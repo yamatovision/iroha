@@ -40,9 +40,12 @@ export const callClaudeAI = async (prompt: string, systemPrompt?: string): Promi
     
     const url = 'https://api.anthropic.com/v1/messages';
     
+    // APIキーがstring型であることを保証
+    const apiKey = config.apiKey || '';
+    
     const headers = {
       'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01'
     };
     
