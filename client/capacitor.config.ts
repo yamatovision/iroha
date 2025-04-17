@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    iosScheme: 'http', // iOSでHTTPを許可
+    iosScheme: 'https', // 本番環境ではHTTPSを使用
     allowNavigation: [
       'dailyfortune.web.app',
       '*.dailyfortune.web.app',
@@ -20,10 +20,16 @@ const config: CapacitorConfig = {
       '192.168.11.6',
       '192.168.11.6:3000',
       '192.168.11.6:8080',
+      'dailyfortune-native-api-235426778039.asia-northeast1.run.app',
+      '*.asia-northeast1.run.app',
+      'run.app',
       '*'  // すべてのドメインを一時的に許可（テスト用）
     ],
-    url: 'http://192.168.11.6:3000',
-    cleartext: true  // 平文HTTP接続を許可
+    // 本番APIを使用するため、ホスト名と直接のURLは指定しない
+    // hostname設定を削除（Web UIからのリダイレクトを防ぐため）
+    // ローカルWeb UI使用時のみ、以下のコメントを外す
+    // url: 'http://192.168.11.6:3000',
+    cleartext: true  // 開発時のみtrue、本番ではfalseに
   },
   plugins: {
     SplashScreen: {
