@@ -1,5 +1,6 @@
 // React 17以降ではJSXでReactのインポートが不要
 // import React from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -7,6 +8,7 @@ import { useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import RequireSajuProfile from './components/common/RequireSajuProfile'
 import LoadingIndicator from './components/common/LoadingIndicator'
+import sessionManager from './services/auth/session-manager.service'
 
 // ページコンポーネント
 import Layout from './components/layout/Layout'
@@ -71,6 +73,34 @@ const theme = createTheme({
 function App() {
   const { loading, userProfile } = useAuth()
 
+  // セッションマネージャーの初期化
+  useEffect(() => {
+    const initSessionManager = async () => {
+      try {
+        await sessionManager.initialize();
+        console.log('App: セッションマネージャー初期化完了');
+      } catch (error) {
+        console.error('App: セッションマネージャー初期化エラー:', error);
+      }
+    };
+    
+    initSessionManager();
+    
+    // クリーンアップ時の処理
+    return () => {
+      const cleanup = async () => {
+        try {
+          await sessionManager.cleanup();
+          console.log('App: セッションマネージャークリーンアップ完了');
+        } catch (error) {
+          console.error('App: セッションマネージャークリーンアップエラー:', error);
+        }
+      };
+      
+      cleanup();
+    };
+  }, []);
+  
   if (loading) {
     // 読み込み中表示
     return <LoadingIndicator message="アプリを読み込み中..." fullScreen size="large" />

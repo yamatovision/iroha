@@ -116,18 +116,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     loadUserAuthentication();
     
-    // JWTトークンの自動更新タイマー
-    const tokenRefreshInterval = setInterval(async () => {
-      const refreshToken = await tokenService.getRefreshToken();
-      if (refreshToken) {
-        jwtAuthService.refreshToken().catch(err => {
-          console.error('トークン自動更新エラー:', err);
-        });
-      }
-    }, 60 * 1000); // 1分ごとにチェック
+      // セッションマネージャーがトークン管理を行うため、ここでの更新タイマーは不要
+    // 代わりに、認証状態の変更を検出するリスナーを追加
     
     return () => {
-      clearInterval(tokenRefreshInterval);
+      // クリーンアップ時の処理
+      console.log('AuthContext: クリーンアップ');
     };
   }, []);
   
