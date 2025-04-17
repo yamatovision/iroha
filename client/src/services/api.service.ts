@@ -6,6 +6,11 @@ const generateTraceId = (): string => {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 };
 
+// モバイルアプリかどうかを判定
+const isNativeApp = (): boolean => {
+  return import.meta.env.VITE_APP_MODE === 'production';
+};
+
 class ApiService {
   private api: AxiosInstance;
   private baseURL: string;
@@ -25,6 +30,12 @@ class ApiService {
       ? import.meta.env.VITE_API_URL 
       : ''; // 開発環境では空文字列（プロキシ使用）
     
+    // モバイルアプリでHTTPSを強制
+    if (isNativeApp() && initialBaseURL && initialBaseURL.startsWith('http:')) {
+      console.warn('⚠️ モバイルアプリではHTTPSが必要です。URLをHTTPSに変換します');
+      initialBaseURL = initialBaseURL.replace('http:', 'https:');
+    }
+    
     // 本番環境で '/api/v1' パスの重複を防ぐための処理
     // APIパスの定数に既に '/api/v1' が含まれているため、環境変数側から除去
     if (initialBaseURL.includes('/api/v1')) {
@@ -35,6 +46,7 @@ class ApiService {
     }
     
     console.log(`🌐 API baseURL: ${this.baseURL || '(using proxy)'}`);
+    console.log(`🔒 HTTPSモード: ${isNativeApp() ? '有効 (ネイティブアプリ)' : '無効 (開発モード)'}`);
 
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -198,9 +210,14 @@ class ApiService {
                     if (refreshToken) {
                       // 直接リフレッシュリクエストを行う（APIサービスインスタンスを使用しない）
                       const axios = (await import('axios')).default;
-                      const baseURL = import.meta.env.PROD 
+                      let baseURL = import.meta.env.PROD 
                         ? import.meta.env.VITE_API_URL 
                         : '';
+                      
+                      // モバイルアプリでHTTPSを強制
+                      if (isNativeApp() && baseURL && baseURL.startsWith('http:')) {
+                        baseURL = baseURL.replace('http:', 'https:');
+                      }
                       
                       // Ensure proper URL construction
                       const refreshUrl = baseURL 
