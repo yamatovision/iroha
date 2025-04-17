@@ -63,7 +63,8 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".debug"
+            // Firebase登録されているアプリIDと一致させるため、デバッグ接尾辞を無効化
+            // applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
             debuggable true
         }
@@ -85,10 +86,10 @@ android {
         }
     }
     
-    // Java 8機能サポート
+    // Java 機能サポート
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     
     // APKスプリット設定（必要に応じて）
@@ -128,12 +129,12 @@ dependencies {
     implementation "androidx.multidex:multidex:2.0.1"
     
     // Firebase関連（プッシュ通知用）
-    implementation platform('com.google.firebase:firebase-bom:34.0.0')
+    implementation platform('com.google.firebase:firebase-bom:32.7.4')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-messaging'
     
     // パフォーマンス最適化
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.2.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     
     // UI関連

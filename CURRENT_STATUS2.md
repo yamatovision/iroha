@@ -97,7 +97,7 @@
 - [x] 69. Firebase App Distribution の設定 (Android)
 - [x] 70. デバッグビルドAPIエンドポイント設定
 - [x] 70a. APIエンドポイントの動作検証とテスト
-- [~] 71. Android デバッグビルド生成と配布
+- [x] 71. Android デバッグビルド生成と配布
 - [ ] 72. iOS デバッグビルド生成と配布
 - [ ] 73. テスター向け簡易ガイド作成
 
@@ -171,8 +171,8 @@
    - 着手中のタスクを明示するため `[ ]` を `[~]` に変更（任意）
 
 ## 進捗管理
-- 完了タスク数: 61/114
-- 進捗率: 53.51%
+- 完了タスク数: 62/114
+- 進捗率: 54.39%
 - 最終更新日: 2025/4/18
 
 ## 開発コマンド集
@@ -277,8 +277,8 @@ cd client && npx cap open android
 - 問題4：Java 21が無効なソースリリースエラー
 - 解決策4：capacitor.build.gradle のJava設定をVERSION_21からVERSION_17に変更
 - 問題5：capacitor-android モジュールでもJava 21エラー
+- 解決策5：android/build.gradleに全サブプロジェクト対応のJava 17設定を追加
+- 状況：ビルド成功、デバッグAPK生成完了（dist/android/app-debug.apk）
 - 次のステップ：
-  1. capacitor-android関連のJavaバージョン設定を全て確認・修正
-  2. 修正したコードでコマンドラインビルドを再試行
-  3. 必要に応じて英語パスのプロジェクトコピーでビルド
-
+  1. Firebase App Distributionでテスターに配布
+  2. インストール・動作を確認
