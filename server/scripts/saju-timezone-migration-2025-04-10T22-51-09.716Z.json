@@ -1,0 +1,26 @@
+{
+  "success": 2,
+  "failed": 0,
+  "noCoordinates": 0,
+  "alreadyMigrated": 0,
+  "details": [
+    {
+      "userId": "Bs2MacLtK1Z1fVnau2dYPpsWRpa2",
+      "email": "shiraishi.tatsuya@mikoto.co.jp",
+      "birthPlace": "東京都",
+      "coordinates": "139.6917, 35.6895",
+      "timeZone": "Asia/Tokyo",
+      "nearestCity": "Tokyo",
+      "country": "Japan"
+    },
+    {
+      "userId": "E83YThG9lwZIef1eirBJJ9Wujht2",
+      "email": "shiraishi.ami@mikoto.co.jp",
+      "birthPlace": "ソウル",
+      "coordinates": "126.978, 37.5665",
+      "timeZone": "Asia/Seoul",
+      "nearestCity": "Seoul",
+      "country": "South Korea"
+    }
+  ]
+}

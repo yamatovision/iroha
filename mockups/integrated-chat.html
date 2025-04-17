@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - AI相談</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <style>
+    :root {
+      /* 五行の色基本色：木・火・土・金・水 */
+      --wood-color: #000000; /* 文字は黒で統一 */
+      --wood-light: #4d4dff;
+      --wood-dark: #0000b3;
+      --wood-bg: #94b8eb; /* 青/緑色の暗めの背景 */
+      
+      --fire-color: #000000; /* 文字は黒で統一 */
+      --fire-light: #ff4d4d;
+      --fire-dark: #b30000;
+      --fire-bg: #e67373; /* 赤色の暗めの背景 */
+      
+      --earth-color: #000000; /* 文字は黒で統一 */
+      --earth-light: #ffff66;
+      --earth-dark: #b3b300;
+      --earth-bg: #f2d06b; /* 黄色の暗めの背景 */
+      
+      --metal-color: #000000; /* 文字は黒で統一 */
+      --metal-light: #ffffff;
+      --metal-dark: #e6e6e6;
+      --metal-bg: #ffffff; /* 純白の背景 */
+      
+      --water-color: #000000; /* 文字は黒で統一 */
+      --water-light: #333333;
+      --water-dark: #000000;
+      --water-bg: #7d94a6; /* より青みがかった暗めの背景 */
+
+      /* ブランドカラー：水をベースに変更（紫から木ベースに変更） */
+      --primary-color: #7d94a6;
+      --primary-dark: #5a6d7c;
+      --primary-light: #a9bac7;
+      --primary-bg: #e1e7ec;
+      
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --success: #4caf50;
+      --border-radius: 16px;
+      --shadow: 0 3px 8px rgba(125, 148, 166, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding-bottom: 20px; /* 下部の余白を減らす */
+    }
+    
+    /* 高度なヘッダー */
+    .header {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+      color: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    /* メインヘッダー部分 */
+    .header-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      position: relative;
+    }
+    
+    /* スクロール時に隠れるヘッダー */
+    .header.hidden {
+      transform: translateY(-100%);
+    }
+    
+    /* ロゴエリア */
+    .header-logo {
+      display: flex;
+      align-items: center;
+    }
+    
+    .header h1 {
+      font-size: 1.2rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+    
+    .header .logo {
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* ナビゲーションアイコンエリア */
+    .header-nav {
+      display: flex;
+      align-items: center;
+    }
+    
+    .nav-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin-left: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      color: rgba(255, 255, 255, 0.8); /* 白色ベース */
+    }
+    
+    .nav-icon:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-icon.active {
+      color: white;
+    }
+    
+    .nav-icon.active::after {
+      content: "";
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      background-color: white;
+      border-radius: 50%;
+    }
+    
+    /* 拡張ヘッダー部分 - 日付と運勢情報 */
+    .header-expanded {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+    
+    .header.expanded .header-expanded {
+      max-height: 60px;
+      opacity: 1;
+    }
+    
+    .today-date {
+      display: flex;
+      align-items: center;
+    }
+    
+    .today-date .material-icons {
+      font-size: 18px;
+      margin-right: 8px;
+    }
+    
+    .fortune-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    
+    .fortune-badge .material-icons {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    
+    /* コンテキスト対応スタイル - 木の場合 */
+    .header.element-wood {
+      background: linear-gradient(120deg, var(--wood-bg), var(--wood-dark));
+    }
+    
+    /* コンテキスト対応スタイル - 火の場合 */
+    .header.element-fire {
+      background: linear-gradient(120deg, var(--fire-bg), var(--fire-dark));
+    }
+    
+    /* コンテキスト対応スタイル - 土の場合 */
+    .header.element-earth {
+      background: linear-gradient(120deg, var(--earth-bg), var(--earth-dark));
+    }
+    
+    /* コンテキスト対応スタイル - 金の場合 */
+    .header.element-metal {
+      background: linear-gradient(120deg, var(--metal-bg), var(--metal-dark));
+    }
+    
+    /* コンテキスト対応スタイル - 水の場合 */
+    .header.element-water {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+    }
+    
+    /* ヘッダー展開ボタン */
+    .expand-header-btn {
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      z-index: 5;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    
+    .header.expanded .expand-header-btn {
+      transform: translateX(-50%) rotate(180deg);
+    }
+    
+    /* チャットエリア */
+    .chat-container {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      scroll-behavior: smooth;
+      padding-bottom: 20px; /* ヘッダーナビのみの場合は余白を減らす */
+    }
+    
+    /* チャットページのメッセージコンテナには大きめの余白を適用 */
+    #chat-messages {
+      padding-bottom: 120px; /* チャット入力欄の高さに合わせて余白を追加（余裕を持たせる） */
+    }
+    
+    .message {
+      margin-bottom: 16px;
+      max-width: 85%;
+      display: flex;
+      align-items: flex-start;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .user-message {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+    
+    .ai-message {
+      margin-right: auto;
+    }
+    
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: var(--border-radius);
+      position: relative;
+      box-shadow: var(--shadow);
+      line-height: 1.6;
+    }
+    
+    .user-message .message-bubble {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+      border-bottom-right-radius: 4px;
+    }
+    
+    .ai-message .message-bubble {
+      background-color: var(--white);
+      border-bottom-left-radius: 4px;
+      border-left: 3px solid var(--primary-light);
+    }
+    
+    .message-time {
+      font-size: 0.7rem;
+      margin-top: 4px;
+      opacity: 0.7;
+      text-align: right;
+    }
+    
+    .user-message .message-time {
+      color: var(--white);
+    }
+    
+    .ai-message .message-time {
+      color: var(--text-secondary);
+    }
+    
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 8px;
+      font-size: 16px;
+      box-shadow: var(--shadow);
+    }
+    
+    .ai-avatar {
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      color: var(--white);
+    }
+    
+    .user-avatar {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+    }
+    
+    /* チャットページ用スタイル */
+    .chat-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1100;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      padding-bottom: 80px; /* 入力欄の高さ分を確保（余裕を持たせる） */
+    }
+
+    .chat-header {
+      background: linear-gradient(120deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+      box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+    
+    /* チャットヘッダー内の配置 */
+    .chat-header .header-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .chat-header h1 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-left: 8px;
+      color: white;
+    }
+    
+    /* 五行属性に応じたスタイル */
+    .chat-header.element-wood {
+      background: linear-gradient(120deg, var(--wood-bg), var(--wood-dark));
+    }
+    
+    .chat-header.element-fire {
+      background: linear-gradient(120deg, var(--fire-bg), var(--fire-dark));
+    }
+    
+    .chat-header.element-earth {
+      background: linear-gradient(120deg, var(--earth-bg), var(--earth-dark));
+    }
+    
+    .chat-header.element-metal {
+      background: linear-gradient(120deg, var(--metal-bg), var(--metal-dark));
+    }
+    
+    .chat-header.element-water {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+    }
+
+    .back-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+    }
+
+    .back-button:active {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    /* チャット入力欄 - 常に表示 */
+    .chat-input-box {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      background: white;
+      padding: 12px 16px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      display: flex !important; /* 強制的に表示 */
+      align-items: center;
+      z-index: 1500;
+      box-sizing: border-box;
+    }
+    
+    .chat-input-box textarea {
+      flex: 1;
+      border: 1px solid #e0e0e0;
+      border-radius: 24px;
+      padding: 12px 16px;
+      resize: none;
+      outline: none;
+      height: 46px;
+      max-height: 120px;
+      font-family: inherit;
+      font-size: 16px;
+      transition: border 0.2s ease;
+    }
+    
+    /* フォーカス時のテキストエリアのボーダー色 */
+    .element-wood .chat-input-box textarea:focus {
+      border-color: var(--wood-dark);
+      box-shadow: 0 0 0 1px rgba(0, 0, 179, 0.1);
+    }
+    
+    .element-fire .chat-input-box textarea:focus {
+      border-color: var(--fire-dark);
+      box-shadow: 0 0 0 1px rgba(179, 0, 0, 0.1);
+    }
+    
+    .element-earth .chat-input-box textarea:focus {
+      border-color: var(--earth-dark);
+      box-shadow: 0 0 0 1px rgba(179, 179, 0, 0.1);
+    }
+    
+    .element-metal .chat-input-box textarea:focus {
+      border-color: var(--metal-dark);
+      box-shadow: 0 0 0 1px rgba(230, 230, 230, 0.5);
+    }
+    
+    .element-water .chat-input-box textarea:focus {
+      border-color: var(--water-dark);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chat-input-box button {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin: 0 8px;
+      background: #eeeeee; /* デフォルト背景色 */
+      color: #555555;
+    }
+    
+    /* 五行属性に応じた入力欄ボタンの色 */
+    .element-wood .chat-input-box button {
+      background-color: var(--wood-dark);
+      color: white;
+    }
+    
+    .element-fire .chat-input-box button {
+      background-color: var(--fire-dark);
+      color: white;
+    }
+    
+    .element-earth .chat-input-box button {
+      background-color: var(--earth-dark);
+      color: black;
+    }
+    
+    .element-metal .chat-input-box button {
+      background-color: var(--metal-dark);
+      color: black;
+    }
+    
+    .element-water .chat-input-box button {
+      background-color: var(--water-dark);
+      color: white;
+    }
+    
+    /* ボタンをホバーしたときのエフェクト */
+    .element-wood .chat-input-box button:hover:not(:disabled) {
+      background-color: var(--wood-light);
+    }
+    
+    .element-fire .chat-input-box button:hover:not(:disabled) {
+      background-color: var(--fire-light);
+    }
+    
+    .element-earth .chat-input-box button:hover:not(:disabled) {
+      background-color: var(--earth-light);
+    }
+    
+    .element-metal .chat-input-box button:hover:not(:disabled) {
+      background-color: var(--metal-light);
+    }
+    
+    .element-water .chat-input-box button:hover:not(:disabled) {
+      background-color: var(--water-light);
+    }
+    
+    .chat-input-box button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* 五行属性切替ボタン */
+    .element-switcher {
+      position: fixed;
+      top: 80px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1600;
+    }
+    
+    .element-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+    
+    .element-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .element-btn.active {
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .element-btn.wood {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: white;
+    }
+    
+    .element-btn.fire {
+      background: linear-gradient(135deg, var(--fire-bg), var(--fire-dark));
+      color: white;
+    }
+    
+    .element-btn.earth {
+      background: linear-gradient(135deg, var(--earth-bg), var(--earth-dark));
+      color: white;
+    }
+    
+    .element-btn.metal {
+      background: linear-gradient(135deg, var(--metal-bg), var(--metal-dark));
+      color: black;
+    }
+    
+    .element-btn.water {
+      background: linear-gradient(135deg, var(--water-bg), var(--water-dark));
+      color: white;
+    }
+    
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      z-index: 1601;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="element-wood">
+  <div class="app-container">
+    <!-- 高度なヘッダー（木の五行属性をデフォルトに） -->
+    <header class="header element-wood" id="app-header">
+      <!-- メインヘッダー部分 -->
+      <div class="header-main">
+        <div class="header-logo">
+          <div class="logo">
+            <span class="material-icons">auto_awesome</span>
+          </div>
+          <h1>DailyFortune</h1>
+        </div>
+        
+        <!-- ヘッダー内ナビゲーション -->
+        <div class="header-nav">
+          <div class="nav-icon" data-nav="home">
+            <span class="material-icons">home</span>
+          </div>
+          <div class="nav-icon" data-nav="team">
+            <span class="material-icons">people</span>
+          </div>
+          <div class="nav-icon active" data-nav="chat">
+            <span class="material-icons">chat</span>
+          </div>
+          <div class="nav-icon" data-nav="settings">
+            <span class="material-icons">settings</span>
+          </div>
+        </div>
+        
+        <!-- ヘッダー展開ボタン -->
+        <div class="expand-header-btn" id="expand-header">
+          <span class="material-icons" style="font-size: 18px;">expand_more</span>
+        </div>
+      </div>
+      
+      <!-- 拡張部分 - 日付と運勢情報 -->
+      <div class="header-expanded">
+        <div class="today-date">
+          <span class="material-icons">calendar_today</span>
+          <span>2025年4月13日 (土)</span>
+        </div>
+        <div class="fortune-badge">
+          <span class="material-icons">auto_awesome</span>
+          <span>運勢 <strong>70点</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- チャットエリア -->
+    <div class="chat-container">
+      <div class="messages-container" id="messages">
+        <!-- AIメッセージ -->
+        <div class="message ai-message">
+          <div class="avatar ai-avatar">
+            <span class="material-icons">psychology</span>
+          </div>
+          <div>
+            <div class="message-bubble">
+              こんにちは。今日の運勢や相性について相談したいことがあれば、お気軽にお尋ねください。
+            </div>
+            <div class="message-time">10:30</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI相談モード（オーバーレイ） - 最初から表示 -->
+  <div class="chat-page" id="chat-page" style="display: flex;">
+    <!-- チャットヘッダー (ヘッダーナビゲーションを統合) -->
+    <div class="chat-header element-wood">
+      <div class="header-main">
+        <div class="header-left">
+          <div class="back-button" id="chat-back-button">
+            <span class="material-icons">arrow_back</span>
+          </div>
+          <h1>AI相談</h1>
+        </div>
+        
+        <!-- ヘッダー内ナビゲーション -->
+        <div class="header-nav">
+          <div class="nav-icon" data-nav="home">
+            <span class="material-icons">home</span>
+          </div>
+          <div class="nav-icon" data-nav="team">
+            <span class="material-icons">people</span>
+          </div>
+          <div class="nav-icon active" data-nav="chat">
+            <span class="material-icons">chat</span>
+          </div>
+          <div class="nav-icon" data-nav="settings">
+            <span class="material-icons">settings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- チャットメッセージ -->
+    <div class="messages-container" id="chat-messages">
+      <!-- AIウェルカムメッセージ -->
+      <div class="message ai-message">
+        <div class="avatar ai-avatar">
+          <span class="material-icons">psychology</span>
+        </div>
+        <div>
+          <div class="message-bubble">
+            こんにちは。今日の運勢や相性について相談したいことがあれば、お気軽にお尋ねください。
+          </div>
+          <div class="message-time">10:30</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- チャット入力欄 (常に表示) -->
+    <div class="chat-input-box" style="display: flex;">
+      <button id="mic-button">
+        <span class="material-icons">mic</span>
+      </button>
+      <textarea id="message-input" placeholder="メッセージを入力..."></textarea>
+      <button id="send-button" disabled>
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+  
+  <!-- 五行属性切替ボタン -->
+  <div class="element-switcher">
+    <button class="element-btn wood active" data-element="wood" title="木">
+      <span class="material-icons">nature</span>
+    </button>
+    <button class="element-btn fire" data-element="fire" title="火">
+      <span class="material-icons">local_fire_department</span>
+    </button>
+    <button class="element-btn earth" data-element="earth" title="土">
+      <span class="material-icons">landscape</span>
+    </button>
+    <button class="element-btn metal" data-element="metal" title="金">
+      <span class="material-icons">brightness_7</span>
+    </button>
+    <button class="element-btn water" data-element="water" title="水">
+      <span class="material-icons">water_drop</span>
+    </button>
+  </div>
+  
+  <!-- トースト通知 -->
+  <div class="toast" id="toast">会話を保存しました</div>
+  
+  <script>
+    // DOM 要素
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const micButton = document.getElementById('mic-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const toast = document.getElementById('toast');
+    const chatNav = document.querySelector('.nav-icon[data-nav="chat"]');
+    const chatPage = document.getElementById('chat-page');
+    const chatBackButton = document.getElementById('chat-back-button');
+    const header = document.getElementById('app-header');
+    const headerNavIcons = document.querySelectorAll('.header .nav-icon');
+    
+    // メッセージスクロール関数
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // ページ読み込み時に入力欄にフォーカス
+    window.addEventListener('load', function() {
+      setTimeout(() => {
+        messageInput.focus();
+        scrollToBottom();
+      }, 100);
+    });
+    
+    // 入力フィールドのイベント
+    messageInput.addEventListener('input', function() {
+      // 入力内容があるときのみ送信ボタンを有効化
+      sendButton.disabled = this.value.trim() === '';
+      
+      // テキストエリアの高さを自動調整
+      this.style.height = 'auto';
+      this.style.height = Math.min(120, this.scrollHeight) + 'px';
+    });
+    
+    // Enterキーでの送信
+    messageInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey && !sendButton.disabled) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // 送信ボタンクリック
+    sendButton.addEventListener('click', sendMessage);
+    
+    // メッセージ送信関数
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      
+      // ユーザーメッセージ追加
+      addUserMessage(text);
+      
+      // 入力フィールドをクリア
+      messageInput.value = '';
+      messageInput.style.height = '46px';
+      sendButton.disabled = true;
+      
+      // AIの応答（デモ）
+      setTimeout(() => {
+        // 現在の五行属性を取得
+        const currentElement = header.className.includes('element-fire') ? 'fire' :
+                             header.className.includes('element-wood') ? 'wood' :
+                             header.className.includes('element-earth') ? 'earth' :
+                             header.className.includes('element-metal') ? 'metal' : 'water';
+        
+        // 属性に基づいた応答
+        const response = `今日のあなたの運勢は上昇傾向です。${currentElement}の気が強く、創造性が高まっています。新しいアイデアを試す良い日でしょう。特に午後からは対人運も良くなります。`;
+        
+        addAIMessage(response);
+      }, 1000);
+    }
+    
+    // ユーザーメッセージ追加
+    function addUserMessage(text) {
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user-message';
+      messageDiv.innerHTML = `
+        <div class="avatar user-avatar">
+          <span class="material-icons">person</span>
+        </div>
+        <div>
+          <div class="message-bubble">${text}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+    
+    // AIメッセージ追加
+    function addAIMessage(text) {
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message ai-message';
+      messageDiv.innerHTML = `
+        <div class="avatar ai-avatar">
+          <span class="material-icons">psychology</span>
+        </div>
+        <div>
+          <div class="message-bubble">${text}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+    
+    // トースト通知表示
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    // チャットアイコンクリックイベント
+    chatNav.addEventListener('click', function() {
+      // 現在の五行属性を取得
+      const currentElement = header.className.includes('element-fire') ? 'element-fire' :
+                           header.className.includes('element-wood') ? 'element-wood' :
+                           header.className.includes('element-earth') ? 'element-earth' :
+                           header.className.includes('element-metal') ? 'element-metal' : 'element-water';
+      
+      // チャットヘッダーに属性を適用
+      const chatHeader = document.querySelector('.chat-header');
+      chatHeader.className = 'chat-header ' + currentElement;
+      
+      // チャットページ表示
+      chatPage.style.display = 'flex';
+      
+      // 入力欄にフォーカス
+      setTimeout(() => {
+        messageInput.focus();
+        scrollToBottom();
+      }, 100);
+    });
+    
+    // 戻るボタンクリック
+    chatBackButton.addEventListener('click', function() {
+      chatPage.style.display = 'none';
+      
+      // ホームアイコンをアクティブに
+      headerNavIcons.forEach(i => i.classList.remove('active'));
+      document.querySelector('.nav-icon[data-nav="home"]').classList.add('active');
+    });
+    
+    // ヘッダーアイコンのクリックイベント
+    headerNavIcons.forEach(icon => {
+      icon.addEventListener('click', function() {
+        // アクティブ状態を更新
+        headerNavIcons.forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        
+        const navType = this.getAttribute('data-nav');
+        
+        if (navType === 'chat') {
+          // チャットページを表示
+          chatNav.click();
+        } else if (navType === 'settings') {
+          // 五行属性を切り替え（デモ用）
+          const elements = ['element-wood', 'element-fire', 'element-earth', 'element-metal', 'element-water'];
+          let currentIndex = 0;
+          
+          // 現在の属性を特定
+          elements.forEach((el, index) => {
+            if (header.classList.contains(el)) {
+              currentIndex = index;
+            }
+          });
+          
+          // 次の属性に切り替え
+          const nextIndex = (currentIndex + 1) % elements.length;
+          
+          // ヘッダーをリセットして新しい属性を適用
+          header.className = 'header ' + elements[nextIndex];
+          
+          // 拡張状態を維持
+          if (header.classList.contains('expanded')) {
+            header.classList.add('expanded');
+          }
+          
+          // 属性名を取得
+          const elementName = elements[nextIndex].replace('element-', '');
+          showToast(`テーマを「${elementName}」に変更しました`);
+        }
+      });
+    });
+    
+    // チャットヘッダー内のナビゲーション
+    document.querySelectorAll('.chat-header .nav-icon').forEach(icon => {
+      icon.addEventListener('click', function() {
+        const navType = this.getAttribute('data-nav');
+        
+        if (navType === 'chat') {
+          // チャットは既に表示中なので何もしない
+          return;
+        }
+        
+        // それ以外のアイコンは戻る
+        chatPage.style.display = 'none';
+        
+        // メインヘッダーのナビゲーションを同期
+        headerNavIcons.forEach(i => i.classList.remove('active'));
+        document.querySelector(`.nav-icon[data-nav="${navType}"]`).classList.add('active');
+      });
+    });
+    
+    // ヘッダー展開ボタン
+    document.getElementById('expand-header').addEventListener('click', function() {
+      header.classList.toggle('expanded');
+    });
+    
+    // スクロールでヘッダーを隠す
+    let lastScrollTop = 0;
+    window.addEventListener('scroll', function() {
+      // チャットページ表示中は無効
+      if (chatPage.style.display === 'flex') return;
+      
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      if (scrollTop > lastScrollTop && scrollTop > 80) {
+        // 下方向スクロール
+        header.classList.add('hidden');
+      } else {
+        // 上方向スクロール
+        header.classList.remove('hidden');
+      }
+      
+      lastScrollTop = scrollTop;
+    });
+    
+    // 音声入力（デモ用）
+    micButton.addEventListener('click', function() {
+      showToast('音声入力は現在実装中です');
+    });
+    
+    // 五行属性切替ボタンのイベント
+    const elementButtons = document.querySelectorAll('.element-btn');
+    
+    elementButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // 現在の要素タイプ
+        const elementType = this.getAttribute('data-element');
+        
+        // ボタンのアクティブ状態を更新
+        elementButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        
+        // body要素に五行属性クラスを設定し、グローバルに適用
+        document.body.classList.remove('element-wood', 'element-fire', 'element-earth', 'element-metal', 'element-water');
+        document.body.classList.add('element-' + elementType);
+        
+        // ヘッダーの属性を更新
+        header.className = 'header element-' + elementType;
+        
+        // チャットヘッダーの属性も更新
+        const chatHeader = document.querySelector('.chat-header');
+        chatHeader.className = 'chat-header element-' + elementType;
+        
+        // チャットページ要素にも属性を追加
+        chatPage.classList.remove('element-wood', 'element-fire', 'element-earth', 'element-metal', 'element-water');
+        chatPage.classList.add('element-' + elementType);
+        
+        // 拡張状態を維持
+        if (document.getElementById('app-header').classList.contains('expanded')) {
+          header.classList.add('expanded');
+        }
+        
+        // 属性名を日本語で表示
+        const elementNames = {
+          'wood': '木',
+          'fire': '火',
+          'earth': '土',
+          'metal': '金',
+          'water': '水'
+        };
+        
+        showToast(`五行属性を「${elementNames[elementType]}」に変更しました`);
+      });
+    });
+  </script>
+</body>
+</html>

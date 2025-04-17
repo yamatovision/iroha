@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@shared/*": ["./src/types/*"] // 変更: internalSharedではなくtypesを参照
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/archived/**/*.ts"]
+}

@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - プロフィール設定</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  
+  <!-- Flatpickr (日付時間選択ライブラリ) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --primary-light: #e1bee7;
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --shadow: 0 3px 8px rgba(156, 39, 176, 0.1);
+      --card-shadow: 0 4px 20px rgba(156, 39, 176, 0.15);
+      --border-radius: 16px;
+      
+      /* 五行色定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      padding-bottom: 24px;
+    }
+    
+    .navbar {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      padding: 0 16px;
+      box-shadow: 0 2px 10px rgba(156, 39, 176, 0.15);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .navbar-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 64px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      color: white;
+      text-decoration: none;
+    }
+    
+    .navbar-logo {
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .navbar-logo .material-icons {
+      font-size: 28px;
+    }
+    
+    .navbar-title {
+      font-size: 1.4rem;
+      font-weight: 500;
+    }
+    
+    .navbar-menu {
+      display: flex;
+      align-items: center;
+    }
+    
+    .navbar-item {
+      color: white;
+      opacity: 0.9;
+      padding: 8px;
+      margin-left: 8px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+    
+    .navbar-item:hover {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .container-main {
+      max-width: 960px;
+      margin: 80px auto 0;
+      padding: 0 16px;
+    }
+    
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: var(--primary-dark);
+      margin: 24px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider);
+    }
+    
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    
+    .profile-card {
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 24px;
+      box-shadow: 0 4px 10px rgba(156, 39, 176, 0.2);
+    }
+    
+    .avatar .material-icons {
+      font-size: 36px;
+      color: white;
+    }
+    
+    .profile-info h2 {
+      font-size: 1.5rem;
+      margin: 0 0 4px;
+      color: var(--primary-dark);
+    }
+    
+    .profile-info p {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    /* 四柱推命タブのスタイル */
+    .saju-details {
+      margin-top: 20px;
+    }
+    
+    .saju-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    
+    .saju-row {
+      display: flex;
+      margin-bottom: 8px;
+      padding: 4px 0;
+    }
+    
+    .saju-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .saju-label {
+      flex: 0 0 140px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .saju-value {
+      flex: 1;
+      color: var(--text-color);
+    }
+    
+    .pillars-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .pillar-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    
+    .pillar-title {
+      font-weight: 500;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--primary-light);
+    }
+    
+    .pillar-content {
+      text-align: left;
+    }
+    
+    .pillar-item {
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    
+    .character-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    
+    .character-card p {
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    .character-card p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .profile-tabs {
+      display: flex;
+      background-color: var(--background-color);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .profile-tab {
+      flex: 1;
+      text-align: center;
+      padding: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .profile-tab.active {
+      color: var(--primary-color);
+      background-color: white;
+      border-bottom: 3px solid var(--primary-color);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .input-field {
+      margin-bottom: 24px;
+    }
+    
+    .input-field label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .input-field input, .input-field select, .input-field textarea {
+      border: 1px solid var(--divider) !important;
+      border-radius: 8px !important;
+      padding: 0 16px !important;
+      box-sizing: border-box !important;
+      height: 54px !important;
+      box-shadow: none !important;
+      background-color: white !important;
+    }
+    
+    .input-field textarea {
+      padding: 16px !important;
+      min-height: 120px !important;
+      height: auto !important;
+    }
+    
+    .input-field input:focus, .input-field select:focus, .input-field textarea:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.1) !important;
+    }
+    
+    .birth-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .birth-details {
+        grid-template-columns: 2fr 1fr 1fr;
+      }
+    }
+    
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -8px;
+    }
+    
+    .form-col {
+      flex: 1 0 100%;
+      padding: 0 8px;
+    }
+    
+    @media (min-width: 768px) {
+      .form-col-6 {
+        flex: 0 0 50%;
+      }
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+      color: white;
+      border-radius: 30px;
+      text-transform: none;
+      font-weight: 500;
+      font-size: 1rem;
+      height: 48px;
+      line-height: 48px;
+      padding: 0 32px;
+      box-shadow: 0 4px 10px rgba(156, 39, 176, 0.25) !important;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(156, 39, 176, 0.35) !important;
+    }
+    
+    .btn-secondary {
+      background-color: transparent !important;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      border-radius: 30px;
+      text-transform: none;
+      font-weight: 500;
+      font-size: 1rem;
+      height: 48px;
+      line-height: 46px;
+      padding: 0 32px;
+      box-shadow: none !important;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background-color: rgba(156, 39, 176, 0.05) !important;
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+      gap: 16px;
+    }
+    
+    .element-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+    }
+    
+    .element-wood {
+      background-color: var(--wood-bg);
+      color: var(--wood-color);
+    }
+    
+    .element-fire {
+      background-color: var(--fire-bg);
+      color: var(--fire-color);
+    }
+    
+    .element-earth {
+      background-color: var(--earth-bg);
+      color: var(--earth-color);
+    }
+    
+    .element-metal {
+      background-color: var(--metal-bg);
+      color: var(--metal-color);
+    }
+    
+    .element-water {
+      background-color: var(--water-bg);
+      color: var(--water-color);
+    }
+    
+    .element-info {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      background-color: var(--background-color);
+      margin-bottom: 16px;
+    }
+    
+    .element-info p {
+      margin: 0;
+    }
+    
+    .flatpickr-input {
+      background-color: white !important;
+    }
+    
+    .profile-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .summary-item {
+      flex: 1 0 calc(50% - 16px);
+      background-color: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    
+    @media (min-width: 768px) {
+      .summary-item {
+        flex: 1 0 calc(25% - 16px);
+      }
+    }
+    
+    .summary-item h3 {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin: 0 0 8px;
+    }
+    
+    .summary-item p {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+      color: var(--primary-dark);
+    }
+    
+    .helper-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      display: block;
+    }
+    
+    /* カスタムセレクトスタイル */
+    .select-wrapper input.select-dropdown {
+      border: 1px solid var(--divider) !important;
+      border-radius: 8px !important;
+      padding: 0 16px !important;
+      height: 54px !important;
+      line-height: 54px !important;
+    }
+    
+    .select-wrapper input.select-dropdown:focus {
+      border-color: var(--primary-color) !important;
+    }
+    
+    .dropdown-content li>a, .dropdown-content li>span {
+      color: var(--primary-color) !important;
+    }
+    
+    /* モバイル対応 */
+    @media (max-width: 600px) {
+      .container-main {
+        margin-top: 70px;
+      }
+      
+      .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .avatar {
+        margin-bottom: 16px;
+        margin-right: 0;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .btn-primary, .btn-secondary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ナビゲーションバー -->
+  <div class="navbar">
+    <div class="navbar-content">
+      <a href="daily-fortune.html" class="navbar-brand">
+        <div class="navbar-logo">
+          <i class="material-icons">psychology</i>
+        </div>
+        <div class="navbar-title">DailyFortune</div>
+      </a>
+      
+      <div class="navbar-menu">
+        <a href="#" class="navbar-item">
+          <i class="material-icons">help_outline</i>
+        </a>
+        <a href="#" class="navbar-item">
+          <i class="material-icons">notifications_none</i>
+        </a>
+        <a href="#" class="navbar-item">
+          <i class="material-icons">account_circle</i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- メインコンテンツ -->
+  <div class="container-main">
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar">
+          <i class="material-icons">person</i>
+        </div>
+        <div class="profile-info">
+          <h2>{{username}}</h2>
+          <p>{{email}}</p>
+          <p>{{elementJp}}属性 • {{role}}</p>
+        </div>
+      </div>
+      
+      <div class="profile-tabs">
+        <div class="profile-tab active" data-tab="personal">個人情報</div>
+        <div class="profile-tab" data-tab="goals">個人目標</div>
+        <div class="profile-tab" data-tab="saju">四柱推命</div>
+        <div class="profile-tab" data-tab="security">セキュリティ</div>
+      </div>
+      
+      <!-- 個人情報タブ -->
+      <div class="tab-content active" id="personal-tab">
+        <div class="element-info">
+          <div class="element-icon element-{{element}}">
+            <i class="material-icons">{{elementIcon}}</i>
+          </div>
+          <div>
+            <p><strong>{{elementJp}}属性 ({{birthdate}}生まれ)</strong> - {{elementDescription}}</p>
+          </div>
+        </div>
+        
+        <form id="personal-form">
+          <div class="section-title">基本情報</div>
+          
+          <div class="form-row">
+            <div class="form-col form-col-6">
+              <div class="input-field">
+                <input type="text" id="first_name" value="{{firstName}}">
+                <label for="first_name" class="active">姓</label>
+              </div>
+            </div>
+            <div class="form-col form-col-6">
+              <div class="input-field">
+                <input type="text" id="last_name" value="{{lastName}}">
+                <label for="last_name" class="active">名</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="input-field">
+            <input type="email" id="email" value="{{email}}">
+            <label for="email" class="active">メールアドレス</label>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-col">
+              <div class="input-field">
+                <input type="text" id="role" value="{{role}}" disabled>
+                <label for="role" class="active">役割（管理者設定）</label>
+                <span class="helper-text">役割は経営者/管理者によって設定されます</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section-title">生年月日・出生情報</div>
+          <div class="section-subtitle">
+            四柱推命の計算に必要な情報です。正確な情報を入力してください。
+          </div>
+          
+          <div class="input-field">
+            <input type="text" id="birthdate" class="datepicker" value="{{birthdate}}">
+            <label for="birthdate" class="active">生年月日</label>
+            <span class="helper-text">YYYY-MM-DD形式で入力</span>
+          </div>
+          
+          <div class="input-field">
+            <input type="text" id="birthtime" class="timepicker" value="{{birthtime}}">
+            <label for="birthtime" class="active">出生時間</label>
+            <span class="helper-text">24時間形式 (HH:MM) で入力</span>
+          </div>
+          
+          <div class="input-field">
+            <input type="text" id="birthplace" value="{{birthplace}}">
+            <label for="birthplace" class="active">出生地</label>
+            <span class="helper-text">都道府県と市区町村まで入力してください</span>
+          </div>
+          
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary waves-effect waves-light">キャンセル</button>
+            <button type="submit" class="btn btn-primary waves-effect waves-light">保存する</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- 個人目標タブ -->
+      <div class="tab-content" id="goals-tab">
+        <div class="section-subtitle">
+          あなたの個人目標を設定してください。これらはデイリー運勢と連携して、目標達成のためのアドバイスを提供します。具体的な期限を設定することでより的確なアドバイスが受けられます。
+        </div>
+        
+        <form id="goals-form">
+          <div class="input-field">
+            <input type="text" id="goal1_date" class="datepicker" value="2025-07-05">
+            <label for="goal1_date" class="active">目標1の期限</label>
+          </div>
+          
+          <div class="input-field">
+            <textarea id="goal1" class="materialize-textarea">新しいプログラミング言語（Rust）の基礎を習得し、小規模なプロジェクトを完成させる</textarea>
+            <label for="goal1" class="active">キャリア目標</label>
+            <span class="helper-text">仕事やスキルに関する目標を設定してください</span>
+          </div>
+          
+          <div class="input-field">
+            <input type="text" id="goal2_date" class="datepicker" value="2025-12-31">
+            <label for="goal2_date" class="active">目標2の期限</label>
+          </div>
+          
+          <div class="input-field">
+            <textarea id="goal2" class="materialize-textarea">プロジェクトリーダーとして1つのプロジェクトを成功に導く</textarea>
+            <label for="goal2" class="active">チーム目標</label>
+            <span class="helper-text">チーム内での役割や貢献に関する目標を設定してください</span>
+          </div>
+          
+          <div class="input-field">
+            <input type="text" id="goal3_date" class="datepicker" value="2026-04-05">
+            <label for="goal3_date" class="active">目標3の期限</label>
+          </div>
+          
+          <div class="input-field">
+            <textarea id="goal3" class="materialize-textarea">週3回の運動習慣を定着させ、健康管理を徹底する</textarea>
+            <label for="goal3" class="active">個人的な目標</label>
+            <span class="helper-text">プライベートや自己成長に関する目標を設定してください</span>
+          </div>
+          
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary waves-effect waves-light">キャンセル</button>
+            <button type="submit" class="btn btn-primary waves-effect waves-light">保存する</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- 四柱推命タブ -->
+      <div class="tab-content" id="saju-tab">
+        <div class="section-subtitle">
+          あなたの四柱推命情報です。これは生年月日時と出生地に基づいて計算されています。
+        </div>
+        
+        <div class="saju-details">
+          <div class="saju-summary">
+            <div class="section-title">基本情報</div>
+            <div class="saju-card">
+              <div class="saju-row">
+                <div class="saju-label">生年月日時：</div>
+                <div class="saju-value">{{birthdate}} {{birthtime}}</div>
+              </div>
+              <div class="saju-row">
+                <div class="saju-label">出生地：</div>
+                <div class="saju-value">{{birthplace}}</div>
+              </div>
+              <div class="saju-row">
+                <div class="saju-label">命式陰陽五行：</div>
+                <div class="saju-value">{{elementJp}}命</div>
+              </div>
+              <div class="saju-row">
+                <div class="saju-label">日主：</div>
+                <div class="saju-value">{{dayMaster}}</div>
+              </div>
+            </div>
+            
+            <div class="section-title">四柱</div>
+            <div class="pillars-container">
+              <div class="pillar-card">
+                <div class="pillar-title">年柱</div>
+                <div class="pillar-content">
+                  <div class="pillar-item">天干：{{year.heavenlyStem}}</div>
+                  <div class="pillar-item">地支：{{year.earthlyBranch}}</div>
+                </div>
+              </div>
+              <div class="pillar-card">
+                <div class="pillar-title">月柱</div>
+                <div class="pillar-content">
+                  <div class="pillar-item">天干：{{month.heavenlyStem}}</div>
+                  <div class="pillar-item">地支：{{month.earthlyBranch}}</div>
+                </div>
+              </div>
+              <div class="pillar-card">
+                <div class="pillar-title">日柱</div>
+                <div class="pillar-content">
+                  <div class="pillar-item">天干：{{day.heavenlyStem}}</div>
+                  <div class="pillar-item">地支：{{day.earthlyBranch}}</div>
+                </div>
+              </div>
+              <div class="pillar-card">
+                <div class="pillar-title">時柱</div>
+                <div class="pillar-content">
+                  <div class="pillar-item">天干：{{hour.heavenlyStem}}</div>
+                  <div class="pillar-item">地支：{{hour.earthlyBranch}}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="section-title">性格特性</div>
+            <div class="character-card">
+              <p>{{personalityDescription}}</p>
+            </div>
+            
+            <div class="section-title">仕事とキャリア</div>
+            <div class="character-card">
+              <p>{{careerDescription}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- セキュリティタブ -->
+      <div class="tab-content" id="security-tab">
+        <div class="section-subtitle">
+          アカウントのセキュリティ設定を更新します。定期的なパスワード変更をお勧めします。
+        </div>
+        
+        <form id="security-form">
+          <div class="input-field">
+            <input type="password" id="current_password">
+            <label for="current_password">現在のパスワード</label>
+          </div>
+          
+          <div class="input-field">
+            <input type="password" id="new_password">
+            <label for="new_password">新しいパスワード</label>
+            <span class="helper-text">8文字以上で、英字・数字・記号を含めてください</span>
+          </div>
+          
+          <div class="input-field">
+            <input type="password" id="confirm_password">
+            <label for="confirm_password">新しいパスワード（確認）</label>
+          </div>
+          
+          <div class="section-title">通知設定</div>
+          
+          <p>
+            <label>
+              <input type="checkbox" class="filled-in" checked="checked" />
+              <span>運勢更新の通知</span>
+            </label>
+          </p>
+          
+          <p>
+            <label>
+              <input type="checkbox" class="filled-in" checked="checked" />
+              <span>チームからの招待通知</span>
+            </label>
+          </p>
+          
+          <p>
+            <label>
+              <input type="checkbox" class="filled-in" />
+              <span>マーケティングメール</span>
+            </label>
+          </p>
+          
+          <div class="button-group">
+            <button type="button" class="btn btn-secondary waves-effect waves-light">キャンセル</button>
+            <button type="submit" class="btn btn-primary waves-effect waves-light">保存する</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- スクリプト -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ja.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Material UIの初期化
+      M.updateTextFields();
+      
+      // セレクトボックスの初期化
+      const selects = document.querySelectorAll('select');
+      M.FormSelect.init(selects);
+      
+      // 日付ピッカーの初期化
+      flatpickr("#birthdate", {
+        dateFormat: "Y-m-d",
+        locale: "ja",
+        maxDate: "today",
+        disableMobile: "true"
+      });
+      
+      // 時間ピッカーの初期化
+      flatpickr("#birthtime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minuteIncrement: 1,
+        disableMobile: "true"
+      });
+      
+      // 目標の日付ピッカーの初期化
+      flatpickr("#goal1_date", {
+        dateFormat: "Y-m-d",
+        locale: "ja",
+        minDate: "today",
+        disableMobile: "true"
+      });
+      
+      flatpickr("#goal2_date", {
+        dateFormat: "Y-m-d",
+        locale: "ja",
+        minDate: "today",
+        disableMobile: "true"
+      });
+      
+      flatpickr("#goal3_date", {
+        dateFormat: "Y-m-d",
+        locale: "ja",
+        minDate: "today",
+        disableMobile: "true"
+      });
+      
+      // タブ切り替え
+      const tabs = document.querySelectorAll('.profile-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // アクティブタブの更新
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // タブコンテンツの表示/非表示
+          const tabName = tab.getAttribute('data-tab');
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+      });
+      
+      // フォームの送信
+      const personalForm = document.getElementById('personal-form');
+      const goalsForm = document.getElementById('goals-form');
+      const securityForm = document.getElementById('security-form');
+      
+      personalForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        M.toast({html: '個人情報を更新しました', classes: 'rounded'});
+      });
+      
+      goalsForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        M.toast({html: '個人目標を更新しました', classes: 'rounded'});
+      });
+      
+      securityForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // パスワード確認
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword && newPassword !== confirmPassword) {
+          M.toast({html: 'パスワードが一致しません', classes: 'rounded red'});
+          return;
+        }
+        
+        if (newPassword && newPassword.length < 8) {
+          M.toast({html: 'パスワードは8文字以上にしてください', classes: 'rounded red'});
+          return;
+        }
+        
+        M.toast({html: 'セキュリティ設定を更新しました', classes: 'rounded'});
+        
+        // フォームリセット
+        document.getElementById('current_password').value = '';
+        document.getElementById('new_password').value = '';
+        document.getElementById('confirm_password').value = '';
+        M.updateTextFields();
+      });
+    });
+  </script>
+</body>
+</html>

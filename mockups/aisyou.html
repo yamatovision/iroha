@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - チームページ</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <style>
+    :root {
+      --primary: #6a1b9a;
+      --primary-dark: #4a148c;
+      --primary-light: #9c27b0;
+      --primary-bg: #f3e5f5;
+      --secondary: #00897b;
+      --secondary-light: #4db6ac;
+      --secondary-dark: #004d40;
+      --background-color: #f3e5f5;
+      --text-primary: rgba(0, 0, 0, 0.87);
+      --text-secondary: rgba(0, 0, 0, 0.6);
+      --text-disabled: rgba(0, 0, 0, 0.38);
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-800: #424242;
+      --black: #212121;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --error: #f44336;
+      --divider: #e0e0e0;
+      --border-radius: 16px;
+      --box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      
+      /* 陰陽五行属性カラー */
+      --element-wood: #43a047;       /* 木：緑 */
+      --element-wood-light: #81c784; /* 木：薄い緑 */
+      --element-wood-dark: #2e7d32;  /* 木：濃い緑 */
+      --element-wood-bg: #e8f5e9;    /* 木：背景色 */
+      
+      --element-fire: #e53935;       /* 火：赤 */
+      --element-fire-light: #ef5350; /* 火：薄い赤 */
+      --element-fire-dark: #c62828;  /* 火：濃い赤 */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ff8f00;      /* 土：オレンジ */
+      --element-earth-light: #ffd54f;/* 土：薄いオレンジ */
+      --element-earth-dark: #ef6c00; /* 土：濃いオレンジ */
+      --element-earth-bg: #fff8e1;   /* 土：背景色 */
+      
+      --element-metal: #fdd835;      /* 金：金色 */
+      --element-metal-light: #ffee58;/* 金：薄い金色 */
+      --element-metal-dark: #f9a825; /* 金：濃い金色 */
+      --element-metal-bg: #fffde7;   /* 金：背景色 */
+      
+      --element-water: #1e88e5;      /* 水：青 */
+      --element-water-light: #64b5f6;/* 水：薄い青 */
+      --element-water-dark: #0d47a1; /* 水：濃い青 */
+      --element-water-bg: #e3f2fd;   /* 水：背景色 */
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--primary-bg) 0%, var(--gray-100) 100%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      letter-spacing: 0.015em;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 100%;
+      margin: 0 auto;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 500;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      letter-spacing: 0.02em;
+    }
+    
+    .header-icon {
+      margin-right: 12px;
+    }
+    
+    /* メインコンテンツ */
+    .main-content {
+      flex: 1;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* セクション共通スタイル */
+    .section {
+      background-color: white;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+    }
+    
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      letter-spacing: 0.01em;
+    }
+    
+    .section-title .material-icons {
+      margin-right: 12px;
+      color: var(--primary-light);
+      font-size: 1.5rem;
+    }
+    
+    /* ランキングセクション */
+    .ranking-section {
+      margin-bottom: 8px;
+    }
+    
+    .ranking-card {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .ranking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .ranking-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #bdbdbd, var(--primary-color));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      margin-right: 16px;
+      position: relative;
+    }
+    
+    .crown-icon {
+      position: absolute;
+      top: -10px;
+      right: -5px;
+      color: #ffc107;
+      font-size: 20px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+    }
+    
+    .ranking-info {
+      flex: 1;
+    }
+    
+    .ranking-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    
+    .ranking-role {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .ranking-score {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    
+    .lucky-item {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      background-color: rgba(0, 0, 0, 0.05);
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      margin-top: 4px;
+      border: 1px solid rgba(106, 27, 154, 0.1);
+    }
+    
+    .lucky-item .material-icons {
+      font-size: 14px;
+      margin-right: 4px;
+    }
+    
+    /* チームメンバーリスト */
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .member-card {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: var(--border-radius);
+      background-color: var(--white);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .member-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .member-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    
+    /* 削除されたクイックチャットボタン（互換性のため保持） */
+    .quick-chat-button {
+      display: none; /* ボタンを非表示に */
+    }
+    
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary-light), #f5f5f5);
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    
+    /* 五行属性のアバター */
+    .water-avatar {
+      background-color: var(--element-water);
+      color: black;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--element-water-dark);
+    }
+    
+    .wood-avatar {
+      background-color: var(--element-wood);
+      color: black;
+      box-shadow: 0 4px 12px rgba(128, 196, 215, 0.3);
+    }
+    
+    .fire-avatar {
+      background-color: var(--element-fire);
+      color: black;
+      box-shadow: 0 4px 12px rgba(234, 153, 153, 0.3);
+    }
+    
+    .earth-avatar {
+      background-color: var(--element-earth);
+      color: black;
+      box-shadow: 0 4px 12px rgba(246, 194, 112, 0.3);
+    }
+    
+    .metal-avatar {
+      background-color: var(--element-metal);
+      color: black;
+      box-shadow: 0 4px 12px rgba(179, 179, 179, 0.3);
+    }
+    
+    .member-info {
+      flex: 1;
+    }
+    
+    .member-name {
+      font-weight: 500;
+      font-size: 1rem;
+      margin-bottom: 2px;
+    }
+    
+    .member-role {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .compatibility-button {
+      display: flex;
+      align-items: center;
+    }
+    
+    .view-compatibility-btn {
+      padding: 6px 10px;
+      background-color: rgba(106, 27, 154, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(106, 27, 154, 0.2);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .view-compatibility-btn:hover {
+      background-color: rgba(106, 27, 154, 0.12);
+      transform: translateY(-1px);
+    }
+    
+    .view-compatibility-btn .material-icons {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    
+    /* 五行バッジスタイル */
+    .element-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-right: 6px;
+    }
+    
+    .water-badge {
+      background-color: var(--element-water-bg);
+      color: var(--element-water-dark);
+    }
+    
+    .wood-badge {
+      background-color: var(--element-wood-bg);
+      color: var(--element-wood-dark);
+    }
+    
+    .fire-badge {
+      background-color: var(--element-fire-bg);
+      color: var(--element-fire-dark);
+    }
+    
+    .earth-badge {
+      background-color: var(--element-earth-bg);
+      color: var(--element-earth-dark);
+    }
+    
+    .metal-badge {
+      background-color: var(--element-metal-bg);
+      color: var(--element-metal-dark);
+    }
+    
+    /* 詳細情報モーダル */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(3px);
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--divider);
+    }
+    
+    .modal-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin-right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-name {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .modal-role {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .compatibility-detail {
+      margin-bottom: 24px;
+    }
+    
+    .compatibility-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary);
+    }
+    
+    /* 相性チャートは不要のため削除 */
+    
+    .attribute-chart {
+      background-color: rgba(0, 0, 0, 0.05);
+      border-radius: var(--border-radius);
+      padding: 16px;
+      margin: 20px 0;
+    }
+    
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    
+    .attribute-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .attribute-bar-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .bar-label {
+      width: 60px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .bar-container {
+      flex: 1;
+      height: 6px;
+      background-color: var(--divider);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--primary-color), #9e9e9e);
+      border-radius: 3px;
+    }
+    
+    .compatibility-attributes {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .attribute-item {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      flex: 1;
+    }
+    
+    .attribute-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    
+    .attribute-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      background-color: rgba(0, 0, 0, 0.03);
+      border-radius: 8px;
+      display: inline-block;
+    }
+    
+    .compatibility-notes {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    
+    .suggestion-box {
+      background-color: #f5f5f5;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      margin-top: 16px;
+    }
+    
+    .suggestion-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .suggestion-title .material-icons {
+      margin-right: 6px;
+      font-size: 20px;
+    }
+    
+    .suggestion-list {
+      list-style-type: none;
+    }
+    
+    .suggestion-list li {
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+      font-size: 0.9rem;
+    }
+    
+    .suggestion-list li::before {
+      content: "•";
+      position: absolute;
+      left: 6px;
+      color: var(--primary-color);
+    }
+    
+    .action-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+    }
+    
+    .action-button {
+      flex: 1;
+      margin: 0 8px;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(106, 27, 154, 0.25);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .action-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(106, 27, 154, 0.35);
+    }
+    
+    .action-button .material-icons {
+      margin-right: 10px;
+      font-size: 1.3rem;
+    }
+    
+    .ai-consult-desc {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    
+    /* チーム目標セクション */
+    /* 相性サマリー */
+    .compatibility-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .summary-item {
+      background: linear-gradient(135deg, #f5f5f5, #ffffff);
+      border-radius: var(--border-radius);
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    
+    .summary-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    
+    .summary-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      position: relative;
+    }
+    
+    .mini-score {
+      font-size: 0.7rem;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 10px;
+      padding: 2px 4px;
+      margin-left: 4px;
+      position: relative;
+      top: -8px;
+    }
+    
+    .mini-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: normal;
+      color: var(--text-secondary);
+    }
+    
+    /* ランキングリスト */
+    .ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .ranking-position {
+      background: var(--primary);
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-right: 12px;
+      box-shadow: 0 2px 8px rgba(106, 27, 154, 0.25);
+    }
+    
+    .your-rank {
+      background-color: rgba(106, 27, 154, 0.05);
+      border-left: 4px solid var(--primary);
+    }
+    
+    .you-badge::after {
+      content: "";
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      border: 2px solid white;
+    }
+    
+    .you-label {
+      font-size: 0.7rem;
+      background-color: var(--primary);
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      margin-left: 6px;
+      font-weight: normal;
+    }
+    
+    .ranking-note {
+      display: flex;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      background-color: rgba(0, 0, 0, 0.03);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    
+    .ranking-note .material-icons {
+      font-size: 18px;
+      margin-right: 8px;
+      color: var(--primary-light);
+    }
+    
+    .member-attribute {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    /* ナビゲーションバー */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 15px rgba(0,0,0,0.12);
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding: 4px 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      min-width: 72px;
+      flex: 1;
+      color: var(--text-secondary);
+      text-decoration: none;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-item.active {
+      color: var(--primary);
+    }
+    
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .nav-item .material-icons {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+    
+    .nav-item .bottom-nav-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    /* フローティングアクションボタン */
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(106, 27, 154, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 80;
+    }
+    
+    .fab:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(106, 27, 154, 0.35);
+    }
+    
+    /* ページ下部のパディング（ナビゲーションバーのため） */
+    .page-bottom-padding {
+      padding-bottom: 100px;
+    }
+      
+    /* アニメーション */
+    @keyframes slideIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .animated-section {
+      animation: slideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: var(--box-shadow);
+      }
+      
+      .member-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <div class="header">
+      <h1 class="header-title">
+        <span class="material-icons header-icon">diversity_3</span>
+        チームページ
+      </h1>
+      <div style="display: flex; align-items: center;">
+        <span class="material-icons" style="margin-right: 20px; font-size: 1.4rem;">notifications</span>
+        <span class="material-icons" style="font-size: 1.4rem;">account_circle</span>
+      </div>
+    </div>
+    
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      
+      <!-- 今日の運勢ランキング -->
+      <div class="section animated-section">
+        <div class="section-title">
+          <span class="material-icons">emoji_events</span>
+          今日の運勢ランキング
+        </div>
+        
+        <!-- ランキングリスト -->
+        <div class="ranking-list">
+          <!-- 1位 -->
+          <div class="ranking-card" style="background-color: white; border-left: 4px solid var(--primary); box-shadow: var(--card-shadow);">
+            <div class="ranking-position">1</div>
+            <div class="ranking-avatar water-avatar">
+              <span>鈴</span>
+              <span class="material-icons crown-icon">stars</span>
+            </div>
+            <div class="ranking-info">
+              <div class="ranking-name">鈴木 花子</div>
+              <div class="ranking-role">デザイナー <span style="color: var(--element-water-dark);">水属性</span></div>
+              <div class="ranking-score">運勢スコア: 92/100</div>
+            </div>
+          </div>
+          
+          <!-- 2位 -->
+          <div class="ranking-card" style="background-color: white; border-left: 4px solid var(--primary-light); box-shadow: var(--card-shadow);">
+            <div class="ranking-position">2</div>
+            <div class="ranking-avatar metal-avatar">
+              <span>田</span>
+            </div>
+            <div class="ranking-info">
+              <div class="ranking-name">田中 太郎</div>
+              <div class="ranking-role">エンジニア <span style="color: var(--element-metal-dark);">金属性</span></div>
+              <div class="ranking-score">運勢スコア: 87/100</div>
+            </div>
+          </div>
+          
+          <!-- 3位 -->
+          <div class="ranking-card" style="background-color: white; border-left: 4px solid var(--primary-light); box-shadow: var(--card-shadow);">
+            <div class="ranking-position">3</div>
+            <div class="ranking-avatar fire-avatar">
+              <span>渡</span>
+            </div>
+            <div class="ranking-info">
+              <div class="ranking-name">渡辺 健太</div>
+              <div class="ranking-role">営業 <span style="color: var(--element-fire-dark);">火属性</span></div>
+              <div class="ranking-score">運勢スコア: 85/100</div>
+            </div>
+          </div>
+          
+          <!-- あなたの順位 (5位) -->
+          <div class="ranking-card your-rank" style="background-color: rgba(106, 27, 154, 0.05); border-left: 4px solid var(--primary); box-shadow: var(--card-shadow);">
+            <div class="ranking-position">5</div>
+            <div class="ranking-avatar earth-avatar you-badge">
+              <span>佐</span>
+            </div>
+            <div class="ranking-info">
+              <div class="ranking-name">佐藤 次郎 <span class="you-label" style="background-color: var(--primary);">あなた</span></div>
+              <div class="ranking-role">マネージャー <span style="color: var(--element-earth-dark);">土属性</span></div>
+              <div class="ranking-score">運勢スコア: 78/100</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ranking-note">
+          <span class="material-icons">info</span>
+          ランキングは毎日3時に更新されます
+        </div>
+      </div>
+      
+      <!-- チームメンバーリスト -->
+      <div class="section animated-section delay-1">
+        <div class="section-title">
+          <span class="material-icons">group</span>
+          チームメンバー
+        </div>
+        
+        <div class="member-list">
+          <div class="member-card" data-member-id="2">
+            <div class="member-avatar water-avatar">鈴</div>
+            <div class="member-info">
+              <div class="member-name">鈴木 花子</div>
+              <div class="member-role">デザイナー</div>
+              <div class="member-attribute">水属性 (創造的)</div>
+            </div>
+            <div class="compatibility-button">
+              <button class="view-compatibility-btn">
+                <span class="material-icons">person_search</span>
+                相性を見る
+              </button>
+            </div>
+          </div>
+          
+          <div class="member-card" data-member-id="1">
+            <div class="member-avatar metal-avatar">田</div>
+            <div class="member-info">
+              <div class="member-name">田中 太郎</div>
+              <div class="member-role">エンジニア</div>
+              <div class="member-attribute">金属性 (分析的)</div>
+            </div>
+            <div class="compatibility-button">
+              <button class="view-compatibility-btn">
+                <span class="material-icons">person_search</span>
+                相性を見る
+              </button>
+            </div>
+          </div>
+          
+          <div class="member-card" data-member-id="5">
+            <div class="member-avatar fire-avatar">渡</div>
+            <div class="member-info">
+              <div class="member-name">渡辺 健太</div>
+              <div class="member-role">営業</div>
+              <div class="member-attribute">火属性 (情熱的)</div>
+            </div>
+            <div class="compatibility-button">
+              <button class="view-compatibility-btn">
+                <span class="material-icons">person_search</span>
+                相性を見る
+              </button>
+            </div>
+          </div>
+          
+          <div class="member-card" data-member-id="4">
+            <div class="member-avatar wood-avatar">高</div>
+            <div class="member-info">
+              <div class="member-name">高橋 めぐみ</div>
+              <div class="member-role">マーケティング</div>
+              <div class="member-attribute">木属性 (成長的)</div>
+            </div>
+            <div class="compatibility-button">
+              <button class="view-compatibility-btn">
+                <span class="material-icons">person_search</span>
+                相性を見る
+              </button>
+            </div>
+          </div>
+          
+          <div class="member-card" data-member-id="6">
+            <div class="member-avatar earth-avatar">山</div>
+            <div class="member-info">
+              <div class="member-name">山本 一郎</div>
+              <div class="member-role">経理</div>
+              <div class="member-attribute">土属性 (安定的)</div>
+            </div>
+            <div class="compatibility-button">
+              <button class="view-compatibility-btn">
+                <span class="material-icons">person_search</span>
+                相性を見る
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 詳細情報モーダル -->
+    <div class="modal-overlay" id="member-modal">
+      <div class="modal-content">
+        <span class="material-icons modal-close" id="modal-close">close</span>
+        
+        <div class="modal-header">
+          <div class="modal-avatar water-avatar">鈴</div>
+          <div>
+            <div class="modal-name">鈴木 花子</div>
+            <div class="modal-role">デザイナー</div>
+          </div>
+        </div>
+        
+        <div class="compatibility-detail">
+          <div class="compatibility-title">チームメンバー相性</div>
+          
+          <div class="compatibility-attributes">
+            <div class="attribute-item">
+              <div class="attribute-label">あなたの性質</div>
+              <div class="attribute-value" style="color: var(--element-earth-dark);">土 (現実的)</div>
+            </div>
+            <div class="attribute-item">
+              <div class="attribute-label">相手の性質</div>
+              <div class="attribute-value" style="color: var(--element-water-dark);">水 (創造的)</div>
+            </div>
+            <div class="attribute-item">
+              <div class="attribute-label">関係性</div>
+              <div class="attribute-value">補完関係</div>
+            </div>
+          </div>
+          
+          
+          <div class="compatibility-notes">
+            鈴木さん（水属性）の性格は、創造性に溢れ柔軟な思考を持ちながらも、知的好奇心が旺盛な印象です。あなた（土属性）との関係では、彼女はあなたに対して新しいアイデアや視点を提供する役割を自然と担えるでしょう。彼女の持つ水の性質はあなたの命式を活性化させる形となり、あなたの思考に新たな流れをもたらします。また、あなたの土の性質は彼女のアイデアを形にする力となり、互いに良い影響を与え合える関係です。仕事面では、彼女の創造性とあなたの実行力を組み合わせることで、優れた成果を生み出せる可能性が高いでしょう。
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="action-button" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
+            <span class="material-icons">psychology</span>
+            鈴木さんとの関係について相談する
+          </button>
+        </div>
+        <p class="ai-consult-desc" style="text-align: center; margin-top: 10px; color: var(--text-secondary); font-size: 0.85rem;">
+          AIアシスタントが五行相性に基づいた具体的なアドバイスを提供します
+        </p>
+      </div>
+    </div>
+    
+    <!-- フローティングアクションボタン -->
+    <div class="fab">
+      <span class="material-icons">chat</span>
+    </div>
+    
+    <div class="page-bottom-padding"></div>
+    
+    <!-- ナビゲーションバー -->
+    <div class="nav-bar">
+      <a href="#" class="nav-item">
+        <span class="material-icons">auto_graph</span>
+        <span class="bottom-nav-label">運勢</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">chat</span>
+        <span class="bottom-nav-label">対話</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">route</span>
+        <span class="bottom-nav-label">キャリア</span>
+      </a>
+      <a href="#" class="nav-item active">
+        <span class="material-icons">diversity_3</span>
+        <span class="bottom-nav-label">チーム</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">person</span>
+        <span class="bottom-nav-label">プロフィール</span>
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // DOM要素
+    const memberCards = document.querySelectorAll('.member-card');
+    const compatibilityButtons = document.querySelectorAll('.view-compatibility-btn');
+    const memberModal = document.getElementById('member-modal');
+    const modalClose = document.getElementById('modal-close');
+    const fab = document.querySelector('.fab');
+    
+    // 相性ボタンクリックでモーダル表示
+    compatibilityButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation(); // カード全体のクリックイベントを防止
+        
+        // 親要素のカードからメンバー情報を取得
+        const card = button.closest('.member-card');
+        const memberId = card.getAttribute('data-member-id');
+        const memberName = card.querySelector('.member-name').textContent;
+        const memberRole = card.querySelector('.member-role').textContent;
+        
+        // 実際のアプリでは、ここでメンバーIDに基づいて相性データを取得しモーダルを更新
+        // 例: fetchCompatibilityData(currentUserId, memberId);
+        
+        // テスト用にモーダルを表示
+        memberModal.classList.add('active');
+      });
+    });
+    
+    // カード自体のクリックハンドラーは必要に応じて追加
+    // 例えば、カードクリックでユーザーの基本情報を表示する場合など
+    
+    // モーダルを閉じる
+    modalClose.addEventListener('click', () => {
+      memberModal.classList.remove('active');
+    });
+    
+    // モーダル外クリックでも閉じる
+    memberModal.addEventListener('click', (e) => {
+      if (e.target === memberModal) {
+        memberModal.classList.remove('active');
+      }
+    });
+    
+    // フローティングアクションボタン
+    fab.addEventListener('click', () => {
+      // チャットページへ遷移
+      window.location.href = 'integrated-chat.html';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - デイリー運勢</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- マークダウン処理用ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --primary-light: #e1bee7;
+      --secondary-color: #ce93d8;
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --border-radius: 16px;
+      --shadow: 0 3px 8px rgba(156, 39, 176, 0.1);
+      
+      /* 陰陽五行属性カラー */
+      --element-wood: #43a047;       /* 木：緑 */
+      --element-wood-light: #81c784; /* 木：薄い緑 */
+      --element-wood-dark: #2e7d32;  /* 木：濃い緑 */
+      --element-wood-bg: #e8f5e9;    /* 木：背景色 */
+      
+      --element-fire: #e53935;       /* 火：赤 */
+      --element-fire-light: #ef5350; /* 火：薄い赤 */
+      --element-fire-dark: #c62828;  /* 火：濃い赤 */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ff8f00;      /* 土：オレンジ */
+      --element-earth-light: #ffd54f;/* 土：薄いオレンジ */
+      --element-earth-dark: #ef6c00; /* 土：濃いオレンジ */
+      --element-earth-bg: #fff8e1;   /* 土：背景色 */
+      
+      --element-metal: #fdd835;     /* 金：金色 */
+      --element-metal-light: #ffee58;/* 金：薄い金色 */
+      --element-metal-dark: #f9a825; /* 金：濃い金色 */
+      --element-metal-bg: #fffde7;   /* 金：背景色 */
+      
+      --element-water: #1e88e5;      /* 水：青 */
+      --element-water-light: #64b5f6;/* 水：薄い青 */
+      --element-water-dark: #0d47a1; /* 水：濃い青 */
+      --element-water-bg: #e3f2fd;   /* 水：背景色 */
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+      color: var(--white);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin: 0 auto;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    
+    .header .icon {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    
+    .header .icon:active {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    /* メインコンテンツ */
+    .main-content {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    /* 日付表示 */
+    .date-display {
+      text-align: center;
+      margin-bottom: 0;
+      color: var(--primary-dark);
+      font-size: 1rem;
+      margin-top: 8px;
+    }
+
+    .current-date {
+      font-weight: 500;
+    }
+    
+    /* 運勢ヘッダーセクション */
+    .fortune-header-section {
+      background: linear-gradient(135deg, var(--element-water), var(--element-water-dark));
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .fortune-header-section::before {
+      content: "";
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      width: 140%;
+      height: 140%;
+      background: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.1;
+      z-index: 0;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .element-tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .element-tag .material-icons {
+      font-size: 16px;
+      margin-right: 6px;
+    }
+
+    /* スコアチャートセクション */
+    .score-chart-section {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      background-color: var(--element-water-bg);
+      position: relative;
+      border-bottom-left-radius: var(--border-radius);
+      border-bottom-right-radius: var(--border-radius);
+      border-top: 1px solid rgba(30, 136, 229, 0.1);
+      margin-top: -16px;
+    }
+    
+    .fortune-chart-container {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      filter: drop-shadow(0 8px 16px rgba(30, 136, 229, 0.2));
+    }
+    
+    .chart-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .score-value {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--element-water);
+      line-height: 1;
+    }
+    
+    .score-label {
+      font-size: 1rem;
+      color: var(--text-color);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    
+    /* セクション共通スタイル */
+    .section {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title .material-icons {
+      margin-right: 8px;
+      color: var(--element-water);
+    }
+    
+    /* ラッキーアイテム */
+    .lucky-item-container {
+      background-color: var(--element-water-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.1);
+    }
+    
+    .lucky-item-title {
+      font-size: 1.1rem;
+      color: var(--element-water);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+    }
+    
+    .lucky-item-title .material-icons {
+      margin-right: 8px;
+      font-size: 1.2rem;
+    }
+    
+    .lucky-item-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    
+    .lucky-item-chip {
+      background-color: white;
+      padding: 15px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .lucky-item-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .lucky-item-value {
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    .lucky-item-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--element-water);
+    }
+
+    /* マークダウンコンテンツ用スタイル */
+    .markdown-content {
+      margin-bottom: 24px;
+      line-height: 1.7;
+    }
+    
+    .markdown-content h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin: 1.5em 0 0.8em;
+      padding-bottom: 0.3em;
+      border-bottom: 1px solid var(--divider);
+    }
+    
+    .markdown-content h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--element-water);
+      margin: 1.2em 0 0.6em;
+    }
+    
+    .markdown-content p {
+      margin-bottom: 1em;
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+    
+    .markdown-content ul {
+      margin-bottom: 1em;
+      padding-left: 1.5em;
+    }
+    
+    .markdown-content li {
+      margin-bottom: 0.5em;
+    }
+    
+    /* AIアシスタント相談ボタン */
+    .ai-consultation {
+      margin-top: 32px;
+      text-align: center;
+    }
+    
+    .ai-consult-button {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      box-shadow: 0 4px 16px rgba(106, 27, 154, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .ai-consult-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(106, 27, 154, 0.35);
+    }
+    
+    .ai-consult-button .material-icons {
+      font-size: 1.3rem;
+      margin-right: 10px;
+    }
+    
+    .ai-consult-desc {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* ナビゲーションバー */
+    .nav-bar {
+      display: flex;
+      background-color: var(--white);
+      border-top: 1px solid var(--divider);
+      position: sticky;
+      bottom: 0;
+      z-index: 90;
+    }
+    
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-item .material-icons {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    /* タブレット・デスクトップ表示 */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 600px;
+        margin: 0 auto;
+        border-left: 1px solid var(--divider);
+        border-right: 1px solid var(--divider);
+        box-shadow: 0 0 40px rgba(156, 39, 176, 0.1);
+      }
+      
+      .lucky-item-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    /* 余白 */
+    .page-bottom-padding {
+      padding-bottom: 64px;
+    }
+    
+    /* アニメーション */
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(156, 39, 176, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(156, 39, 176, 0);
+      }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .animated-section {
+      animation: slideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="icon menu-button">
+        <span class="material-icons">menu</span>
+      </div>
+      <h1>デイリー運勢</h1>
+      <div class="icon profile-button">
+        <span class="material-icons">person</span>
+      </div>
+    </header>
+    
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <!-- 日付表示 -->
+      <div class="date-display">
+        <span class="current-date">2025年4月5日 (土)</span>の運勢
+      </div>
+      
+      <!-- 運勢ヘッダー -->
+      <div class="fortune-header-section">
+        <div class="header-title">今日の運勢</div>
+        <div class="element-tag">
+          <span class="material-icons">water_drop</span>
+          水の陽 (壬午)
+        </div>
+      </div>
+      
+      <!-- スコアチャート -->
+      <div class="score-chart-section">
+        <div class="fortune-chart-container">
+          <canvas id="fortuneChart"></canvas>
+          <div class="chart-center-text">
+            <div class="score-value">82</div>
+            <div class="score-label">命式との相性</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ラッキーアイテム -->
+      <div class="lucky-item-container animated-section">
+        <div class="lucky-item-title">
+          <span class="material-icons">auto_awesome</span>
+          今日のラッキーポイント
+        </div>
+        
+        <div class="lucky-item-grid">
+          <!-- ラッキーカラー -->
+          <div class="lucky-item-chip">
+            <div class="lucky-item-label">ラッキーカラー</div>
+            <div class="lucky-item-icon">
+              <span class="material-icons">palette</span>
+            </div>
+            <div class="lucky-item-value">ブルー</div>
+          </div>
+          
+          <!-- ラッキーアイテム -->
+          <div class="lucky-item-chip">
+            <div class="lucky-item-label">ラッキーアイテム</div>
+            <div class="lucky-item-icon">
+              <span class="material-icons">brush</span>
+            </div>
+            <div class="lucky-item-value">青いペン</div>
+          </div>
+          
+          <!-- ラッキードリンク -->
+          <div class="lucky-item-chip">
+            <div class="lucky-item-label">ラッキードリンク</div>
+            <div class="lucky-item-icon">
+              <span class="material-icons">local_cafe</span>
+            </div>
+            <div class="lucky-item-value">クリアな水</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 運勢詳細（マークダウン表示エリア） -->
+      <div class="section">
+        <div id="fortuneContent" class="markdown-content">
+          <!-- ここにマークダウンコンテンツが表示されます -->
+        </div>
+      </div>
+      
+      <!-- AIアシスタント相談ボタン -->
+      <div class="ai-consultation">
+        <button class="ai-consult-button pulse">
+          <span class="material-icons">psychology</span>
+          AIアシスタントに相談する
+        </button>
+        <p class="ai-consult-desc">今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します</p>
+      </div>
+      
+      <div class="page-bottom-padding"></div>
+    </div>
+    
+    <!-- ナビゲーションバー -->
+    <div class="nav-bar">
+      <a href="#" class="nav-item active">
+        <span class="material-icons">home</span>
+        ホーム
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">group</span>
+        チーム
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">chat</span>
+        相談
+      </a>
+      <a href="#" class="nav-item">
+        <span class="material-icons">person</span>
+        設定
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // 運勢チャート
+    const ctx = document.getElementById('fortuneChart').getContext('2d');
+    
+    const fortuneChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [82, 18],
+          backgroundColor: [
+            '#1e88e5',  // 水の色（メイン）
+            '#e3f2fd',  // 水の薄い背景色
+          ],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        cutout: '75%',
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+    
+    // マークダウン形式の運勢コンテンツ
+    const fortuneContent = `# 今日のあなたの運気
+
+今日は水の気が強く、創造性と柔軟性が高まる一日です。特に直感力が冴えるため、アイデアを形にする作業に適しています。午前中は冷静な判断力が働き、重要な決断にも迷いが少ないでしょう。午後からは人間関係の調整能力が増し、コミュニケーションがスムーズになります。
+
+感情の起伏はありますが、それを創造的なエネルギーに変換できれば、普段は思いつかないような発想が生まれるでしょう。
+
+# 個人目標へのアドバイス
+
+プログラミングスキル向上という目標に対して、今日は特に新しい技術やライブラリの探索に適しています。チュートリアルを試してみると、直感的な理解が進むでしょう。
+
+「水」の気質を活かして、情報の流れに身を任せ、様々なリソースから吸収する姿勢が効果的です。特に午後2時から4時は学習効率が高まる時間帯なので、集中的に取り組むことをお勧めします。
+
+# チーム目標へのアドバイス
+
+プロジェクト完成に向けて、今日はチームメンバーとのアイデア共有が特に効果的です。特に鈴木さん（火の気質）と協力すると、水火の相乗効果が期待できます。
+
+具体的な数値目標よりも、柔軟なアプローチで全体の流れを整えることを意識しましょう。チームメンバーの意見に耳を傾け、それを統合する役割を担うと、プロジェクトが大きく前進するでしょう。`;
+    
+    // マークダウンコンテンツのレンダリング
+    document.getElementById('fortuneContent').innerHTML = marked.parse(fortuneContent);
+    
+    // 現在の日付を設定
+    function setCurrentDate() {
+      const today = new Date();
+      const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        weekday: 'short'
+      };
+      const dateString = today.toLocaleDateString('ja-JP', options);
+      document.querySelector('.current-date').textContent = dateString;
+    }
+    
+    // AIアシスタント相談ボタンのクリックイベント（チャットページへ遷移）
+    document.querySelector('.ai-consult-button').addEventListener('click', function() {
+      // 実際の実装ではチャットページへのリンク
+      window.location.href = 'integrated-chat.html';
+    });
+    
+    // ナビゲーションの切り替え
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        if (!this.classList.contains('active')) {
+          document.querySelector('.nav-item.active').classList.remove('active');
+          this.classList.add('active');
+          
+          // 実際の実装では対応するページへ遷移
+          const page = this.textContent.trim();
+          if (page === 'チーム') {
+            window.location.href = 'team-page.html';
+          } else if (page === '相談') {
+            window.location.href = 'integrated-chat.html';
+          }
+        }
+      });
+    });
+    
+    // 初期化
+    window.addEventListener('DOMContentLoaded', function() {
+      setCurrentDate();
+    });
+  </script>
+</body>
+</html>

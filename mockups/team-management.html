@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - 管理ダッシュボード</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --primary-light: #e1bee7;
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --info: #2196f3;
+      --border-radius: 16px;
+      --shadow: 0 3px 8px rgba(156, 39, 176, 0.1);
+      
+      /* 陰陽五行属性カラー */
+      --element-wood: #43a047;       /* 木：緑 */
+      --element-wood-light: #81c784; /* 木：薄い緑 */
+      --element-wood-dark: #2e7d32;  /* 木：濃い緑 */
+      --element-wood-bg: #e8f5e9;    /* 木：背景色 */
+      
+      --element-fire: #e53935;       /* 火：赤 */
+      --element-fire-light: #ef5350; /* 火：薄い赤 */
+      --element-fire-dark: #c62828;  /* 火：濃い赤 */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ff8f00;      /* 土：オレンジ */
+      --element-earth-light: #ffd54f;/* 土：薄いオレンジ */
+      --element-earth-dark: #ef6c00; /* 土：濃いオレンジ */
+      --element-earth-bg: #fff8e1;   /* 土：背景色 */
+      
+      --element-metal: #fdd835;     /* 金：金色 */
+      --element-metal-light: #ffee58;/* 金：薄い金色 */
+      --element-metal-dark: #f9a825; /* 金：濃い金色 */
+      --element-metal-bg: #fffde7;   /* 金：背景色 */
+      
+      --element-water: #1e88e5;      /* 水：青 */
+      --element-water-light: #64b5f6;/* 水：薄い青 */
+      --element-water-dark: #0d47a1; /* 水：濃い青 */
+      --element-water-bg: #e3f2fd;   /* 水：背景色 */
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+      color: var(--white);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin: 0 auto;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    
+    .header .icon {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    
+    .header .icon:active {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    /* タブナビゲーション */
+    .tabs-container {
+      background-color: var(--white);
+      position: sticky;
+      top: 56px; /* ヘッダーの高さに合わせる */
+      z-index: 99;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    
+    .tabs {
+      display: flex;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+    }
+    
+    .tabs::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+    
+    .tab {
+      padding: 16px;
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+    
+    .tab.active {
+      color: var(--primary-color);
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--primary-color);
+    }
+    
+    .tab-indicator {
+      position: absolute;
+      bottom: 0;
+      height: 3px;
+      background-color: var(--primary-color);
+      transition: left 0.3s ease, width 0.3s ease;
+    }
+    
+    /* タブコンテンツ */
+    .tab-content {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 共通セクションスタイル */
+    .section {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title .material-icons {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    /* カード共通スタイル */
+    .card {
+      background-color: var(--white);
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 16px;
+      margin-bottom: 16px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    /* フォーム要素 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-color);
+      font-size: 0.95rem;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--divider);
+      border-radius: 8px;
+      font-size: 1rem;
+      color: var(--text-color);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.1);
+    }
+    
+    textarea.form-control {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper::after {
+      content: '\25BC';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    select.form-control {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 36px;
+      background-color: white;
+    }
+    
+    /* ボタン */
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn .material-icons {
+      font-size: 1.1rem;
+      margin-right: 8px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      box-shadow: 0 4px 10px rgba(156, 39, 176, 0.25);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 6px 15px rgba(156, 39, 176, 0.35);
+      transform: translateY(-2px);
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .btn-outline:hover {
+      background-color: rgba(156, 39, 176, 0.05);
+    }
+    
+    .btn-sm {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    /* チーム管理ページスタイル */
+    .team-goal-form {
+      margin-bottom: 24px;
+    }
+    
+    .members-list {
+      margin-top: 16px;
+    }
+    
+    .member-card {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: var(--border-radius);
+      margin-bottom: 12px;
+      background-color: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-right: 16px;
+    }
+    
+    .member-info {
+      flex: 1;
+    }
+    
+    .member-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .member-role {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .member-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .invite-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .invite-form .form-control {
+      flex: 1;
+    }
+    
+    /* 五行属性のアバター */
+    .water-avatar {
+      background: linear-gradient(135deg, var(--element-water-light), var(--element-water));
+      color: white;
+      box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
+    }
+    
+    .wood-avatar {
+      background: linear-gradient(135deg, var(--element-wood-light), var(--element-wood));
+      color: white;
+      box-shadow: 0 4px 12px rgba(67, 160, 71, 0.2);
+    }
+    
+    .fire-avatar {
+      background: linear-gradient(135deg, var(--element-fire-light), var(--element-fire));
+      color: white;
+      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+    }
+    
+    .earth-avatar {
+      background: linear-gradient(135deg, var(--element-earth-light), var(--element-earth));
+      color: white;
+      box-shadow: 0 4px 12px rgba(255, 143, 0, 0.2);
+    }
+    
+    .metal-avatar {
+      background: linear-gradient(135deg, var(--element-metal-light), var(--element-metal));
+      color: white;
+      box-shadow: 0 4px 12px rgba(253, 216, 53, 0.2);
+    }
+    
+    /* 経営者ダッシュボードスタイル */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    
+    .stat-icon.primary {
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      color: white;
+    }
+    
+    .stat-icon.success {
+      background: linear-gradient(135deg, #a5d6a7, var(--success));
+      color: white;
+    }
+    
+    .stat-icon.warning {
+      background: linear-gradient(135deg, #ffe082, var(--warning));
+      color: white;
+    }
+    
+    .stat-icon.danger {
+      background: linear-gradient(135deg, #ef9a9a, var(--danger));
+      color: white;
+    }
+    
+    .stat-icon .material-icons {
+      font-size: 1.5rem;
+    }
+    
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-color);
+    }
+    
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .alert-list {
+      margin-top: 12px;
+    }
+    
+    .alert-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background-color: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .alert-icon {
+      margin-right: 16px;
+      color: var(--danger);
+    }
+    
+    .alert-info {
+      flex: 1;
+    }
+    
+    .alert-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .alert-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .alert-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* チャート */
+    .chart-container {
+      height: 300px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    
+    /* プログレスバー */
+    .progress-container {
+      background-color: var(--divider);
+      border-radius: 4px;
+      height: 8px;
+      width: 100%;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-bar-primary {
+      background: linear-gradient(to right, var(--primary-color), var(--primary-light));
+    }
+    
+    .progress-bar-success {
+      background: linear-gradient(to right, var(--success), #a5d6a7);
+    }
+    
+    .progress-bar-warning {
+      background: linear-gradient(to right, var(--warning), #ffe082);
+    }
+    
+    .progress-bar-danger {
+      background: linear-gradient(to right, var(--danger), #ef9a9a);
+    }
+    
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    /* チーム目標ダッシュボードスタイル */
+    .goal-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .goal-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+    
+    .goal-badge {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .goal-badge-success {
+      background-color: var(--element-wood-bg);
+      color: var(--element-wood-dark);
+    }
+    
+    .goal-badge-warning {
+      background-color: var(--element-earth-bg);
+      color: var(--element-earth-dark);
+    }
+    
+    .goal-badge-danger {
+      background-color: var(--element-fire-bg);
+      color: var(--element-fire-dark);
+    }
+    
+    .goal-progress {
+      margin-bottom: 16px;
+    }
+    
+    .goal-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 16px;
+    }
+    
+    .goal-detail-item {
+      display: flex;
+      align-items: center;
+    }
+    
+    .goal-detail-icon {
+      margin-right: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .goal-detail-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .timeline {
+      margin-top: 24px;
+      position: relative;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 16px;
+      width: 2px;
+      background-color: var(--divider);
+    }
+    
+    .timeline-item {
+      position: relative;
+      padding-left: 40px;
+      margin-bottom: 20px;
+    }
+    
+    .timeline-icon {
+      position: absolute;
+      left: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    
+    .timeline-content {
+      background-color: var(--white);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .timeline-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .timeline-date {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .timeline-text {
+      font-size: 0.9rem;
+      color: var(--text-color);
+    }
+    
+    /* ナビゲーションバー */
+    .nav-bar {
+      display: flex;
+      background-color: var(--white);
+      border-top: 1px solid var(--divider);
+      position: sticky;
+      bottom: 0;
+      z-index: 90;
+    }
+    
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-item .material-icons {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    .page-bottom-padding {
+      padding-bottom: 72px;
+    }
+    
+    /* メンバーインサイトスタイル */
+    .insight-card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .insight-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .insight-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .insight-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      margin-right: 12px;
+    }
+    
+    .insight-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    
+    .insight-analysis {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .insight-section-title {
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    
+    .insight-divider {
+      background-color: var(--primary-light);
+      opacity: 0.1;
+      height: 1px;
+      margin: 16px 0;
+    }
+    
+    .insight-tag {
+      display: inline-block;
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    /* レスポンシブデザイン */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 800px;
+        margin: 0 auto;
+        border-left: 1px solid var(--divider);
+        border-right: 1px solid var(--divider);
+        box-shadow: 0 0 40px rgba(156, 39, 176, 0.1);
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .invite-form {
+        max-width: 500px;
+      }
+    }
+    
+    @media (min-width: 1200px) {
+      .app-container {
+        max-width: 1000px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="icon back-button">
+        <span class="material-icons">arrow_back</span>
+      </div>
+      
+      <!-- チーム選択UI -->
+      <div class="team-selector" id="team-selector" style="display: flex; align-items: center; cursor: pointer; padding: 0 12px; border-radius: 20px; background-color: rgba(255, 255, 255, 0.2); height: 36px;">
+        <span class="material-icons">groups</span>
+        <span style="margin: 0 8px; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">営業チーム</span>
+        <span class="material-icons">arrow_drop_down</span>
+      </div>
+      
+      <div class="icon menu-button">
+        <span class="material-icons">more_vert</span>
+      </div>
+    </header>
+    
+    <!-- タブナビゲーション -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <div class="tab active" data-tab="team-management">
+          <span>チーム管理</span>
+        </div>
+        <div class="tab" data-tab="executive-dashboard">
+          <span>経営者ダッシュボード</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- タブコンテンツ -->
+    <div class="tab-content active" id="team-management">
+      <!-- チーム目標設定 -->
+      <div class="section">
+        <div class="section-title">
+          <span class="material-icons">flag</span>
+          チーム目標設定
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">目標は期限を決めると効果的です。明確な数値目標を含めましょう。</p>
+        </div>
+        
+        <div class="team-goal-form">
+          <div class="form-group">
+            <label class="form-label">チーム目標</label>
+            <textarea class="form-control" placeholder="チームの目標を設定してください" rows="4">四半期売上目標（1200万円）の達成と顧客満足度90%の維持</textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">目標期限</label>
+            <input type="date" class="form-control" value="2025-06-30">
+          </div>
+          
+          <div class="form-actions">
+            <button class="btn btn-outline">キャンセル</button>
+            <button class="btn btn-primary">
+              <span class="material-icons">save</span>
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- メンバー管理 -->
+      <div class="section">
+        <div class="section-title">
+          <span class="material-icons">people</span>
+          メンバー管理
+        </div>
+        
+        <!-- メンバー追加フォーム -->
+        <div class="card" style="padding: 16px; margin-bottom: 20px;">
+          <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px;">メンバー追加</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label">メールアドレス</label>
+              <input type="email" class="form-control" placeholder="example@company.com">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label">パスワード</label>
+              <input type="password" class="form-control" placeholder="初期パスワード">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">役割</label>
+              <input type="text" class="form-control" placeholder="エンジニア、デザイナーなど">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">五行属性</label>
+              <div class="select-wrapper">
+                <select class="form-control">
+                  <option value="water">水（創造的・柔軟）</option>
+                  <option value="wood">木（成長的・発展的）</option>
+                  <option value="fire">火（情熱的・活動的）</option>
+                  <option value="earth">土（安定的・保守的）</option>
+                  <option value="metal">金（分析的・論理的）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div style="text-align: right; margin-top: 16px;">
+            <button class="btn btn-primary">
+              <span class="material-icons">person_add</span>
+              メンバー追加
+            </button>
+          </div>
+        </div>
+        
+        <!-- メンバーリスト（テーブル形式） -->
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+            <thead>
+              <tr style="background-color: var(--primary-light); color: white;">
+                <th style="padding: 12px 16px; text-align: left; border-radius: 8px 0 0 0;">名前</th>
+                <th style="padding: 12px 16px; text-align: left;">役割</th>
+                <th style="padding: 12px 16px; text-align: left;">五行属性</th>
+                <th style="padding: 12px 16px; text-align: left;">メールアドレス</th>
+                <th style="padding: 12px 16px; text-align: center; border-radius: 0 8px 0 0;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--divider);">
+                <td style="padding: 16px; display: flex; align-items: center;">
+                  <div class="member-avatar water-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; margin-right: 12px;">鈴</div>
+                  鈴木 花子
+                </td>
+                <td style="padding: 16px;">デザイナー</td>
+                <td style="padding: 16px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-water-bg); color: var(--element-water-dark); border-radius: 12px; font-size: 0.85rem;">水</span>
+                </td>
+                <td style="padding: 16px;">hanako.suzuki@example.com</td>
+                <td style="padding: 16px; text-align: center;">
+                  <button class="btn btn-outline btn-sm edit-member-btn">
+                    <span class="material-icons">edit</span>
+                    編集
+                  </button>
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--divider);">
+                <td style="padding: 16px; display: flex; align-items: center;">
+                  <div class="member-avatar metal-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; margin-right: 12px;">田</div>
+                  田中 太郎
+                </td>
+                <td style="padding: 16px;">エンジニア</td>
+                <td style="padding: 16px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-metal-bg); color: var(--element-metal-dark); border-radius: 12px; font-size: 0.85rem;">金</span>
+                </td>
+                <td style="padding: 16px;">taro.tanaka@example.com</td>
+                <td style="padding: 16px; text-align: center;">
+                  <button class="btn btn-outline btn-sm edit-member-btn">
+                    <span class="material-icons">edit</span>
+                    編集
+                  </button>
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--divider);">
+                <td style="padding: 16px; display: flex; align-items: center;">
+                  <div class="member-avatar fire-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; margin-right: 12px;">渡</div>
+                  渡辺 健太
+                </td>
+                <td style="padding: 16px;">営業</td>
+                <td style="padding: 16px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-fire-bg); color: var(--element-fire-dark); border-radius: 12px; font-size: 0.85rem;">火</span>
+                </td>
+                <td style="padding: 16px;">kenta.watanabe@example.com</td>
+                <td style="padding: 16px; text-align: center;">
+                  <button class="btn btn-outline btn-sm edit-member-btn">
+                    <span class="material-icons">edit</span>
+                    編集
+                  </button>
+                </td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--divider);">
+                <td style="padding: 16px; display: flex; align-items: center;">
+                  <div class="member-avatar earth-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; margin-right: 12px;">佐</div>
+                  佐藤 次郎
+                </td>
+                <td style="padding: 16px;">マネージャー</td>
+                <td style="padding: 16px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-earth-bg); color: var(--element-earth-dark); border-radius: 12px; font-size: 0.85rem;">土</span>
+                </td>
+                <td style="padding: 16px;">jiro.sato@example.com</td>
+                <td style="padding: 16px; text-align: center;">
+                  <button class="btn btn-outline btn-sm edit-member-btn">
+                    <span class="material-icons">edit</span>
+                    編集
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 16px; display: flex; align-items: center;">
+                  <div class="member-avatar wood-avatar" style="width: 36px; height: 36px; font-size: 0.9rem; margin-right: 12px;">高</div>
+                  高橋 めぐみ
+                </td>
+                <td style="padding: 16px;">マーケティング</td>
+                <td style="padding: 16px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-wood-bg); color: var(--element-wood-dark); border-radius: 12px; font-size: 0.85rem;">木</span>
+                </td>
+                <td style="padding: 16px;">megumi.takahashi@example.com</td>
+                <td style="padding: 16px; text-align: center;">
+                  <button class="btn btn-outline btn-sm edit-member-btn">
+                    <span class="material-icons">edit</span>
+                    編集
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- メンバーカルテ（個人分析とチーム貢献） -->
+      <div class="section">
+        <div class="section-title">
+          <span class="material-icons">psychology</span>
+          メンバーカルテ
+        </div>
+        
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+          各メンバーの特性と、チーム目標に対する最適な貢献方法を分析します。メンバー名をクリックすると詳細が表示されます。
+        </p>
+        
+        <!-- メンバー選択タブ -->
+        <div style="display: flex; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 20px; padding-bottom: 8px; -webkit-overflow-scrolling: touch;">
+          <div class="member-tab active" data-member="suzuki" style="display: flex; align-items: center; padding: 8px 16px; margin-right: 8px; background-color: var(--element-water-bg); border-radius: 20px; cursor: pointer; white-space: nowrap; border: 2px solid var(--element-water);">
+            <div class="member-avatar water-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 8px;">鈴</div>
+            鈴木 花子
+          </div>
+          <div class="member-tab" data-member="tanaka" style="display: flex; align-items: center; padding: 8px 16px; margin-right: 8px; background-color: #f5f5f5; border-radius: 20px; cursor: pointer; white-space: nowrap;">
+            <div class="member-avatar metal-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 8px;">田</div>
+            田中 太郎
+          </div>
+          <div class="member-tab" data-member="watanabe" style="display: flex; align-items: center; padding: 8px 16px; margin-right: 8px; background-color: #f5f5f5; border-radius: 20px; cursor: pointer; white-space: nowrap;">
+            <div class="member-avatar fire-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 8px;">渡</div>
+            渡辺 健太
+          </div>
+          <div class="member-tab" data-member="sato" style="display: flex; align-items: center; padding: 8px 16px; margin-right: 8px; background-color: #f5f5f5; border-radius: 20px; cursor: pointer; white-space: nowrap;">
+            <div class="member-avatar earth-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 8px;">佐</div>
+            佐藤 次郎
+          </div>
+          <div class="member-tab" data-member="takahashi" style="display: flex; align-items: center; padding: 8px 16px; margin-right: 8px; background-color: #f5f5f5; border-radius: 20px; cursor: pointer; white-space: nowrap;">
+            <div class="member-avatar wood-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 8px;">高</div>
+            高橋 めぐみ
+          </div>
+        </div>
+        
+        <!-- メンバーカルテコンテンツ - 鈴木 花子 -->
+        <div class="member-profile active" id="suzuki-profile">
+          <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
+            <div style="display: flex; padding: 20px; background: linear-gradient(135deg, var(--element-water-bg), #e3f2fd);">
+              <div class="member-avatar water-avatar" style="width: 80px; height: 80px; font-size: 2rem;">鈴</div>
+              <div style="margin-left: 20px;">
+                <h2 style="font-size: 1.5rem; font-weight: 500; margin-bottom: 8px; color: var(--element-water-dark);">鈴木 花子</h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <span style="padding: 4px 12px; background-color: var(--element-water); color: white; border-radius: 16px; font-size: 0.85rem;">水の気質</span>
+                  <span style="padding: 4px 12px; background-color: white; border-radius: 16px; font-size: 0.85rem;">デザイナー</span>
+                  <span style="padding: 4px 12px; background-color: white; border-radius: 16px; font-size: 0.85rem;">直感型</span>
+                </div>
+              </div>
+            </div>
+            
+            <div style="padding: 20px;">
+              <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px; color: var(--primary-dark);">基本プロファイル</h3>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                <div>
+                  <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 8px; color: var(--element-water-dark);">四柱推命プロファイル</h4>
+                  <p style="font-size: 0.9rem; margin-bottom: 12px;">日柱：壬子（水の気質が強い）</p>
+                  <p style="font-size: 0.9rem; margin-bottom: 12px;">天干：壬（陽の水）- 流動的で柔軟な思考を持つ</p>
+                  <p style="font-size: 0.9rem;">地支：子（陰の水）- 深い洞察力と直感を持つ</p>
+                </div>
+                
+                <div>
+                  <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 8px; color: var(--element-water-dark);">特性と才能</h4>
+                  <ul style="padding-left: 20px; font-size: 0.9rem;">
+                    <li style="margin-bottom: 8px;">創造的な問題解決能力</li>
+                    <li style="margin-bottom: 8px;">直感的な洞察力</li>
+                    <li style="margin-bottom: 8px;">柔軟な思考と適応力</li>
+                    <li>複雑な状況の理解と整理</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div style="border-top: 1px solid var(--divider); padding-top: 20px; margin-bottom: 20px;">
+                <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px; color: var(--primary-dark);">チーム貢献分析</h3>
+                
+                <div style="background-color: #f5f5f5; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                  <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 8px;">現在のチーム目標：四半期売上目標（1200万円）の達成と顧客満足度90%の維持</h4>
+                  
+                  <p style="font-size: 0.9rem;">
+                    <strong>分析：</strong> 鈴木さんの水の気質は、顧客満足度向上に特に適しています。直感的なユーザー体験設計と、顧客の潜在的ニーズを感知する能力が目標達成に大きく貢献します。
+                  </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                  <div style="background-color: var(--element-water-bg); border-radius: 8px; padding: 16px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; color: var(--element-water-dark);">最適な役割と貢献方法</h4>
+                    <ul style="padding-left: 20px; font-size: 0.9rem;">
+                      <li style="margin-bottom: 8px;">顧客体験の設計と最適化</li>
+                      <li style="margin-bottom: 8px;">ユーザーフィードバックの収集と分析</li>
+                      <li style="margin-bottom: 8px;">チーム内の創造的プロセスのファシリテーション</li>
+                      <li>ブレインストーミングや問題解決セッションのリード</li>
+                    </ul>
+                  </div>
+                  
+                  <div style="background-color: #fff8e1; border-radius: 8px; padding: 16px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; color: var(--element-earth-dark);">注意点と強化すべき領域</h4>
+                    <ul style="padding-left: 20px; font-size: 0.9rem;">
+                      <li style="margin-bottom: 8px;">詳細な実装計画への注意（「土」の要素を強化）</li>
+                      <li style="margin-bottom: 8px;">締切管理の徹底（「金」の要素を強化）</li>
+                      <li style="margin-bottom: 8px;">アイデアの選別と優先順位付け</li>
+                      <li>定期的な進捗報告の習慣化</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="border-top: 1px solid var(--divider); padding-top: 20px;">
+                <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px; color: var(--primary-dark);">コミュニケーションガイド</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                  <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 8px; color: var(--element-water-dark);">効果的なアプローチ</h4>
+                    <ul style="padding-left: 20px; font-size: 0.9rem;">
+                      <li style="margin-bottom: 8px;">視覚的な資料や例を用いた説明</li>
+                      <li style="margin-bottom: 8px;">オープンエンドな質問と発想の余地</li>
+                      <li style="margin-bottom: 8px;">大局的なビジョンの共有</li>
+                      <li>柔軟性のある進め方</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 500; margin-bottom: 8px; color: var(--element-water-dark);">避けるべきアプローチ</h4>
+                    <ul style="padding-left: 20px; font-size: 0.9rem;">
+                      <li style="margin-bottom: 8px;">過度に構造化された指示</li>
+                      <li style="margin-bottom: 8px;">細かいマイクロマネジメント</li>
+                      <li style="margin-bottom: 8px;">創造性を制限する厳格なルール</li>
+                      <li>短すぎる締切の連続</li>
+                    </ul>
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn btn-primary">
+              <span class="material-icons">chat</span>
+              AIに詳細なアドバイスを相談する
+            </button>
+          </div>
+        </div>
+        
+        <!-- メンバーカルテコンテンツ - 田中 太郎 (非表示) -->
+        <div class="member-profile" id="tanaka-profile" style="display: none;">
+          <!-- 田中さんのプロファイル内容（必要に応じて実装） -->
+        </div>
+        
+        <!-- メンバーカルテコンテンツ - 渡辺 健太 (非表示) -->
+        <div class="member-profile" id="watanabe-profile" style="display: none;">
+          <!-- 渡辺さんのプロファイル内容（必要に応じて実装） -->
+        </div>
+        
+        <!-- メンバーカルテコンテンツ - 佐藤 次郎 (非表示) -->
+        <div class="member-profile" id="sato-profile" style="display: none;">
+          <!-- 佐藤さんのプロファイル内容（必要に応じて実装） -->
+        </div>
+        
+        <!-- メンバーカルテコンテンツ - 高橋 めぐみ (非表示) -->
+        <div class="member-profile" id="takahashi-profile" style="display: none;">
+          <!-- 高橋さんのプロファイル内容（必要に応じて実装） -->
+        </div>
+        
+        <!-- メンバーカルテ切り替え用JavaScript -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const memberTabs = document.querySelectorAll('.member-tab');
+            const memberProfiles = document.querySelectorAll('.member-profile');
+            
+            memberTabs.forEach(tab => {
+              tab.addEventListener('click', function() {
+                // タブの見た目を切り替え
+                memberTabs.forEach(t => {
+                  t.classList.remove('active');
+                  t.style.backgroundColor = '#f5f5f5';
+                  t.style.border = 'none';
+                });
+                
+                // クリックされたタブをアクティブにする
+                this.classList.add('active');
+                
+                // メンバーに応じた背景色とボーダーを設定
+                const memberId = this.getAttribute('data-member');
+                let bgColor, borderColor;
+                
+                if (memberId === 'suzuki') {
+                  bgColor = 'var(--element-water-bg)';
+                  borderColor = 'var(--element-water)';
+                } else if (memberId === 'tanaka') {
+                  bgColor = 'var(--element-metal-bg)';
+                  borderColor = 'var(--element-metal-dark)';
+                } else if (memberId === 'watanabe') {
+                  bgColor = 'var(--element-fire-bg)';
+                  borderColor = 'var(--element-fire)';
+                } else if (memberId === 'sato') {
+                  bgColor = 'var(--element-earth-bg)';
+                  borderColor = 'var(--element-earth)';
+                } else if (memberId === 'takahashi') {
+                  bgColor = 'var(--element-wood-bg)';
+                  borderColor = 'var(--element-wood)';
+                }
+                
+                this.style.backgroundColor = bgColor;
+                this.style.border = `2px solid ${borderColor}`;
+                
+                // プロファイルの表示を切り替え
+                memberProfiles.forEach(profile => {
+                  profile.style.display = 'none';
+                  profile.classList.remove('active');
+                });
+                
+                // 対応するプロファイルを表示
+                const targetProfile = document.getElementById(`${memberId}-profile`);
+                if (targetProfile) {
+                  targetProfile.style.display = 'block';
+                  targetProfile.classList.add('active');
+                }
+              });
+            });
+          });
+        </script>
+      </div>
+      
+      <div class="page-bottom-padding"></div>
+    </div>
+    
+    <div class="tab-content" id="executive-dashboard">
+      <!-- 統計情報 -->
+      <!-- 統計情報セクションを削除 -->
+      
+      <!-- アラート通知 -->
+      <div class="section">
+        <div class="section-title">
+          <span class="material-icons">notifications_active</span>
+          アラート通知
+        </div>
+        
+        <div class="alert-list">
+          <!-- アラート1 -->
+          <div class="alert-item">
+            <span class="material-icons alert-icon" style="color: var(--warning);">warning</span>
+            <div class="alert-info">
+              <div class="alert-title">渡辺 健太のモチベーション低下</div>
+              <div class="alert-desc">過去2週間でモチベーションスコアが25%減少しています。面談を推奨します。</div>
+            </div>
+            <div class="alert-actions">
+              <button class="btn btn-primary btn-sm">
+                <span class="material-icons">chat</span>
+                面談
+              </button>
+            </div>
+          </div>
+          
+          <!-- アラート2 -->
+          <div class="alert-item">
+            <span class="material-icons alert-icon" style="color: var(--danger);">priority_high</span>
+            <div class="alert-info">
+              <div class="alert-title">高橋 めぐみの離職リスク</div>
+              <div class="alert-desc">AIチャット分析から離職の可能性が検出されました。早急な対応が必要です。</div>
+            </div>
+            <div class="alert-actions">
+              <button class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, var(--danger), #e57373);">
+                <span class="material-icons">priority_high</span>
+                緊急対応
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- メンバーインサイト -->
+      <div class="section">
+        <div class="section-title">
+          <span class="material-icons">psychology</span>
+          メンバーインサイト
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-header">
+            <div class="insight-avatar water-avatar">鈴</div>
+            <h3 class="insight-title">鈴木 花子 へのアプローチ</h3>
+          </div>
+          
+          <div class="insight-analysis" style="background-color: var(--element-water-bg);">
+            <div class="insight-section-title" style="color: var(--element-water-dark);">AI分析</div>
+            <p>最近の会話から、新しいデザインツールの導入に興味を持っていることが検出されました。特にUI/UXの効率化について頻繁に言及しています。</p>
+            
+            <div style="margin-top: 12px;">
+              <span class="insight-tag" style="background-color: rgba(30, 136, 229, 0.1);">デザインツール</span>
+              <span class="insight-tag" style="background-color: rgba(30, 136, 229, 0.1);">UI/UX</span>
+              <span class="insight-tag" style="background-color: rgba(30, 136, 229, 0.1);">効率化</span>
+            </div>
+          </div>
+          
+          <div class="insight-divider"></div>
+          
+          <div>
+            <div class="insight-section-title" style="color: var(--primary-dark);">アドバイス</div>
+            <p>本日は「水」の気が強い日であり、鈴木さんの水属性と相性が良いため、創造的な提案を受け入れやすい状態です。新しいデザインツールの試験導入について話し合うと良いでしょう。データや具体例を示すとさらに効果的です。</p>
+          </div>
+          
+          <button class="btn btn-primary" style="margin-top: 16px;">
+            <span class="material-icons">chat</span>
+            AIアシスタントに相談する
+          </button>
+        </div>
+        
+        <div class="insight-card">
+          <div class="insight-header">
+            <div class="insight-avatar fire-avatar">渡</div>
+            <h3 class="insight-title">渡辺 健太 へのアプローチ</h3>
+          </div>
+          
+          <div class="insight-analysis" style="background-color: var(--element-fire-bg);">
+            <div class="insight-section-title" style="color: var(--element-fire-dark);">AI分析</div>
+            <p>チャット内容から、最近の営業成績に関する懸念と不安が読み取れます。具体的な目標設定と進捗の可視化を求めているサインが見られます。</p>
+            
+            <div style="margin-top: 12px;">
+              <span class="insight-tag" style="background-color: rgba(229, 57, 53, 0.1);">営業成績</span>
+              <span class="insight-tag" style="background-color: rgba(229, 57, 53, 0.1);">目標設定</span>
+              <span class="insight-tag" style="background-color: rgba(229, 57, 53, 0.1);">進捗管理</span>
+            </div>
+          </div>
+          
+          <div class="insight-divider"></div>
+          
+          <div>
+            <div class="insight-section-title" style="color: var(--primary-dark);">アドバイス</div>
+            <p>本日は「土」の気が強く、渡辺さんの火属性と相生関係にあります。明確な目標と達成可能な短期的マイルストーンを設定することで、モチベーション回復を促せるでしょう。彼のエネルギーを具体的な行動計画に変換する支援が効果的です。</p>
+          </div>
+          
+          <button class="btn btn-primary" style="margin-top: 16px;">
+            <span class="material-icons">chat</span>
+            AIアシスタントに相談する
+          </button>
+        </div>
+        
+     
+      
+      <div class="page-bottom-padding"></div>
+    </div>
+    
+    
+    <!-- ナビゲーションバー -->
+    <div class="nav-bar">
+      <a href="daily-fortune.html" class="nav-item">
+        <span class="material-icons">home</span>
+        ホーム
+      </a>
+      <a href="team-page.html" class="nav-item">
+        <span class="material-icons">group</span>
+        チーム
+      </a>
+      <a href="integrated-chat.html" class="nav-item">
+        <span class="material-icons">chat</span>
+        相談
+      </a>
+      <a href="#" class="nav-item active">
+        <span class="material-icons">dashboard</span>
+        管理
+      </a>
+    </div>
+  </div>
+  
+  <!-- チーム切り替えモーダル -->
+  <div class="modal-overlay" id="team-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; padding: 20px; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 400px; padding: 0; background-color: white; border-radius: var(--border-radius); box-shadow: var(--shadow); margin: 40px auto; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--divider);">
+        <h2 style="font-size: 1.2rem; font-weight: 500; color: var(--text-color); margin: 0;">チーム選択</h2>
+        <span class="material-icons" style="cursor: pointer;" id="team-modal-close">close</span>
+      </div>
+      
+      <ul style="list-style: none; margin: 0; padding: 0;">
+        <li style="padding: 16px 20px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; cursor: pointer; background-color: var(--primary-light); color: white;">
+          <div style="width: 36px; height: 36px; border-radius: 8px; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center; margin-right: 12px; color: white; font-weight: 500;">営</div>
+          <div style="flex: 1; font-weight: 500;">営業チーム</div>
+          <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); display: flex; align-items: center;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person</span>
+            5
+          </div>
+        </li>
+        <li style="padding: 16px 20px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 8px; background-color: var(--element-water); display: flex; align-items: center; justify-content: center; margin-right: 12px; color: white; font-weight: 500;">開</div>
+          <div style="flex: 1; font-weight: 500;">開発チーム</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person</span>
+            7
+          </div>
+        </li>
+        <li style="padding: 16px 20px; border-bottom: 1px solid var(--divider); display: flex; align-items: center; cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 8px; background-color: var(--element-fire); display: flex; align-items: center; justify-content: center; margin-right: 12px; color: white; font-weight: 500;">マ</div>
+          <div style="flex: 1; font-weight: 500;">マーケティングチーム</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person</span>
+            3
+          </div>
+        </li>
+      </ul>
+      
+      <div style="padding: 16px 20px; border-top: 1px solid var(--divider);">
+        <button class="btn btn-primary" style="width: 100%;" id="create-team-btn">
+          <span class="material-icons">add</span>
+          新しいチームを作成
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- チーム作成モーダル -->
+  <div class="modal-overlay" id="create-team-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; padding: 20px; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 400px; padding: 0; background-color: white; border-radius: var(--border-radius); box-shadow: var(--shadow); margin: 40px auto; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--divider);">
+        <h2 style="font-size: 1.2rem; font-weight: 500; color: var(--text-color); margin: 0;">新しいチームを作成</h2>
+        <span class="material-icons" style="cursor: pointer;" id="create-team-modal-close">close</span>
+      </div>
+      
+      <div style="padding: 20px;">
+        <div class="form-group">
+          <label class="form-label">チーム名</label>
+          <input type="text" class="form-control" placeholder="新しいチーム名">
+        </div>
+        <div class="form-group">
+          <label class="form-label">チームの説明（オプション）</label>
+          <textarea class="form-control" placeholder="チームの目的や役割について説明" rows="3"></textarea>
+        </div>
+      </div>
+      
+      <div style="padding: 16px 20px; border-top: 1px solid var(--divider);">
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline" id="cancel-create-team">キャンセル</button>
+          <button class="btn btn-primary" style="flex: 1;">
+            <span class="material-icons">check</span>
+            チームを作成
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- メンバー編集モーダル -->
+  <div class="modal-overlay" id="member-edit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; padding: 20px; overflow-y: auto;">
+    <div class="modal-content" style="max-width: 500px; padding: 24px; background-color: white; border-radius: var(--border-radius); box-shadow: var(--shadow); margin: 40px auto; position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="font-size: 1.3rem; font-weight: 500; color: var(--primary-dark);">メンバー編集</h2>
+        <span class="material-icons" style="cursor: pointer;" id="modal-close">close</span>
+      </div>
+      
+      <form id="member-edit-form">
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+          <div class="member-avatar water-avatar" id="edit-avatar" style="width: 56px; height: 56px; font-size: 1.3rem; margin-right: 16px;">鈴</div>
+          <div style="flex: 1;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="form-label">名前</label>
+              <input type="text" class="form-control" id="edit-name" value="鈴木 花子">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">役割</label>
+          <input type="text" class="form-control" id="edit-role" value="デザイナー">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">メールアドレス</label>
+          <input type="email" class="form-control" id="edit-email" value="hanako.suzuki@example.com">
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="cancel-edit">キャンセル</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons">save</span>
+            保存
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // ページ読み込み完了時
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded');
+      
+      // チーム選択モーダル関連
+      const teamSelector = document.getElementById('team-selector');
+      const teamModal = document.getElementById('team-modal');
+      const teamModalClose = document.getElementById('team-modal-close');
+      const teamListItems = document.querySelectorAll('#team-modal li');
+      const createTeamBtn = document.getElementById('create-team-btn');
+      const createTeamModal = document.getElementById('create-team-modal');
+      const createTeamModalClose = document.getElementById('create-team-modal-close');
+      const cancelCreateTeam = document.getElementById('cancel-create-team');
+      
+      // チーム選択ボタンクリックでモーダル表示
+      if (teamSelector) {
+        teamSelector.addEventListener('click', function() {
+          teamModal.style.display = 'block';
+          document.body.style.overflow = 'hidden';
+        });
+      }
+      
+      // チームモーダルを閉じる
+      if (teamModalClose) {
+        teamModalClose.addEventListener('click', function() {
+          teamModal.style.display = 'none';
+          document.body.style.overflow = '';
+        });
+      }
+      
+      // チーム選択
+      teamListItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // アクティブクラスの切り替え（ここではスタイルを変更）
+          teamListItems.forEach(i => {
+            i.style.backgroundColor = '';
+            i.style.color = '';
+            const countEl = i.querySelector('div:last-child');
+            if (countEl) countEl.style.color = 'var(--text-secondary)';
+          });
+          
+          this.style.backgroundColor = 'var(--primary-light)';
+          this.style.color = 'white';
+          const countEl = this.querySelector('div:last-child');
+          if (countEl) countEl.style.color = 'rgba(255, 255, 255, 0.8)';
+          
+          // 選択したチーム名をセレクターに表示
+          const teamName = this.querySelector('div:nth-child(2)').textContent;
+          const selectorText = teamSelector.querySelector('span:nth-child(2)');
+          if (selectorText) selectorText.textContent = teamName;
+          
+          // モーダルを閉じる
+          teamModal.style.display = 'none';
+          document.body.style.overflow = '';
+        });
+      });
+      
+      // 新しいチーム作成ボタン
+      if (createTeamBtn) {
+        createTeamBtn.addEventListener('click', function() {
+          teamModal.style.display = 'none';
+          createTeamModal.style.display = 'block';
+        });
+      }
+      
+      // チーム作成モーダルを閉じる
+      function closeCreateTeamModal() {
+        createTeamModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      
+      if (createTeamModalClose) {
+        createTeamModalClose.addEventListener('click', closeCreateTeamModal);
+      }
+      
+      if (cancelCreateTeam) {
+        cancelCreateTeam.addEventListener('click', closeCreateTeamModal);
+      }
+    });
+    
+    // タブ切り替え
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        // アクティブタブの切り替え
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // コンテンツの切り替え
+        const tabId = this.getAttribute('data-tab');
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === tabId) {
+            content.classList.add('active');
+          }
+        });
+      });
+    });
+    
+    // バックボタン
+    document.querySelector('.back-button').addEventListener('click', function() {
+      window.location.href = 'daily-fortune.html';
+    });
+    
+    // メンバー編集モーダル
+    const editButtons = document.querySelectorAll('.edit-member-btn');
+    const memberEditModal = document.getElementById('member-edit-modal');
+    const modalClose = document.getElementById('modal-close');
+    const cancelEdit = document.getElementById('cancel-edit');
+    const memberEditForm = document.getElementById('member-edit-form');
+    
+    // メンバー編集ボタンクリックで表示
+    console.log('Found edit buttons:', editButtons.length);
+    
+    // モーダル関連の処理をまとめる
+    function setupModalHandlers() {
+      editButtons.forEach((button, index) => {
+        console.log('Setting up listener for button', index);
+        
+        button.addEventListener('click', function(e) {
+          console.log('Edit button clicked!');
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // テーブル行を取得
+          const tableRow = this.closest('tr');
+          console.log('Found table row:', tableRow);
+          
+          // メンバー情報を取得
+          const memberAvatar = tableRow.querySelector('.member-avatar');
+          const memberName = tableRow.querySelector('td:first-child').textContent.trim();
+          const memberRole = tableRow.querySelector('td:nth-child(2)').textContent.trim();
+          const memberEmail = tableRow.querySelector('td:nth-child(4)').textContent.trim();
+          
+          // メールアドレスをセット
+          document.getElementById('edit-email').value = memberEmail;
+          
+          // 名前と役割をセット（先頭末尾の空白を削除）
+          document.getElementById('edit-name').value = memberName.replace(/^\s+|\s+$/g, '');
+          document.getElementById('edit-role').value = memberRole;
+          
+          // アバタークラスの取得と設定
+          const avatarClasses = Array.from(memberAvatar.classList);
+          let elementClass = '';
+          
+          // 属性を判定
+          if (avatarClasses.includes('water-avatar')) elementClass = 'water';
+          else if (avatarClasses.includes('wood-avatar')) elementClass = 'wood';
+          else if (avatarClasses.includes('fire-avatar')) elementClass = 'fire';
+          else if (avatarClasses.includes('earth-avatar')) elementClass = 'earth';
+          else if (avatarClasses.includes('metal-avatar')) elementClass = 'metal';
+          
+          // アバターを設定
+          document.getElementById('edit-avatar').className = 'member-avatar ' + elementClass + '-avatar';
+          document.getElementById('edit-avatar').textContent = memberAvatar.textContent;
+          
+          // 属性は表示のみで編集はしない
+          
+          // モーダル表示
+          memberEditModal.style.display = 'block';
+          document.body.style.overflow = 'hidden'; // スクロール防止
+        });
+      });
+    }
+    
+    // モーダルハンドラーのセットアップを実行
+    setupModalHandlers();
+    
+    // モーダルを閉じる
+    function closeModal() {
+      memberEditModal.style.display = 'none';
+      document.body.style.overflow = ''; // スクロール復活
+    }
+    
+    modalClose.addEventListener('click', closeModal);
+    cancelEdit.addEventListener('click', closeModal);
+    
+    // モーダル外クリックでも閉じる
+    memberEditModal.addEventListener('click', function(e) {
+      // モーダルの背景がクリックされたときのみ閉じる
+      if (e.target === memberEditModal) {
+        closeModal();
+      }
+    });
+    
+    // 五行属性は表示のみで編集不可
+    
+    // フォーム送信
+    memberEditForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 実際の実装では、ここでAPIにデータを送信
+      console.log('メンバー情報を更新:', {
+        name: document.getElementById('edit-name').value,
+        role: document.getElementById('edit-role').value,
+        email: document.getElementById('edit-email').value
+      });
+      
+      // モーダルを閉じてトースト通知
+      closeModal();
+      
+      // トースト通知（実装例）
+      const toast = document.createElement('div');
+      toast.textContent = 'メンバー情報を更新しました';
+      toast.style.position = 'fixed';
+      toast.style.bottom = '20px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = 'rgba(0, 0, 0, 0.7)';
+      toast.style.color = 'white';
+      toast.style.padding = '10px 20px';
+      toast.style.borderRadius = '20px';
+      toast.style.zIndex = '1000';
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# 依存モジュール
+node_modules/
+
+# ビルド出力ディレクトリ
+dist/
+
+# 環境変数
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ログファイル
+logs/
+*.log
+
+# キャッシュディレクトリ
+.npm
+.eslintcache
+
+# src/internalShared (ビルド時に自動生成されるディレクトリ)
+src/internalShared/
+
+# テスト結果
+coverage/
+
+# エディタの設定ファイル
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 機密情報を含むスクリプト - GitHubセキュリティ対策
+# これらのファイルにはAPIキーなどの機密情報が含まれているため、
+# リポジトリから除外する必要があります。
+scripts/test-lucky-items/
+scripts/.jwt_token_cache.json
+scripts/**/test-*-credentials.js
+scripts/**/auth-tokens.json

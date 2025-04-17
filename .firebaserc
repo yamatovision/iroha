@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "sys-76614112762438486420044584"
+  },
+  "targets": {
+    "sys-76614112762438486420044584": {
+      "hosting": {
+        "client": [
+          "dailyfortune"
+        ],
+        "admin": [
+          "dailyfortune-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - 今日の運勢</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <style>
+    :root {
+      /* 五行の色基本色：木・火・土・金・水 */
+      --wood-color: #000000; /* 文字は黒で統一 */
+      --wood-light: #4d4dff;
+      --wood-dark: #0000b3;
+      --wood-bg: #94b8eb; /* 青/緑色の暗めの背景 */
+      
+      --fire-color: #000000; /* 文字は黒で統一 */
+      --fire-light: #ff4d4d;
+      --fire-dark: #b30000;
+      --fire-bg: #e67373; /* 赤色の暗めの背景 */
+      
+      --earth-color: #000000; /* 文字は黒で統一 */
+      --earth-light: #ffff66;
+      --earth-dark: #b3b300;
+      --earth-bg: #f2d06b; /* 黄色の暗めの背景 */
+      
+      --metal-color: #000000; /* 文字は黒で統一 */
+      --metal-light: #ffffff;
+      --metal-dark: #e6e6e6;
+      --metal-bg: #ffffff; /* 純白の背景 */
+      
+      --water-color: #000000; /* 文字は黒で統一 */
+      --water-light: #333333;
+      --water-dark: #000000;
+      --water-bg: #7d94a6; /* より青みがかった暗めの背景 */
+
+      /* ブランドカラー：水をベースに変更（紫から木ベースに変更） */
+      --primary-color: #7d94a6;
+      --primary-dark: #5a6d7c;
+      --primary-light: #a9bac7;
+      --primary-bg: #e1e7ec;
+      
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --success: #4caf50;
+      --border-radius: 16px;
+      --shadow: 0 3px 8px rgba(125, 148, 166, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 100%;
+      margin: 0 auto;
+      padding-bottom: 70px; /* 下部ナビゲーションの高さ分だけ余白を確保 */
+    }
+    
+    /* ヘッダー - シンプル化 */
+    .header {
+      background: linear-gradient(120deg, var(--primary-color), var(--primary-dark));
+      color: var(--white);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header h1 {
+      font-size: 1.2rem;
+      font-weight: 400;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    
+    .header .logo {
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 日付表示 */
+    .date-display {
+      text-align: center;
+      margin: 16px 0 8px;
+      color: var(--primary-dark);
+      font-weight: 500;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      margin-left: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(125, 148, 166, 0.1);
+    }
+
+    /* 運勢カード */
+    .fortune-card-container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fortune-header {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      border-radius: 16px 16px 0 0;
+      padding: 20px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(125, 148, 166, 0.2);
+    }
+
+    .fortune-header::before {
+      content: "";
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      width: 140%;
+      height: 140%;
+      background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.1;
+      z-index: 0;
+    }
+
+    .fortune-header h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .day-pillar-tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .day-pillar-tag .material-icons {
+      margin-right: 8px;
+      font-size: 16px;
+    }
+
+    /* スコアカード */
+    .score-card {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 0 0 16px 16px;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(125, 148, 166, 0.1);
+      border-top: 1px solid rgba(148, 184, 235, 0.2);
+      margin-top: -8px;
+    }
+
+    .score-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+    }
+
+    .score-circle {
+      width: 100%;
+      height: 100%;
+      background: conic-gradient(
+        var(--wood-bg) 0% 70%,
+        #e6e6e6 70% 100%
+      );
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      box-shadow: 0 8px 16px rgba(148, 184, 235, 0.2);
+    }
+
+    .score-circle::before {
+      content: "";
+      position: absolute;
+      top: 15%;
+      left: 15%;
+      width: 70%;
+      height: 70%;
+      background-color: white;
+      border-radius: 50%;
+    }
+
+    .score-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--wood-dark);
+      z-index: 1;
+      line-height: 1;
+    }
+
+    .score-label {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-color);
+      z-index: 1;
+    }
+
+    /* ラッキーアイテム */
+    .lucky-items {
+      margin: 24px auto;
+      padding: 0 16px;
+      max-width: 600px;
+      animation: slideIn 0.5s ease 0.2s both;
+    }
+
+    .lucky-items-card {
+      background-color: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(125, 148, 166, 0.1);
+    }
+
+    .lucky-items-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+
+    .lucky-items-title .material-icons {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+
+    .lucky-items-grid {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .lucky-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 30%;
+    }
+
+    .lucky-item-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 8px;
+      color: white;
+      box-shadow: 0 4px 10px rgba(125, 148, 166, 0.2);
+    }
+
+    .lucky-item-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .lucky-item-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* 運勢詳細 */
+    .fortune-details {
+      margin: 24px auto;
+      padding: 0 16px;
+      max-width: 600px;
+      animation: slideIn 0.5s ease 0.4s both;
+    }
+
+    .fortune-details-card {
+      background-color: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(125, 148, 166, 0.1);
+    }
+
+    .fortune-details-title {
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .fortune-details-title .material-icons {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+
+    .fortune-advice {
+      line-height: 1.6;
+      padding-left: 16px;
+      border-left: 3px solid var(--primary-light);
+    }
+
+    /* AI相談ボタン */
+    .ai-consult-button {
+      margin: 32px auto;
+      padding: 0 16px;
+      max-width: 600px;
+      text-align: center;
+      animation: slideIn 0.5s ease 0.6s both;
+    }
+
+    .ai-button {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(148, 184, 235, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .ai-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(148, 184, 235, 0.4);
+    }
+
+    .ai-button .material-icons {
+      margin-right: 8px;
+    }
+
+    .ai-button-caption {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(148, 184, 235, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(148, 184, 235, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(148, 184, 235, 0);
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    /* 下部ナビゲーション */
+    .bottom-navigation {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-around;
+      background: white;
+      border-top: 1px solid var(--divider);
+      padding: 10px 0;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 5px;
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    .nav-item.active {
+      color: var(--primary-color);
+      opacity: 1;
+    }
+
+    .nav-item .material-icons {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item span {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* チャットページ用スタイル */
+    .chat-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1100;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      padding-bottom: 70px; /* 入力欄の高さ分を確保 */
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      max-width: 85%;
+      display: flex;
+      align-items: flex-start;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .user-message {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+    
+    .ai-message {
+      margin-right: auto;
+    }
+    
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: var(--border-radius);
+      position: relative;
+      box-shadow: var(--shadow);
+      line-height: 1.6;
+    }
+    
+    .user-message .message-bubble {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+      border-bottom-right-radius: 4px;
+    }
+    
+    .ai-message .message-bubble {
+      background-color: var(--white);
+      border-bottom-left-radius: 4px;
+      border-left: 3px solid var(--primary-light);
+    }
+    
+    .message-time {
+      font-size: 0.7rem;
+      margin-top: 4px;
+      opacity: 0.7;
+      text-align: right;
+    }
+    
+    .user-message .message-time {
+      color: var(--white);
+    }
+    
+    .ai-message .message-time {
+      color: var(--text-secondary);
+    }
+    
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 8px;
+      font-size: 16px;
+      box-shadow: var(--shadow);
+    }
+    
+    .ai-avatar {
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+      color: var(--white);
+    }
+    
+    .user-avatar {
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+    }
+
+    .chat-header {
+      background: linear-gradient(120deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+    }
+
+    .chat-header h1 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .back-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .back-button:active {
+      background-color: rgba(255,255,255,0.1);
+    }
+
+    /* 入力エリア */
+    .input-container {
+      padding: 14px 18px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 100;
+    }
+    
+    .message-input {
+      flex: 1;
+      border: 1px solid var(--divider);
+      border-radius: 24px;
+      padding: 14px 20px;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.8);
+      resize: none;
+      max-height: 120px;
+      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .message-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(125, 148, 166, 0.1);
+    }
+    
+    .mic-button, .send-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--wood-bg), var(--wood-dark));
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 8px rgba(148, 184, 235, 0.3);
+    }
+    
+    .mic-button {
+      margin-right: 10px;
+    }
+    
+    .send-button {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- シンプル化したヘッダー -->
+    <header class="header">
+      <div class="logo">
+        <span class="material-icons">auto_awesome</span>
+      </div>
+      <h1>DailyFortune</h1>
+    </header>
+
+    <!-- 日付表示 -->
+    <div class="date-display">
+      <span>2025年4月13日 (土)</span>の運勢
+      <button class="refresh-btn" title="運勢情報を更新">
+        <span class="material-icons">refresh</span>
+      </button>
+    </div>
+
+    <!-- 運勢カード -->
+    <section class="fortune-card-container">
+      <div class="fortune-header">
+        <h2>今日の運勢</h2>
+        <div class="day-pillar-tag">
+          <span class="material-icons">
+            park <!-- 木の五行を表すアイコン -->
+          </span>
+          木の陽 (甲寅)
+        </div>
+      </div>
+      <div class="score-card">
+        <div class="score-container">
+          <div class="score-circle"></div>
+          <div class="score-value">70</div>
+          <div class="score-label">命式との相性</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ラッキーアイテム -->
+    <section class="lucky-items">
+      <div class="lucky-items-card">
+        <div class="lucky-items-title">
+          <span class="material-icons">star</span>
+          <h3>今日のラッキーアイテム</h3>
+        </div>
+        <div class="lucky-items-grid">
+          <div class="lucky-item">
+            <div class="lucky-item-icon">
+              <span class="material-icons">palette</span>
+            </div>
+            <div class="lucky-item-name">ブルー</div>
+            <div class="lucky-item-label">ラッキーカラー</div>
+          </div>
+          <div class="lucky-item">
+            <div class="lucky-item-icon">
+              <span class="material-icons">coffee</span>
+            </div>
+            <div class="lucky-item-name">緑茶</div>
+            <div class="lucky-item-label">ラッキードリンク</div>
+          </div>
+          <div class="lucky-item">
+            <div class="lucky-item-icon">
+              <span class="material-icons">sports_basketball</span>
+            </div>
+            <div class="lucky-item-name">ボール</div>
+            <div class="lucky-item-label">ラッキーアイテム</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 運勢詳細 -->
+    <section class="fortune-details">
+      <div class="fortune-details-card">
+        <div class="fortune-details-title">
+          <span class="material-icons">lightbulb</span>
+          <h3>運勢アドバイス</h3>
+        </div>
+        <div class="fortune-advice">
+          <p>今日は様々な可能性に恵まれる一日です。特に午後からはコミュニケーション能力が高まり、新しい出会いや情報収集に適しています。</p>
+          <p>自分の目標に向かって少しずつ進むことを心がけましょう。小さな一歩でも、継続することで大きな進歩に繋がります。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI相談ボタン -->
+    <section class="ai-consult-button">
+      <button class="ai-button pulse" id="chat-button">
+        <span class="material-icons">psychology</span>
+        AIアシスタントに相談する
+      </button>
+      <p class="ai-button-caption">
+        今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します
+      </p>
+    </section>
+  </div>
+
+  <!-- 下部ナビゲーション -->
+  <div class="bottom-navigation">
+    <a href="#" class="nav-item active">
+      <span class="material-icons">home</span>
+      <span>ホーム</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="material-icons">people</span>
+      <span>チーム</span>
+    </a>
+    <a href="#" class="nav-item" id="chat-nav">
+      <span class="material-icons">chat</span>
+      <span>AI相談</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="material-icons">settings</span>
+      <span>設定</span>
+    </a>
+  </div>
+
+  <!-- AI相談モード（オーバーレイ） -->
+  <div class="chat-page" id="chat-page" style="display: none;">
+    <!-- チャットヘッダー -->
+    <div class="chat-header">
+      <div class="back-button" id="chat-back-button">
+        <span class="material-icons">arrow_back</span>
+      </div>
+      <h1>AI相談</h1>
+      <div style="width: 40px;"></div> <!-- 右側の余白 -->
+    </div>
+
+    <!-- チャットメッセージ -->
+    <div class="messages-container" id="chat-messages">
+      <!-- AIウェルカムメッセージ -->
+      <div class="message ai-message">
+        <div class="avatar ai-avatar">
+          <span class="material-icons">psychology</span>
+        </div>
+        <div>
+          <div class="message-bubble">
+            こんにちは。今日の運勢や相性について相談したいことがあれば、お気軽にお尋ねください。
+          </div>
+          <div class="message-time">10:30</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  
+  <!-- チャットの入力欄 (チャットページがアクティブ時のみ表示) -->
+  <div class="input-container" id="chat-input-container" style="display: none;">
+    <button class="mic-button" id="mic-button" title="音声入力">
+      <span class="material-icons">mic</span>
+    </button>
+    <textarea class="message-input" placeholder="メッセージを入力..." rows="1" id="message-input"></textarea>
+    <button class="send-button" id="send-button" disabled>
+      <span class="material-icons">send</span>
+    </button>
+  </div>
+  
+  <script>
+    // DOM 要素
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const micButton = document.getElementById('mic-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatNav = document.getElementById('chat-nav');
+    const chatButton = document.getElementById('chat-button');
+    const chatPage = document.getElementById('chat-page');
+    const chatBackButton = document.getElementById('chat-back-button');
+    const chatInputContainer = document.getElementById('chat-input-container');
+    
+    // 音声認識
+    let recognition = null;
+    let isRecording = false;
+    
+    // SpeechRecognition APIのサポートチェック
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      // 音声認識結果
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        messageInput.value = transcript;
+        messageInput.style.height = 'auto';
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+        sendButton.disabled = false;
+      };
+      
+      // 音声認識終了
+      recognition.onend = function() {
+        micButton.classList.remove('recording');
+        isRecording = false;
+      };
+      
+      // 音声認識エラー
+      recognition.onerror = function(event) {
+        console.error('Speech recognition error', event.error);
+        micButton.classList.remove('recording');
+        isRecording = false;
+      };
+    }
+    
+    // テキストエリアの高さ自動調整
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      
+      // 送信ボタンの有効/無効切り替え
+      sendButton.disabled = this.value.trim() === '';
+    });
+    
+    // Enterキー対応
+    messageInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendButton.disabled) {
+          sendMessage();
+        }
+      }
+    });
+    
+    // 送信ボタンクリック
+    sendButton.addEventListener('click', sendMessage);
+    
+    // マイクボタンクリック
+    micButton.addEventListener('click', function() {
+      if (!recognition) {
+        return;
+      }
+      
+      if (isRecording) {
+        // 録音停止
+        recognition.stop();
+        micButton.classList.remove('recording');
+        isRecording = false;
+      } else {
+        // 録音開始
+        recognition.start();
+        micButton.classList.add('recording');
+        isRecording = true;
+      }
+    });
+    
+    // メッセージ送信関数
+    function sendMessage() {
+      const messageText = messageInput.value.trim();
+      if (messageText === '') return;
+      
+      // ユーザーメッセージを追加
+      addUserMessage(messageText);
+      
+      // 入力フィールドをクリア
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      sendButton.disabled = true;
+      
+      // AIの応答 (モック)
+      setTimeout(() => {
+        const aiResponse = "今日のあなたの運勢は上昇傾向です。木の気が強く、創造性と行動力が高まっています。新しいアイデアを実行に移すのに良い日でしょう。特に午後からは対人運も良くなります。";
+        addAIMessage(aiResponse);
+      }, 1000);
+    }
+    
+    // ユーザーメッセージ追加
+    function addUserMessage(text) {
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user-message';
+      messageDiv.innerHTML = `
+        <div class="avatar user-avatar">
+          <span class="material-icons">person</span>
+        </div>
+        <div>
+          <div class="message-bubble">${text}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+    
+    // AIメッセージ追加
+    function addAIMessage(text) {
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message ai-message';
+      messageDiv.innerHTML = `
+        <div class="avatar ai-avatar">
+          <span class="material-icons">psychology</span>
+        </div>
+        <div>
+          <div class="message-bubble">${text}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+    
+    // 最下部にスクロール
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // AI相談ナビゲーションクリック
+    chatNav.addEventListener('click', function(e) {
+      e.preventDefault();
+      chatPage.style.display = 'flex';
+      scrollToBottom();
+    });
+    
+    // AI相談ボタンクリック
+    chatButton.addEventListener('click', function() {
+      chatPage.style.display = 'flex';
+      chatInputContainer.style.display = 'flex';
+      chatInputContainer.style.zIndex = 1200; // 高いz-indexを設定
+      scrollToBottom();
+    });
+
+    // 戻るボタンクリック
+    chatBackButton.addEventListener('click', function() {
+      chatPage.style.display = 'none';
+      chatInputContainer.style.display = 'none';
+    });
+    
+    // ページ読み込み時にアニメーション効果を適用
+    document.addEventListener('DOMContentLoaded', function() {
+      // すでにanimation-delayが設定されているのでここでは何もしない
+    });
+  </script>
+</body>
+</html>

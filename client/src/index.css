@@ -1,0 +1,89 @@
+:root {
+  /* 五行の色基本色：木・火・土・金・水 */
+  --wood-color: #000000; /* 文字は黒で統一 */
+  --wood-light: #4d4dff;
+  --wood-dark: #0000b3;
+  --wood-bg: #94b8eb; /* 青/緑色の暗めの背景 */
+  
+  --fire-color: #000000; /* 文字は黒で統一 */
+  --fire-light: #ff4d4d;
+  --fire-dark: #b30000;
+  --fire-bg: #e67373; /* 赤色の暗めの背景 */
+  
+  --earth-color: #000000; /* 文字は黒で統一 */
+  --earth-light: #ffff66;
+  --earth-dark: #b3b300;
+  --earth-bg: #f2d06b; /* 黄色の暗めの背景 */
+  
+  --metal-color: #000000; /* 文字は黒で統一 */
+  --metal-light: #ffffff;
+  --metal-dark: #e6e6e6;
+  --metal-bg: #ffffff; /* 純白の背景 */
+  
+  --water-color: #000000; /* 文字は黒で統一 */
+  --water-light: #333333;
+  --water-dark: #000000;
+  --water-bg: #7d94a6; /* より青みがかった暗めの背景 */
+  
+  /* ブランドカラー：紫色 */
+  --primary-main: #673ab7;
+  --primary-light: #9575cd;
+  --primary-dark: #4527a0;
+  --primary-bg: #ede7f6;
+  
+  /* アクセントカラー */
+  --accent-main: #ff4081;
+  --accent-light: #ff80ab;
+  --accent-dark: #c51162;
+  
+  /* テキストと背景 */
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #9e9e9e;
+  --bg-default: #ffffff;
+  --bg-paper: #f5f5f5;
+  
+  /* スペース */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  
+  /* アクセス制御 */
+  font-family: 'Noto Sans JP', 'Roboto', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  color-scheme: light dark;
+  color: var(--text-primary);
+  background-color: var(--bg-default);
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #f5f5f5;
+    --text-secondary: #b0b0b0;
+    --text-disabled: #6c6c6c;
+    --bg-default: #121212;
+    --bg-paper: #1e1e1e;
+    
+    --primary-main: #bb86fc;
+    --primary-light: #d9b6ff;
+    --primary-dark: #9a67ea;
+    --primary-bg: #33294b;
+  }
+}

@@ -1,0 +1,103 @@
+# 環境変数・シークレット
+.env
+.env.*
+*.pem
+*.key
+service-account*.json
+*firebase-adminsdk*.json
+sys-*-firebase-adminsdk-*.json
+
+# APIキーなどの機密情報
+CLAUDE.md
+server/src/tests/services/claude-api.test.ts
+deploy-history.md
+
+# ビルド出力
+dist/
+build/
+*.tsbuildinfo
+
+# 依存関係
+node_modules/
+
+# ログ
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# キャッシュ/一時ファイル
+.temp/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist
+.fusebox/
+.dynamodb/
+.tern-port
+
+# システム固有
+.DS_Store
+Thumbs.db
+.vercel
+.netlify
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# IDE / エディタ
+.idea/
+.vscode/
+*.code-workspace
+.project
+.classpath
+.c9/
+*.launch
+*.sublime-workspace
+
+# テスト・カバレッジ
+coverage/
+.nyc_output/
+jest-report/
+
+# 機密情報を含むスクリプト
+server/scripts/check-mongodb.js
+server/scripts/check-user-detail.js
+server/scripts/cleanup-team-members.js
+server/scripts/check-jwt-status.js
+server/scripts/check-test-users.js
+server/scripts/prepare-test-user.js
+server/scripts/sync-firebase-users.js
+server/scripts/saju-profile-purge.js
+server/scripts/check-daily-fortunes.js
+server/scripts/check-mongodb-collections.js
+server/scripts/migrate-users-to-jwt.js
+server/scripts/check-team-info.js
+server/scripts/create-jwt-user.js
+server/scripts/create-objectid-users.js
+server/scripts/create-sample-data.js
+server/scripts/create-test-user.js
+server/scripts/check-mongo-state.js
+server/scripts/test-jwt-login.js
+server/scripts/test-jwt-objectid.js
+server/scripts/verify-migration.js
+
+# ローカルツール
+.appgenius_temp/
+.claude_data/
+temp/firebase-service-account.json
+/server/firebase-service-account.json
+
+# バックアップとテストファイル
+backup/
+server/scripts/migration-logs/
+temp/check-yojin.js
+server/check-current-user.js
+server/test-*.js
+server/scripts/test-kakukyoku-yojin-custom.js
+test-harmony-compass.html
+temp/db/test-connection.js
+temp/db/

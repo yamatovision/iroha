@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortune - ログイン</title>
+  
+  <!-- フォントとアイコン -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --primary-dark: #7b1fa2;
+      --primary-light: #e1bee7;
+      --background-color: #fcf7ff;
+      --text-color: #3a3a3a;
+      --text-secondary: #666666;
+      --white: #ffffff;
+      --divider: #e6e0eb;
+      --shadow: 0 3px 8px rgba(156, 39, 176, 0.1);
+      --border-radius: 16px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--background-color) 0%, #f6edff 100%);
+      color: var(--text-color);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .login-container {
+      max-width: 100%;
+      width: 100%;
+      padding: 20px;
+      margin: 0 auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .login-card {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 30px 24px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      max-width: 420px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo-container {
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(156, 39, 176, 0.25);
+    }
+    
+    .logo .material-icons {
+      font-size: 40px;
+      color: white;
+    }
+    
+    .login-title {
+      font-size: 1.8rem;
+      color: var(--primary-dark);
+      margin: 0;
+      font-weight: 500;
+    }
+    
+    .login-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+    
+    .input-field {
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    .input-field input {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      border-radius: 8px !important;
+      padding: 0 16px !important;
+      border: 1px solid var(--divider) !important;
+      box-sizing: border-box !important;
+      height: 56px !important;
+      box-shadow: none !important;
+    }
+    
+    .input-field input:focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.1) !important;
+    }
+    
+    .input-field label {
+      color: var(--text-secondary) !important;
+      padding: 0 16px !important;
+      font-size: 1rem !important;
+    }
+    
+    .input-field .prefix {
+      color: var(--text-secondary);
+      font-size: 20px;
+      top: 0.5rem;
+    }
+    
+    .input-field input:focus + label {
+      color: var(--primary-color) !important;
+    }
+    
+    .input-field input:focus ~ .prefix {
+      color: var(--primary-color) !important;
+    }
+    
+    .btn-login {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+      color: white;
+      border-radius: var(--border-radius);
+      text-transform: none;
+      font-weight: 500;
+      font-size: 1rem;
+      height: 56px;
+      line-height: 56px;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(156, 39, 176, 0.25) !important;
+      margin-top: 10px;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(156, 39, 176, 0.35) !important;
+    }
+    
+    .forgot-password {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .forgot-password a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+    
+    .forgot-password a:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+    
+    .divider-container {
+      display: flex;
+      align-items: center;
+      margin: 25px 0;
+    }
+    
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--divider);
+    }
+    
+    .divider-text {
+      padding: 0 15px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .login-footer {
+      text-align: center;
+      margin-top: 30px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .signup-link {
+      margin-top: 10px;
+    }
+    
+    .signup-link a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+    
+    .signup-link a:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+    
+    .validation-message {
+      color: red;
+      font-size: 0.8rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .validation-message.show {
+      display: block;
+    }
+    
+    /* レスポンシブデザイン */
+    @media (min-width: 768px) {
+      .login-container {
+        padding: 40px;
+      }
+      
+      .login-card {
+        padding: 40px 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-container">
+          <div class="logo">
+            <span class="material-icons">psychology</span>
+          </div>
+        </div>
+        <h1 class="login-title">DailyFortune</h1>
+        <p class="login-subtitle">経営者向け人材管理ツール</p>
+      </div>
+      
+      <form id="login-form">
+        <div class="input-field">
+          <i class="material-icons prefix">email</i>
+          <input type="email" id="email" name="email" required>
+          <label for="email">メールアドレス</label>
+          <div class="validation-message" id="email-validation">有効なメールアドレスを入力してください</div>
+        </div>
+        
+        <div class="input-field">
+          <i class="material-icons prefix">lock</i>
+          <input type="password" id="password" name="password" required>
+          <label for="password">パスワード</label>
+          <div class="validation-message" id="password-validation">パスワードは6文字以上で入力してください</div>
+        </div>
+        
+        <button type="submit" class="btn btn-login waves-effect waves-light">
+          ログイン
+        </button>
+        
+        <div class="forgot-password">
+          <a href="#" id="forgot-password-link">パスワードをお忘れですか？</a>
+        </div>
+      </form>
+      
+      <div class="divider-container">
+        <div class="divider-line"></div>
+        <div class="divider-text">または</div>
+        <div class="divider-line"></div>
+      </div>
+      
+      <div class="login-footer">
+        <p>アカウントをお持ちでない場合</p>
+        <p class="signup-link"><a href="#" id="signup-link">新規登録</a></p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- スクリプト -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // フォーム要素
+      const loginForm = document.getElementById('login-form');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const emailValidation = document.getElementById('email-validation');
+      const passwordValidation = document.getElementById('password-validation');
+      const forgotPasswordLink = document.getElementById('forgot-password-link');
+      const signupLink = document.getElementById('signup-link');
+      
+      // Material UIの初期化
+      M.updateTextFields();
+      
+      // ログインフォーム送信
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+        
+        // メールアドレスの検証
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(emailInput.value)) {
+          emailValidation.classList.add('show');
+          isValid = false;
+        } else {
+          emailValidation.classList.remove('show');
+        }
+        
+        // パスワードの検証
+        if (passwordInput.value.length < 6) {
+          passwordValidation.classList.add('show');
+          isValid = false;
+        } else {
+          passwordValidation.classList.remove('show');
+        }
+        
+        // バリデーション成功時の処理
+        if (isValid) {
+          // 実際のアプリケーションではAPIリクエストを送信
+          console.log('ログイン処理:', {
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          
+          // ログイン成功時にホームページにリダイレクト
+          // 実際の実装では認証処理後に遷移
+          setTimeout(() => {
+            window.location.href = 'daily-fortune.html'; // ホームページへ遷移
+          }, 1000);
+          
+          // ログイン中の表示などを行うとよい
+          // ここではシンプルにトースト通知
+          M.toast({html: 'ログイン中...', classes: 'rounded', displayLength: 1000});
+        }
+      });
+      
+      // パスワードリセットリンク
+      forgotPasswordLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        // パスワードリセット画面への遷移やモーダル表示
+        M.toast({html: 'パスワードリセット機能は準備中です', classes: 'rounded'});
+      });
+      
+      // 新規登録リンク
+      signupLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        // 新規登録画面への遷移
+        M.toast({html: '新規登録画面へ遷移します', classes: 'rounded'});
+        // 実際の実装では以下のような処理
+        // window.location.href = 'signup.html';
+      });
+    });
+  </script>
+</body>
+</html>
