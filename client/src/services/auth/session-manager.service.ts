@@ -12,6 +12,7 @@ import { isNativePlatform } from '../storage/platform-detector';
  * 2. トークン自動更新の最適化（バックグラウンド時は実行しない）
  * 3. アプリ再開時のセッション状態復元
  * 4. トークンの有効期限管理と事前更新
+ * 5. Android端末のバックボタン処理
  * 
  * @class SessionManagerService
  */
@@ -26,6 +27,14 @@ class SessionManagerService {
   private lastTokenRefresh: number = 0;
   // トークン更新の最小間隔 (1分)
   private readonly MIN_REFRESH_INTERVAL = 60 * 1000;
+  // バックボタン履歴
+  private backButtonPressTimestamp = 0;
+  // 二重バックボタン検出期間 (ミリ秒)
+  private readonly BACK_BUTTON_EXIT_INTERVAL = 2000;
+  // ルート画面パス
+  private readonly ROOT_PATHS = ['/', '/fortune', '/chat', '/team', '/profile'];
+  // 履歴スタック
+  private historyStack: string[] = [];
 
   /**
    * セッションマネージャーを初期化
@@ -46,8 +55,56 @@ class SessionManagerService {
     // トークン更新タイマーの設定
     this.setupTokenRefreshTimer();
     
+    // 履歴スタックの初期化
+    this.initHistoryStack();
+    
     this.initialized = true;
     console.log('セッションマネージャー：初期化完了');
+  }
+
+  /**
+   * 履歴スタックの初期化
+   */
+  private initHistoryStack(): void {
+    // 現在のパスを初期値として設定
+    const currentPath = window.location.pathname;
+    this.historyStack = [currentPath];
+
+    // 履歴変更イベントのリスニング
+    window.addEventListener('popstate', this.handlePopState.bind(this));
+  }
+
+  /**
+   * 履歴変更イベントハンドラ
+   */
+  private handlePopState(_event: PopStateEvent): void {
+    const currentPath = window.location.pathname;
+    
+    // 現在のパスをスタックに追加（重複しないように）
+    if (this.historyStack.length === 0 || this.historyStack[this.historyStack.length - 1] !== currentPath) {
+      this.historyStack.push(currentPath);
+      
+      // スタックサイズを管理（最大20エントリまで）
+      if (this.historyStack.length > 20) {
+        this.historyStack.shift();
+      }
+    }
+    
+    console.log('セッションマネージャー：履歴スタック更新', this.historyStack);
+  }
+
+  /**
+   * 履歴スタックに新しいパスを追加
+   */
+  addToHistoryStack(path: string): void {
+    if (this.historyStack.length === 0 || this.historyStack[this.historyStack.length - 1] !== path) {
+      this.historyStack.push(path);
+      
+      // スタックサイズを管理（最大20エントリまで）
+      if (this.historyStack.length > 20) {
+        this.historyStack.shift();
+      }
+    }
   }
 
   /**
@@ -69,13 +126,69 @@ class SessionManagerService {
       }
     });
 
-    // アプリの終了処理
+    // Androidの戻るボタン処理
     App.addListener('backButton', () => {
       console.log('セッションマネージャー：戻るボタン検出');
-      this.prepareForExit();
+      this.handleBackButton();
     });
     
     console.log('セッションマネージャー：ネイティブライフサイクルリスナーを設定');
+  }
+
+  /**
+   * バックボタン処理
+   */
+  private handleBackButton(): void {
+    const currentPath = window.location.pathname;
+    
+    // 現在がルート画面かどうかを確認
+    const isRootScreen = this.ROOT_PATHS.some(path => 
+      path === currentPath || (path !== '/' && currentPath.startsWith(path))
+    );
+    
+    if (isRootScreen) {
+      // ルート画面での戻るボタン処理（アプリ終了確認）
+      const now = Date.now();
+      if (now - this.backButtonPressTimestamp < this.BACK_BUTTON_EXIT_INTERVAL) {
+        // 短時間内に2回バックボタンが押された場合はアプリ終了
+        console.log('セッションマネージャー：アプリ終了処理');
+        App.exitApp();
+      } else {
+        // 最初のバックボタン押下
+        this.backButtonPressTimestamp = now;
+        // トースト表示などのフィードバック
+        this.showExitToast();
+      }
+    } else {
+      // 通常の戻る処理
+      console.log('セッションマネージャー：通常の戻る処理');
+      window.history.back();
+    }
+  }
+  
+  /**
+   * アプリ終了確認トーストの表示
+   */
+  private showExitToast(): void {
+    // 簡易的なトースト表示（実際のアプリでは専用のトーストUIを使用）
+    const toast = document.createElement('div');
+    toast.textContent = 'もう一度戻るボタンを押すと終了します';
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20%';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    toast.style.color = 'white';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '20px';
+    toast.style.zIndex = '9999';
+    
+    document.body.appendChild(toast);
+    
+    // 2秒後に消去
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, this.BACK_BUTTON_EXIT_INTERVAL);
   }
 
   /**
@@ -163,7 +276,11 @@ class SessionManagerService {
    */
   private prepareForExit(): void {
     console.log('セッションマネージャー：アプリ終了準備');
-    // 必要に応じてセッション状態を保存
+    // セッション状態の保存とクリーンアップ
+    if (this.tokenRefreshTimer !== null) {
+      clearInterval(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
   }
 
   /**
@@ -275,6 +392,9 @@ class SessionManagerService {
     if (isNativePlatform()) {
       await App.removeAllListeners();
     }
+    
+    // Webリスナーを削除
+    window.removeEventListener('popstate', this.handlePopState.bind(this));
     
     this.listeners = [];
     this.initialized = false;

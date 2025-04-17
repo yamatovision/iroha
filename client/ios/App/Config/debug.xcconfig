@@ -1,0 +1,19 @@
+#include "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"
+
+// アプリ設定
+PRODUCT_BUNDLE_IDENTIFIER = jp.dailyfortune.app.debug
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1
+DEVELOPMENT_TEAM = 
+CODE_SIGN_STYLE = Automatic
+
+// デバッグ固有設定
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_TESTABILITY = YES
+GCC_OPTIMIZATION_LEVEL = 0
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG
+
+// 環境変数
+VITE_APP_MODE = development
+VITE_API_URL = https://dev-api.dailyfortune.com

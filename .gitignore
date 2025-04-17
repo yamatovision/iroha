@@ -11,6 +11,7 @@ sys-*-firebase-adminsdk-*.json
 CLAUDE.md
 server/src/tests/services/claude-api.test.ts
 deploy-history.md
+deploy.md
 
 # ビルド出力
 dist/

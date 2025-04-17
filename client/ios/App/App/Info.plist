@@ -50,5 +50,26 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIRequiresPersistentWiFi</key>
+	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DailyFortuneアプリで画像を選択して設定するために使用します。</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>DailyFortuneアプリでは、プライバシー保護のためにFace IDを使用してアプリのロックを解除します。</string>
+	<key>UIKeyboardLayoutGuide</key>
+	<dict>
+		<key>UIBottomLayoutGuide</key>
+		<true/>
+	</dict>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 </dict>
 </plist>

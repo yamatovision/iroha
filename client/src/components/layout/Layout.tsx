@@ -28,7 +28,10 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
     }),
     [theme.breakpoints.up('sm')]: {
       marginLeft: 0,
+      padding: theme.spacing(3), // デスクトップでは余白を大きく
     },
+    // iOSのセーフエリア対応と下部ナビゲーション用の余白
+    paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
   }),
 )
 
@@ -54,8 +57,12 @@ const BottomNavigation = styled(Box)(({ theme }) => ({
   justifyContent: 'space-around',
   backgroundColor: theme.palette.background.paper,
   borderTop: `1px solid ${theme.palette.divider}`,
-  padding: theme.spacing(1, 0),
+  padding: theme.spacing(0.5, 0), // パディングを縮小してアイテムをタップしやすく
   zIndex: theme.zIndex.appBar,
+  boxShadow: '0 -2px 5px rgba(0,0,0,0.05)', // 軽い影を追加
+  height: '60px', // 高さを固定
+  // iOSのセーフエリア対応
+  paddingBottom: 'env(safe-area-inset-bottom, 0px)',
   // デスクトップでも表示するために以下のメディアクエリを削除
   // [theme.breakpoints.up('md')]: {
   //   display: 'none',
@@ -152,7 +159,7 @@ const Layout = () => {
         <Main>
           <Toolbar /> {/* アプリバーの高さ分のスペーサー */}
           <Outlet />
-          <Box sx={{ height: '64px' }} /> {/* すべての画面サイズで下部ナビゲーション用スペース */}
+          {/* 下部スペースは Main コンポーネントの paddingBottom で対応するため削除 */}
         </Main>
       </Box>
       

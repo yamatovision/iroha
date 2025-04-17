@@ -4,4 +4,5 @@
     <string name="title_activity_main">DailyFortune</string>
     <string name="package_name">jp.dailyfortune.app</string>
     <string name="custom_url_scheme">jp.dailyfortune.app</string>
+    <string name="firebase_app_id">1:123456789012:android:1234567890abcdef</string>
 </resources>

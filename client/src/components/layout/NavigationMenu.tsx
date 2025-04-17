@@ -177,6 +177,12 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
                 alignItems: 'center',
                 justifyContent: 'center',
                 mb: 0.5,
+                // アクティブアイテムを少し大きく表示
+                transform: isActive(item.path) ? 'scale(1.2)' : 'scale(1)',
+                transition: 'transform 0.2s ease',
+                '& .MuiSvgIcon-root': {
+                  fontSize: '1.4rem', // アイコンサイズ拡大
+                }
               }}
             >
               {item.icon}
@@ -184,9 +190,10 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
             <Typography
               variant="caption"
               sx={{
-                fontSize: '0.75rem',
-                fontWeight: isActive(item.path) ? '500' : '400',
+                fontSize: '0.7rem', // フォントサイズを少し小さく
+                fontWeight: isActive(item.path) ? '600' : '400', // アクティブはより太く
                 whiteSpace: 'nowrap',
+                opacity: isActive(item.path) ? 1 : 0.8, // 非アクティブは少し薄く
               }}
             >
               {item.text}
@@ -219,6 +226,12 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
                 alignItems: 'center',
                 justifyContent: 'center',
                 mb: 0.5,
+                // アクティブアイテムを少し大きく表示
+                transform: isActive(adminItem.path) ? 'scale(1.2)' : 'scale(1)',
+                transition: 'transform 0.2s ease',
+                '& .MuiSvgIcon-root': {
+                  fontSize: '1.4rem', // アイコンサイズ拡大
+                }
               }}
             >
               {adminItem.icon}
@@ -226,9 +239,10 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
             <Typography
               variant="caption"
               sx={{
-                fontSize: '0.75rem',
-                fontWeight: isActive(adminItem.path) ? '500' : '400',
+                fontSize: '0.7rem', // フォントサイズを少し小さく
+                fontWeight: isActive(adminItem.path) ? '600' : '400', // アクティブはより太く
                 whiteSpace: 'nowrap',
+                opacity: isActive(adminItem.path) ? 1 : 0.8, // 非アクティブは少し薄く
               }}
             >
               {adminItem.text}

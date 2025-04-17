@@ -7,6 +7,15 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!-- ソフトキーボード設定 -->
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <!-- ステータスバー透過 -->
+        <item name="android:windowTranslucentStatus">true</item>
+        <!-- アニメーション設定 -->
+        <item name="android:windowContentTransitions">true</item>
+        <!-- タッチフィードバック有効化 -->
+        <item name="android:windowEnableSplitTouch">true</item>
+        <item name="android:splitMotionEvents">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
@@ -15,8 +24,13 @@
         <item name="android:background">@null</item>
     </style>
 
-
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+    </style>
+    
+    <!-- キーボードアニメーション設定 -->
+    <style name="KeyboardAnimation">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
     </style>
 </resources>
