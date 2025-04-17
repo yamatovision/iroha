@@ -79,7 +79,13 @@ import { API_BASE_PATH } from './types/index';
 const app = express();
 
 // Cloud Runで実行する場合、リバースプロキシ背後で動作するため信頼設定が必要
-app.set('trust proxy', true);
+// 開発環境では無効化、本番環境でのみ有効化
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // 単一のプロキシを信頼
+} else {
+  // 開発環境では無効化
+  console.log('開発環境: trust proxy設定を無効化');
+}
 
 // ロギングミドルウェアを最初に適用
 app.use(requestTracer); // トレースIDを各リクエストに追加

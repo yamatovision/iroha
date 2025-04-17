@@ -32,7 +32,10 @@ export const apiLimiter = rateLimit({
   max: 300, // 15分間に最大300リクエスト
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'リクエスト数が制限を超えました。しばらく待ってから再試行してください。' }
+  message: { message: 'リクエスト数が制限を超えました。しばらく待ってから再試行してください。' },
+  skip: (req) => process.env.NODE_ENV === 'development' // 開発環境ではスキップ
+  // express-rate-limitがtrustProxyプロパティを受け付けない
+  // app.set('trust proxy')で代替
 });
 
 /**
@@ -44,7 +47,10 @@ export const authLimiter = rateLimit({
   max: 200, // 15分間に最大200リクエスト
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: '認証リクエスト数が制限を超えました。しばらく待ってから再試行してください。' }
+  message: { message: '認証リクエスト数が制限を超えました。しばらく待ってから再試行してください。' },
+  skip: (req) => process.env.NODE_ENV === 'development' // 開発環境ではスキップ
+  // express-rate-limitがtrustProxyプロパティを受け付けない
+  // app.set('trust proxy')で代替
 });
 
 /**
@@ -61,26 +67,35 @@ export const corsOptions = {
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:5173', // Vite開発サーバーのデフォルトポート
+      'http://localhost:8080', // 直接サーバーアクセス
+      'capacitor://localhost', // Capacitorアプリ用
+      'http://localhost', // ローカルホスト
+      'ionic://localhost', // Ionicフレームワーク用
+      'https://dailyfortune.web.app', // 本番Webアプリ
+      'https://*.dailyfortune.web.app', // サブドメイン対応
+      'app://dailyfortune.app', // ネイティブアプリディープリンク
       undefined // undefined は開発環境でのリクエスト用
     ];
 
     console.log(`CORS検証: ${origin}`);
-
+    
+    // 開発環境では全て許可
+    if (process.env.NODE_ENV === 'development') {
+      console.log('開発環境: すべてのオリジンからのCORSリクエストを許可');
+      callback(null, true);
+      return;
+    }
+    
+    // 本番環境ではオリジンを確認
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // 開発モードではすべてのオリジンを許可（デバッグのため）
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`開発モードで未承認オリジンを許可: ${origin}`);
-        callback(null, true);
-      } else {
-        console.error(`CORS違反: ${origin} からのリクエストを拒否`);
-        callback(new Error('CORS policy violation'));
-      }
+      console.error(`CORS違反: ${origin} からのリクエストを拒否`);
+      callback(new Error('CORS policy violation'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-ID', 'X-Direct-Refresh'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-ID', 'X-Direct-Refresh', 'X-Capacitor-Request'],
   exposedHeaders: ['X-Trace-ID'], // クライアントに公開するヘッダー
   credentials: true,
   maxAge: 86400 // 24時間

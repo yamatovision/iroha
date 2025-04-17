@@ -8,40 +8,46 @@
 - [x] 5. README と関連ドキュメントの更新
 
 ## Capacitor導入
-- [~] 6. Capacitor Core と CLI をインストール
-- [ ] 7. Capacitor プロジェクト初期化 (`npx cap init`)
-- [ ] 8. vite.config.ts の base を `'./'` に変更
-- [ ] 9. Capacitor Preferences パッケージをインストール
-- [ ] 10. npm run build の実行
-- [ ] 11. Android プラットフォーム追加 (`npx cap add android`)
-- [ ] 12. iOS プラットフォーム追加 (`npx cap add ios`)
-- [ ] 13. capacitor.config.ts の設定
+- [x] 6. Capacitor Core と CLI をインストール
+- [x] 7. Capacitor プロジェクト初期化 (`npx cap init`)
+- [x] 8. vite.config.ts の base を `'./'` に変更
+- [x] 9. Capacitor Preferences パッケージをインストール
+- [x] 10. npm run build の実行
+- [x] 11. Android プラットフォーム追加 (`npx cap add android`)
+- [x] 12. iOS プラットフォーム追加 (`npx cap add ios`)
+- [x] 13. capacitor.config.ts の設定
 
 ## API設定と環境変数
-- [ ] 14. 本番環境用API URL設定
-- [ ] 15. API通信のHTTPS強制対応
-- [ ] 16. バックエンドのCORS設定確認・調整
+- [x] 14. 本番環境用API URL設定
+- [x] 15. API通信のHTTPS強制対応
+- [x] 16. バックエンドのCORS設定確認・調整
 
 ## ストレージシステム実装
-- [ ] 17. IStorageService インターフェース作成
-- [ ] 18. CapacitorStorageService 実装 (Preferences 使用)
-- [ ] 19. WebStorageService 実装 (localStorage バックアップ)
-- [ ] 20. プラットフォーム検出ロジック実装
+- [x] 17. IStorageService インターフェース作成
+- [x] 18. CapacitorStorageService 実装 (Preferences 使用)
+- [x] 19. WebStorageService 実装 (localStorage バックアップ)
+- [x] 20. プラットフォーム検出ロジック実装
 
 ## 認証システム対応
-- [ ] 21. token.service.ts の非同期対応
-- [ ] 22. AuthContext の非同期対応
-- [ ] 23. ローディング状態の適切な管理実装
-- [ ] 24. 認証関連の全コンポーネント更新
-- [ ] 25. JWT更新ロジックの非同期対応
+- [x] 21. token.service.ts の非同期対応
+- [x] 22. AuthContext の非同期対応
+- [x] 23. ローディング状態の適切な管理実装
+- [x] 24. 認証関連の全コンポーネント更新
+  - [x] 24.1. ログイン関連画面（Register, ForgotPassword）
+  - [x] 24.2. ユーザーメニュー・ナビゲーション（UserMenu, NavigationMenu）
+  - [x] 24.3. プロファイル関連コンポーネント（SajuProfileModal, SajuProfileSection）
+  - [x] 24.4. チーム関連コンポーネント（Team pages）
+  - [x] 24.5. その他認証利用コンポーネント（Fortune, Chat）
+  - [x] 24.6. auth-manager.service.ts の非同期対応  
+- [x] 25. JWT更新ロジックの非同期対応
 - [ ] 26. ログイン・ログアウトフローのテスト
 - [ ] 27. セッション管理の最適化
 
 ## ネットワーク監視実装
-- [ ] 28. NetworkMonitorService の作成
-- [ ] 29. プラットフォーム別ネットワーク検出実装
-- [ ] 30. ネットワーク状態表示コンポーネント作成
-- [ ] 31. オフライン状態時の UI フィードバック実装
+- [x] 28. NetworkMonitorService の作成
+- [x] 29. プラットフォーム別ネットワーク検出実装
+- [x] 30. ネットワーク状態表示コンポーネント作成
+- [x] 31. オフライン状態時の UI フィードバック実装
 
 ## APIサービスのオフライン対応 (基本)
 - [ ] 32. GET リクエストのキャッシュシステム実装
@@ -155,8 +161,8 @@
    - 着手中のタスクを明示するため `[ ]` を `[~]` に変更（任意）
 
 ## 進捗管理
-- 完了タスク数: 5/105
-- 進捗率: 4.76%
+- 完了タスク数: 35/105
+- 進捗率: 33.33%
 - 最終更新日: 2025/4/17
 
 ## 参考資料リンク
