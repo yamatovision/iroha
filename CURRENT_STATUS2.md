@@ -41,7 +41,7 @@
   - [x] 24.6. auth-manager.service.ts の非同期対応  
 - [x] 25. JWT更新ロジックの非同期対応
 - [x] 26. ログイン・ログアウトフローのテスト
-- [ ] 27. セッション管理の最適化
+- [x] 27. セッション管理の最適化
 
 ## ネットワーク監視実装
 - [x] 28. NetworkMonitorService の作成
@@ -161,9 +161,44 @@
    - 着手中のタスクを明示するため `[ ]` を `[~]` に変更（任意）
 
 ## 進捗管理
-- 完了タスク数: 37/105
-- 進捗率: 35.24%
+- 完了タスク数: 38/105
+- 進捗率: 36.19%
 - 最終更新日: 2025/4/17
+
+## 開発コマンド集
+
+### TypeScriptエラーチェック
+```bash
+# TypeScriptコンパイルエラーチェック（コード生成なし）
+cd client && npx tsc --noEmit
+
+# プロジェクトビルド（エラーチェック込み）
+cd client && npm run build
+```
+
+### アプリ起動
+```bash
+# 開発サーバー起動（ローカルのみ）
+cd client && npm run dev
+
+# 開発サーバー起動（外部アクセス可能）
+cd client && npm run dev -- --host
+
+# iOS向けビルドと同期
+cd client && npm run build && npx cap sync ios
+
+# Android向けビルドと同期
+cd client && npm run build && npx cap sync android
+```
+
+### テスト実行
+```bash
+# ネイティブプロジェクトをXcodeで開く
+cd client && npx cap open ios
+
+# ネイティブプロジェクトをAndroid Studioで開く
+cd client && npx cap open android
+```
 
 ## 参考資料リンク
 
@@ -204,3 +239,17 @@
   3. 開発サーバーを--hostフラグで起動し外部アクセスを許可
 - メモ：Capacitorアプリのテスト時は開発サーバーをIPアドレスで公開する必要がある
 - 参考：https://capacitorjs.com/docs/basics/configuring-your-app
+
+【27】セッション管理の最適化
+- 問題：アプリのバックグラウンド/フォアグラウンド切り替え時にセッション状態が適切に管理されていない
+- 試行1：AuthContextでのトークン更新ロジックを見直し
+- 結果1：複数のタイマーが重複して動作し、トークン更新が頻繁に発生
+- 試行2：Capacitor Appプラグインを導入し専用のセッションマネージャーを実装
+- 結果2：成功。アプリライフサイクルイベントと連動したセッション管理を実現
+- 解決策：
+  1. Capacitor Appプラグインをインストール・設定
+  2. session-manager.serviceを実装してアプリライフサイクルを検出
+  3. トークン更新最適化（バックグラウンド時は更新しない）
+  4. App.tsxからセッションマネージャーを初期化
+- メモ：Web環境とネイティブ環境の両方でライフサイクルイベントを適切に処理する必要がある
+- 参考：https://capacitorjs.com/docs/apis/app
