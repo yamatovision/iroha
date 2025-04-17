@@ -1,4 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
+import { IStorageService, StorageKeys } from '../storage/storage.interface';
+import storageService from '../storage/storage-factory';
 
 export interface JwtTokenPayload {
   sub: string;        // ユーザーID
@@ -10,46 +12,51 @@ export interface JwtTokenPayload {
 }
 
 export interface TokenService {
-  getAccessToken(): string | null;
-  getRefreshToken(): string | null;
-  setTokens(accessToken: string, refreshToken: string): void;
-  clearTokens(): void;
-  isAccessTokenValid(): boolean;
-  isRefreshTokenValid(): boolean;
-  getTokenPayload(): JwtTokenPayload | null;
-  getRemainingTime(): number | null;
+  getAccessToken(): Promise<string | null>;
+  getRefreshToken(): Promise<string | null>;
+  setTokens(accessToken: string, refreshToken: string): Promise<void>;
+  clearTokens(): Promise<void>;
+  isAccessTokenValid(): Promise<boolean>;
+  isRefreshTokenValid(): Promise<boolean>;
+  getTokenPayload(): Promise<JwtTokenPayload | null>;
+  getRemainingTime(): Promise<number | null>;
 }
 
-// LocalStorageベースのトークン管理サービス
-class LocalStorageTokenService implements TokenService {
-  private readonly ACCESS_TOKEN_KEY = 'df_access_token';
-  private readonly REFRESH_TOKEN_KEY = 'df_refresh_token';
+// ストレージインターフェースを使用したトークン管理サービス
+class PersistentTokenService implements TokenService {
+  private readonly ACCESS_TOKEN_KEY = StorageKeys.ACCESS_TOKEN;
+  private readonly REFRESH_TOKEN_KEY = StorageKeys.REFRESH_TOKEN;
+  private storageService: IStorageService;
+  
+  constructor(storageService: IStorageService) {
+    this.storageService = storageService;
+  }
 
   // アクセストークン取得
-  getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  async getAccessToken(): Promise<string | null> {
+    return this.storageService.get(this.ACCESS_TOKEN_KEY);
   }
 
   // リフレッシュトークン取得
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  async getRefreshToken(): Promise<string | null> {
+    return this.storageService.get(this.REFRESH_TOKEN_KEY);
   }
 
   // トークンの保存
-  setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+  async setTokens(accessToken: string, refreshToken: string): Promise<void> {
+    await this.storageService.set(this.ACCESS_TOKEN_KEY, accessToken);
+    await this.storageService.set(this.REFRESH_TOKEN_KEY, refreshToken);
   }
 
   // トークンのクリア
-  clearTokens(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+  async clearTokens(): Promise<void> {
+    await this.storageService.remove(this.ACCESS_TOKEN_KEY);
+    await this.storageService.remove(this.REFRESH_TOKEN_KEY);
   }
 
   // アクセストークンの有効性チェック
-  isAccessTokenValid(): boolean {
-    const token = this.getAccessToken();
+  async isAccessTokenValid(): Promise<boolean> {
+    const token = await this.getAccessToken();
     if (!token) return false;
     
     try {
@@ -63,8 +70,8 @@ class LocalStorageTokenService implements TokenService {
   }
 
   // リフレッシュトークンの有効性チェック
-  isRefreshTokenValid(): boolean {
-    const token = this.getRefreshToken();
+  async isRefreshTokenValid(): Promise<boolean> {
+    const token = await this.getRefreshToken();
     if (!token) return false;
     
     try {
@@ -78,8 +85,8 @@ class LocalStorageTokenService implements TokenService {
   }
 
   // トークンからペイロードを取得
-  getTokenPayload(): JwtTokenPayload | null {
-    const token = this.getAccessToken();
+  async getTokenPayload(): Promise<JwtTokenPayload | null> {
+    const token = await this.getAccessToken();
     if (!token) return null;
     
     try {
@@ -91,8 +98,8 @@ class LocalStorageTokenService implements TokenService {
   }
 
   // アクセストークンの残り有効時間を取得（ミリ秒）
-  getRemainingTime(): number | null {
-    const token = this.getAccessToken();
+  async getRemainingTime(): Promise<number | null> {
+    const token = await this.getAccessToken();
     if (!token) return null;
     
     try {
@@ -106,5 +113,5 @@ class LocalStorageTokenService implements TokenService {
   }
 }
 
-// トークンサービスのインスタンスをエクスポート
-export default new LocalStorageTokenService();
+// 新しいストレージサービスを使用したトークンサービスのインスタンスをエクスポート
+export default new PersistentTokenService(storageService);
