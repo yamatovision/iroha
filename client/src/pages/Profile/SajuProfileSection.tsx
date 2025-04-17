@@ -1,30 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Alert, CircularProgress } from '@mui/material';
+import { Box, Typography, Alert } from '@mui/material';
 import SajuProfileCard from '../../components/profile/SajuProfileCard';
 import sajuProfileService from '../../services/saju-profile.service';
 import { ISajuProfile } from '@shared/index';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
 
 /**
  * 四柱推命プロフィール表示専用コンポーネント
  * 入力フォームは個人情報タブに移動し、このコンポーネントは表示のみを担当
  */
 const SajuProfileSection: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ISajuProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStep, setLoadingStep] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       if (!userProfile) return;
       
       setIsLoading(true);
+      setLoadingStep('プロフィール情報を確認中...');
+      
       try {
         console.log('四柱推命プロフィール読み込み開始', { userProfile });
         
         // ユーザープロフィールに四柱推命情報が含まれているか確認
         if (userProfile && (userProfile.fourPillars || userProfile.elementAttribute)) {
+          setLoadingStep('四柱推命情報を処理中...');
           console.log('ユーザープロフィールに四柱推命情報があります');
           
           // ISajuProfile形式に変換
@@ -90,6 +95,7 @@ const SajuProfileSection: React.FC = () => {
         
         // ユーザープロフィールに四柱推命情報がない場合はAPIから取得
         try {
+          setLoadingStep('APIからプロフィール情報を取得中...');
           console.log('APIから四柱推命プロフィールを取得します');
           const profileData = await sajuProfileService.getMyProfile();
           setProfile(profileData);
@@ -109,16 +115,23 @@ const SajuProfileSection: React.FC = () => {
         setError('四柱推命プロフィールの処理中にエラーが発生しました');
       } finally {
         setIsLoading(false);
+        setLoadingStep(null);
       }
     };
 
     loadProfile();
   }, [userProfile]);
 
-  if (isLoading) {
+  // 認証データまたはプロフィールデータロード中の表示
+  if (authLoading || isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+        <LoadingIndicator size="medium" />
+        {loadingStep && (
+          <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+            {loadingStep}
+          </Typography>
+        )}
       </Box>
     );
   }

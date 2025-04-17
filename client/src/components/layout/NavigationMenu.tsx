@@ -7,6 +7,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import Skeleton from '@mui/material/Skeleton'
 import { useTheme } from '@mui/material/styles'
 import HomeIcon from '@mui/icons-material/Home'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
@@ -14,6 +15,7 @@ import ChatIcon from '@mui/icons-material/Chat'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { NetworkStatusIndicator } from '../network'
 
 type NavigationMenuProps = {
   onNavigate?: () => void;
@@ -32,7 +34,7 @@ interface MenuItem {
 
 
 const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps) => {
-  const { isAdmin, isSuperAdmin, userProfile, activeTeamId } = useAuth()
+  const { isAdmin, isSuperAdmin, userProfile, activeTeamId, loading: authLoading } = useAuth()
   const location = useLocation()
   const theme = useTheme()
   // const navigate = useNavigate()
@@ -87,6 +89,48 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
     if (path === '/' && location.pathname === '/') return true
     if (path !== '/' && location.pathname.startsWith(path)) return true
     return false
+  }
+
+  // 認証データロード中のスケルトン表示（ボトムナビゲーション）
+  if (authLoading && layout === 'bottom') {
+    return (
+      <>
+        {[1, 2, 3, 4].map((item) => (
+          <Box
+            key={item}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              p: 1,
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
+            <Skeleton variant="circular" width={24} height={24} sx={{ mb: 0.5 }} />
+            <Skeleton variant="text" width={40} height={20} />
+          </Box>
+        ))}
+      </>
+    );
+  }
+
+  // 認証データロード中のスケルトン表示（サイドバー）
+  if (authLoading && layout === 'sidebar') {
+    return (
+      <List>
+        {[1, 2, 3, 4].map((item) => (
+          <ListItem key={item} disablePadding>
+            <ListItemButton disabled>
+              <ListItemIcon>
+                <Skeleton variant="circular" width={24} height={24} />
+              </ListItemIcon>
+              <ListItemText primary={<Skeleton width={100} />} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    );
   }
 
   if (layout === 'bottom') {
@@ -263,6 +307,22 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
           </List>
         </>
       )}
+      
+      {/* ネットワーク状態インジケータ */}
+      <Box sx={{ mt: 'auto', p: 1 }}>
+        <ListItem>
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  ネットワーク状態
+                </Typography>
+                <NetworkStatusIndicator mode="badge" />
+              </Box>
+            }
+          />
+        </ListItem>
+      </Box>
     </>
   )
 }

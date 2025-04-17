@@ -1,7 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import tokenService from '../../services/auth/token.service'
+import LoadingIndicator from './LoadingIndicator'
 
 type ProtectedRouteProps = {
   children: ReactNode
@@ -15,14 +16,33 @@ export const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { userProfile, loading, isAdmin, isSuperAdmin } = useAuth()
   const location = useLocation()
+  const [tokenChecking, setTokenChecking] = useState(true)
+  const [hasJwtToken, setHasJwtToken] = useState(false)
 
-  // 認証状態ロード中は何も表示しない
-  if (loading) {
-    return <div>Loading...</div>
+  // JWT認証のアクセストークンを確認（非同期処理）
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const token = await tokenService.getAccessToken()
+        const isValid = await tokenService.isAccessTokenValid()
+        setHasJwtToken(!!token && isValid)
+      } catch (error) {
+        console.error('トークン検証エラー:', error)
+        setHasJwtToken(false)
+      } finally {
+        setTokenChecking(false)
+      }
+    }
+
+    if (!loading) {
+      checkToken()
+    }
+  }, [loading])
+
+  // 認証状態またはトークンチェック中はローディングを表示
+  if (loading || tokenChecking) {
+    return <LoadingIndicator message="認証情報を確認中..." size="medium" />
   }
-
-  // JWT認証のアクセストークンを確認
-  const hasJwtToken = tokenService.getAccessToken() !== null && tokenService.isAccessTokenValid();
   
   // 未ログインの場合はログインページにリダイレクト
   if (!hasJwtToken) {

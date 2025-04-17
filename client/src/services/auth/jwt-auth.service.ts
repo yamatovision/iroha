@@ -9,7 +9,7 @@ export interface JwtAuthService {
   logout(): Promise<void>;
   refreshToken(): Promise<boolean>;
   migrateToJwt(password: string): Promise<any>;
-  isAuthenticated(): boolean;
+  isAuthenticated(): Promise<boolean>;
 }
 
 class JwtAuthServiceImpl implements JwtAuthService {
@@ -133,7 +133,7 @@ class JwtAuthServiceImpl implements JwtAuthService {
   async logout(): Promise<void> {
     try {
       // リフレッシュトークンを取得
-      const refreshToken = tokenService.getRefreshToken();
+      const refreshToken = await tokenService.getRefreshToken();
       
       if (refreshToken) {
         // サーバー側のリフレッシュトークンを無効化
@@ -141,11 +141,11 @@ class JwtAuthServiceImpl implements JwtAuthService {
       }
       
       // ローカルのトークンをクリア
-      tokenService.clearTokens();
+      await tokenService.clearTokens();
     } catch (error) {
       console.error('JWT認証ログアウトエラー:', error);
       // エラーが発生してもローカルのトークンは必ずクリア
-      tokenService.clearTokens();
+      await tokenService.clearTokens();
       throw error;
     }
   }
@@ -153,7 +153,7 @@ class JwtAuthServiceImpl implements JwtAuthService {
   // トークンリフレッシュ処理
   async refreshToken(): Promise<boolean> {
     try {
-      const refreshToken = tokenService.getRefreshToken();
+      const refreshToken = await tokenService.getRefreshToken();
       
       if (!refreshToken) {
         console.warn('リフレッシュトークンがありません');
@@ -200,7 +200,7 @@ class JwtAuthServiceImpl implements JwtAuthService {
         console.log(`新しいリフレッシュトークン受信: ${newTokenPreview} (長さ: ${newRefreshToken.length})`);
         
         // 新しいトークンをローカルストレージに保存
-        tokenService.setTokens(accessToken, newRefreshToken);
+        await tokenService.setTokens(accessToken, newRefreshToken);
         console.log('新しいトークンを保存しました');
         
         return true;
@@ -219,7 +219,7 @@ class JwtAuthServiceImpl implements JwtAuthService {
         console.warn('リフレッシュトークンの不一致を検出、自動修復を試みます...');
         
         // リフレッシュトークンをクリアして次回ログイン時に再取得させる
-        tokenService.clearTokens();
+        await tokenService.clearTokens();
         
         // ページを再読み込みして再認証を促す
         // 注意: この部分はUIで適切に処理すべきですが、緊急対応として実装
@@ -233,8 +233,8 @@ class JwtAuthServiceImpl implements JwtAuthService {
   }
   
   // 認証状態をチェック
-  isAuthenticated(): boolean {
-    return tokenService.isAccessTokenValid();
+  async isAuthenticated(): Promise<boolean> {
+    return await tokenService.isAccessTokenValid();
   }
 }
 

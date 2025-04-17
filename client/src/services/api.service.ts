@@ -72,7 +72,7 @@ class ApiService {
         }
         
         // JWTトークンを設定
-        let accessToken = tokenService.getAccessToken();
+        let accessToken = await tokenService.getAccessToken();
         
         if (accessToken) {
           // JWT更新エンドポイントへのリクエストの場合は更新チェックをスキップ
@@ -80,11 +80,11 @@ class ApiService {
           
           if (!isTokenRefreshRequest) {
             // トークンの有効期限が近い場合は更新
-            const remainingTime = tokenService.getRemainingTime();
+            const remainingTime = await tokenService.getRemainingTime();
             if (remainingTime !== null && remainingTime < 5 * 60 * 1000) {
               try {
                 // リフレッシュトークンがあるか確認
-                const refreshToken = tokenService.getRefreshToken();
+                const refreshToken = await tokenService.getRefreshToken();
                 if (refreshToken) {
                   // 直接リフレッシュリクエストを行う（APIサービスインスタンスを使用しない）
                   const axios = (await import('axios')).default;
@@ -111,7 +111,7 @@ class ApiService {
                   
                   if (response.status === 200 && response.data.tokens) {
                     const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.tokens;
-                    tokenService.setTokens(newAccessToken, newRefreshToken);
+                    await tokenService.setTokens(newAccessToken, newRefreshToken);
                     accessToken = newAccessToken;
                   }
                 }
@@ -164,8 +164,9 @@ class ApiService {
           const status = error.response.status;
           
           // JWT認証の場合のトークン期限切れ対応
+          const refreshToken = await tokenService.getRefreshToken();
           if (status === 401 && 
-              tokenService.getRefreshToken() && 
+              refreshToken && 
               error.config) {
             
             // リクエスト設定の存在確認と再試行フラグ確認
@@ -206,8 +207,8 @@ class ApiService {
                   
                   try {
                     // リフレッシュトークンがあるか確認
-                    const refreshToken = tokenService.getRefreshToken();
-                    if (refreshToken) {
+                    const innerRefreshToken = await tokenService.getRefreshToken();
+                    if (innerRefreshToken) {
                       // 直接リフレッシュリクエストを行う（APIサービスインスタンスを使用しない）
                       const axios = (await import('axios')).default;
                       let baseURL = import.meta.env.PROD 

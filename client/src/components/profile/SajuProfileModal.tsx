@@ -4,11 +4,12 @@ import {
   Box, 
   Typography, 
   Paper,
-  CircularProgress
+  Alert
 } from '@mui/material';
 import SajuProfileForm from './SajuProfileForm';
 import { useAuth } from '../../contexts/AuthContext';
 import fortuneService from '../../services/fortune.service';
+import LoadingIndicator from '../common/LoadingIndicator';
 
 interface SajuProfileModalProps {
   open: boolean;
@@ -17,9 +18,10 @@ interface SajuProfileModalProps {
 }
 
 const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onComplete }) => {
-  const { updateUserProfile, refreshUserProfile } = useAuth();
+  const { updateUserProfile, refreshUserProfile, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<string | null>(null);
 
   const handleFormSubmit = async (profileData: any) => {
     setIsSubmitting(true);
@@ -27,13 +29,16 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
     
     try {
       // ユーザープロフィールを更新
+      setProcessingStep('プロフィール情報を更新中...');
       await updateUserProfile(profileData);
       
       // 最新のプロフィール情報で認証コンテキストを更新
+      setProcessingStep('プロフィール情報を同期中...');
       await refreshUserProfile();
       
       // デイリーフォーチュンを強制的に更新
       try {
+        setProcessingStep('運勢情報を更新中...');
         console.log('四柱推命プロフィール更新により運勢情報を更新しています...');
         await fortuneService.refreshDailyFortune();
         console.log('運勢情報の更新に成功しました');
@@ -42,6 +47,7 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
         console.warn('運勢情報の更新に失敗しましたが、プロフィール更新は成功しました:', fortuneError);
       }
       
+      setProcessingStep('完了');
       // 成功コールバックを呼び出し
       onComplete();
     } catch (err) {
@@ -49,6 +55,7 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
       setError('プロフィール情報の登録に失敗しました。ネットワーク接続を確認してください。');
     } finally {
       setIsSubmitting(false);
+      setProcessingStep(null);
     }
   };
 
@@ -97,17 +104,22 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
         </Typography>
         
         {error && (
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 2 }}>
-            <Typography color="error">{error}</Typography>
-          </Box>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
         )}
         
         {isSubmitting ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+            <LoadingIndicator size="medium" />
+            {processingStep && (
+              <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                {processingStep}
+              </Typography>
+            )}
           </Box>
         ) : (
-          <SajuProfileForm onSubmit={handleFormSubmit} isLoading={isSubmitting} />
+          <SajuProfileForm onSubmit={handleFormSubmit} isLoading={isSubmitting || authLoading} />
         )}
         
         {!isSubmitting && (

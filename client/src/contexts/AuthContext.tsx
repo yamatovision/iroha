@@ -3,6 +3,7 @@ import { IUser, UserRole, USER } from '@shared/index'
 import apiService from '../services/api.service'
 import tokenService from '../services/auth/token.service'
 import jwtAuthService from '../services/auth/jwt-auth.service'
+import storageService from '../services/storage/storage-factory'
 
 // 認証コンテキストの型定義
 type AuthContextType = {
@@ -25,7 +26,7 @@ type AuthContextType = {
   migrateToJwt: (password: string) => Promise<any>
   // 認証モード
   authMode: 'firebase' | 'jwt'
-  setAuthMode: (mode: 'firebase' | 'jwt') => void
+  setAuthMode: (mode: 'firebase' | 'jwt') => Promise<void>
   currentUser: any
 }
 
@@ -45,10 +46,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [authMode, setAuthMode] = useState<'firebase' | 'jwt'>('jwt')
   const [currentUser, setCurrentUser] = useState<any>(null)
   
-  // ローカルストレージから管理者の選択中のアクティブチームを初期化
-  const [activeTeamId, setActiveTeamId] = useState<string | null>(() => {
-    return localStorage.getItem('activeTeamId')
-  })
+  // アクティブチームIDの初期化は空文字列から始めて非同期で更新
+  const [activeTeamId, setActiveTeamId] = useState<string | null>(null)
+
+  // 初期設定の読み込み
+  useEffect(() => {
+    const loadInitialSettings = async () => {
+      try {
+        // アクティブチームIDを読み込み
+        const savedTeamId = await storageService.get('activeTeamId');
+        if (savedTeamId) {
+          setActiveTeamId(savedTeamId);
+        }
+        
+        // 認証モードを読み込み
+        const savedAuthMode = await storageService.get('df_auth_mode') as 'firebase' | 'jwt' | null;
+        if (savedAuthMode && (savedAuthMode === 'firebase' || savedAuthMode === 'jwt')) {
+          setAuthMode(savedAuthMode);
+        }
+      } catch (error) {
+        console.error('初期設定読み込みエラー:', error);
+      }
+    };
+    
+    loadInitialSettings();
+  }, []);
 
   // ユーザー認証状態の監視
   useEffect(() => {
@@ -57,11 +79,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // JWTトークンの有効性をチェックしてユーザープロフィールを取得
     const loadUserAuthentication = async () => {
       try {
-        // リフレッシュトークンの存在と有効性をチェック
-        const hasJwtToken = !!tokenService.getRefreshToken();
+        // リフレッシュトークンの存在を確認
+        const refreshToken = await tokenService.getRefreshToken();
+        const hasJwtToken = !!refreshToken;
         
         if (hasJwtToken) {
-          const isTokenValid = tokenService.isRefreshTokenValid();
+          // トークンの有効性をチェック
+          const isTokenValid = await tokenService.isRefreshTokenValid();
           
           if (isTokenValid) {
             try {
@@ -71,12 +95,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               console.error('JWTトークンでのプロフィール取得エラー:', error);
               setUserProfile(null);
               // トークンをクリア
-              tokenService.clearTokens();
+              await tokenService.clearTokens();
             }
           } else {
             // リフレッシュトークンが無効な場合はクリア
             console.log('リフレッシュトークンが無効です、トークンをクリアします');
-            tokenService.clearTokens();
+            await tokenService.clearTokens();
             setUserProfile(null);
           }
         } else {
@@ -93,8 +117,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loadUserAuthentication();
     
     // JWTトークンの自動更新タイマー
-    const tokenRefreshInterval = setInterval(() => {
-      if (tokenService.getRefreshToken()) {
+    const tokenRefreshInterval = setInterval(async () => {
+      const refreshToken = await tokenService.getRefreshToken();
+      if (refreshToken) {
         jwtAuthService.refreshToken().catch(err => {
           console.error('トークン自動更新エラー:', err);
         });
@@ -110,9 +135,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const loadUserProfile = async () => {
     try {
       // トークンの更新が必要か確認
-      if (tokenService.isAccessTokenValid() && 
-          tokenService.getRemainingTime() !== null && 
-          tokenService.getRemainingTime()! < 5 * 60 * 1000) {
+      const isValid = await tokenService.isAccessTokenValid();
+      const remainingTime = await tokenService.getRemainingTime();
+      
+      if (isValid && remainingTime !== null && remainingTime < 5 * 60 * 1000) {
         // 残り5分未満ならトークンを更新
         await jwtAuthService.refreshToken();
       }
@@ -259,7 +285,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // ユーザープロフィール再取得
   const refreshUserProfile = async () => {
-    if (!tokenService.getAccessToken()) {
+    const accessToken = await tokenService.getAccessToken();
+    if (!accessToken) {
       return null;
     }
     
@@ -295,9 +322,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                        userRole === 'SuperAdmin';
 
   // アクティブチームIDが変更されたらローカルストレージに保存
-  const handleSetActiveTeamId = (teamId: string) => {
-    localStorage.setItem('activeTeamId', teamId);
-    setActiveTeamId(teamId);
+  const handleSetActiveTeamId = async (teamId: string) => {
+    try {
+      await storageService.set('activeTeamId', teamId);
+      setActiveTeamId(teamId);
+      console.log(`アクティブチームIDを設定: ${teamId}`);
+    } catch (error) {
+      console.error('アクティブチームID保存エラー:', error);
+    }
   };
 
   // JWT認証に移行
@@ -309,6 +341,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('JWT認証移行エラー:', error);
       throw error;
+    }
+  };
+  
+  // 認証モード変更のラッパー（非同期対応）
+  const handleSetAuthMode = async (mode: 'firebase' | 'jwt') => {
+    setAuthMode(mode);
+    try {
+      // ストレージに認証モードを保存
+      await storageService.set('df_auth_mode', mode);
+      console.log(`認証モードを変更: ${mode}`);
+    } catch (error) {
+      console.error('認証モード保存エラー:', error);
     }
   };
 
@@ -330,7 +374,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setShouldPromptMigration,
     migrateToJwt,
     authMode,
-    setAuthMode,
+    setAuthMode: handleSetAuthMode,
     currentUser
   };
 

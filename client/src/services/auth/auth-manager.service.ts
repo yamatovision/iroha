@@ -3,6 +3,7 @@ import { app } from '../../config/firebase';
 import jwtAuthService from './jwt-auth.service';
 import tokenService from './token.service';
 import apiService from '../api.service';
+import storageService from '../storage/storage-factory';
 import { AUTH, USER } from '@shared/index';
 
 // 認証モード
@@ -18,9 +19,10 @@ export interface AuthManager {
   register(email: string, password: string, displayName: string): Promise<any>;
   logout(): Promise<void>;
   getCurrentAuthMode(): AuthMode;
-  setAuthMode(mode: AuthMode): void;
+  setAuthMode(mode: AuthMode): Promise<void>;
   migrateToJwt(password: string): Promise<any>;
   refreshJwtTokenIfNeeded(): Promise<boolean>;
+  isAuthenticated(): Promise<boolean>;
 }
 
 class AuthManagerService implements AuthManager {
@@ -29,12 +31,24 @@ class AuthManagerService implements AuthManager {
   private authMode: AuthMode = AuthMode.HYBRID;
   
   constructor() {
-    // ローカルストレージから認証モードを復元
-    const savedMode = localStorage.getItem('df_auth_mode');
-    if (savedMode && Object.values(AuthMode).includes(savedMode as AuthMode)) {
-      this.authMode = savedMode as AuthMode;
+    // 認証モードの初期化
+    this.initAuthMode();
+  }
+  
+  // 認証モードの非同期初期化
+  private async initAuthMode(): Promise<void> {
+    try {
+      // ストレージから認証モードを取得
+      const savedMode = await storageService.get('df_auth_mode');
+      if (savedMode && Object.values(AuthMode).includes(savedMode as AuthMode)) {
+        this.authMode = savedMode as AuthMode;
+      }
+      console.log(`認証モード: ${this.authMode}`);
+    } catch (error) {
+      console.error('認証モード初期化エラー:', error);
+      // デフォルトモードを使用
+      console.log(`デフォルト認証モードを使用: ${this.authMode}`);
     }
-    console.log(`認証モード: ${this.authMode}`);
   }
   
   // 現在の認証モードを取得
@@ -43,10 +57,15 @@ class AuthManagerService implements AuthManager {
   }
   
   // 認証モードを設定
-  setAuthMode(mode: AuthMode): void {
+  async setAuthMode(mode: AuthMode): Promise<void> {
     this.authMode = mode;
-    localStorage.setItem('df_auth_mode', mode);
-    console.log(`認証モードを変更: ${mode}`);
+    try {
+      // ストレージサービスを使用した非同期保存
+      await storageService.set('df_auth_mode', mode);
+      console.log(`認証モードを変更: ${mode}`);
+    } catch (error) {
+      console.error('認証モード保存エラー:', error);
+    }
   }
   
   // ログイン処理（ハイブリッドまたは特定のモード）
@@ -171,28 +190,41 @@ class AuthManagerService implements AuthManager {
   
   // ログアウト処理
   async logout(): Promise<void> {
-    const isJwtAuth = this.authMode === AuthMode.JWT || 
-                     (this.authMode === AuthMode.HYBRID && tokenService.getAccessToken());
-    
-    const isFirebaseAuth = this.authMode === AuthMode.FIREBASE || 
-                          (this.authMode === AuthMode.HYBRID && this.auth.currentUser);
-    
-    // 両方の認証からログアウト（ハイブリッドモード）
-    const promises: Promise<void>[] = [];
-    
-    if (isJwtAuth) {
-      promises.push(jwtAuthService.logout());
-    }
-    
-    if (isFirebaseAuth) {
-      promises.push(signOut(this.auth));
-    }
-    
     try {
+      // JWTトークンの有無を確認
+      const accessToken = await tokenService.getAccessToken();
+      const isJwtAuth = this.authMode === AuthMode.JWT || 
+                       (this.authMode === AuthMode.HYBRID && accessToken);
+      
+      const isFirebaseAuth = this.authMode === AuthMode.FIREBASE || 
+                            (this.authMode === AuthMode.HYBRID && this.auth.currentUser);
+      
+      // 両方の認証からログアウト（ハイブリッドモード）
+      const promises: Promise<void>[] = [];
+      
+      if (isJwtAuth) {
+        console.log('JWTからログアウトします');
+        promises.push(jwtAuthService.logout());
+      }
+      
+      if (isFirebaseAuth) {
+        console.log('Firebaseからログアウトします');
+        promises.push(signOut(this.auth));
+      }
+      
       await Promise.all(promises);
       console.log('ログアウト完了（全認証システム）');
     } catch (error) {
       console.error('ログアウト処理中にエラーが発生しました', error);
+      
+      // エラーが発生してもローカルのトークンをクリア試行
+      try {
+        await tokenService.clearTokens();
+        console.log('エラー後にトークンをクリアしました');
+      } catch (clearError) {
+        console.error('トークンクリア中にエラーが発生しました', clearError);
+      }
+      
       throw error;
     }
   }
@@ -205,7 +237,7 @@ class AuthManagerService implements AuthManager {
       
       // 移行が成功したら認証モードをJWTに変更
       if (migrationResult && migrationResult.tokens) {
-        this.setAuthMode(AuthMode.JWT);
+        await this.setAuthMode(AuthMode.JWT);
       }
       
       return migrationResult;
@@ -222,41 +254,69 @@ class AuthManagerService implements AuthManager {
       return false;
     }
     
-    // アクセストークンの残り時間を確認
-    const remainingTime = tokenService.getRemainingTime();
-    
-    // トークンがない場合は更新不可
-    if (remainingTime === null) {
-      console.log('アクセストークンが存在しないため更新をスキップします');
-      return false;
-    }
-    
-    // 残り5分以内ならトークンを更新
-    const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5分（ミリ秒）
-    
-    if (remainingTime < REFRESH_THRESHOLD) {
-      console.log(`アクセストークンの残り時間が少ないため更新します（残り${Math.floor(remainingTime / 1000)}秒）`);
-      try {
-        console.log('リフレッシュトークン更新プロセスを開始');
-        const result = await jwtAuthService.refreshToken();
-        
-        if (result) {
-          console.log('リフレッシュトークン更新に成功しました');
-        } else {
-          console.warn('リフレッシュトークン更新に失敗しました');
-        }
-        
-        return result;
-      } catch (error) {
-        console.error('トークン更新エラー:', error);
+    try {
+      // アクセストークンの残り時間を確認
+      const remainingTime = await tokenService.getRemainingTime();
+      
+      // トークンがない場合は更新不可
+      if (remainingTime === null) {
+        console.log('アクセストークンが存在しないため更新をスキップします');
         return false;
       }
-    } else {
-      // デバッグ用：残り時間を表示
-      console.log(`アクセストークンの残り時間が十分あります（残り${Math.floor(remainingTime / 1000)}秒）`);
+      
+      // 残り5分以内ならトークンを更新
+      const REFRESH_THRESHOLD = 5 * 60 * 1000; // 5分（ミリ秒）
+      
+      if (remainingTime < REFRESH_THRESHOLD) {
+        console.log(`アクセストークンの残り時間が少ないため更新します（残り${Math.floor(remainingTime / 1000)}秒）`);
+        try {
+          console.log('リフレッシュトークン更新プロセスを開始');
+          const result = await jwtAuthService.refreshToken();
+          
+          if (result) {
+            console.log('リフレッシュトークン更新に成功しました');
+          } else {
+            console.warn('リフレッシュトークン更新に失敗しました');
+          }
+          
+          return result;
+        } catch (error) {
+          console.error('トークン更新エラー:', error);
+          return false;
+        }
+      } else {
+        // デバッグ用：残り時間を表示
+        console.log(`アクセストークンの残り時間が十分あります（残り${Math.floor(remainingTime / 1000)}秒）`);
+      }
+      
+      return true; // トークンは有効
+    } catch (error) {
+      console.error('トークン残り時間チェックエラー:', error);
+      return false;
     }
-    
-    return true; // トークンは有効
+  }
+  
+  // 認証状態を確認する
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      // 認証モードに応じた確認
+      if (this.authMode === AuthMode.JWT) {
+        // JWTの場合はトークンの有効性をチェック
+        return await tokenService.isAccessTokenValid();
+      } else if (this.authMode === AuthMode.FIREBASE) {
+        // Firebaseの場合は現在のユーザーをチェック
+        return !!this.auth.currentUser;
+      } else {
+        // ハイブリッドモードの場合は両方をチェック
+        const jwtValid = await tokenService.isAccessTokenValid();
+        const firebaseValid = !!this.auth.currentUser;
+        
+        return jwtValid || firebaseValid;
+      }
+    } catch (error) {
+      console.error('認証状態確認エラー:', error);
+      return false;
+    }
   }
 }
 

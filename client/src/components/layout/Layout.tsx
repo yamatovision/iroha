@@ -13,6 +13,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useNavigate } from 'react-router-dom'
 import NavigationMenu from './NavigationMenu'
 import UserMenu from './UserMenu'
+import { NetworkStatusIndicator } from '../network'
 
 // ドロワーの幅
 const drawerWidth = 240
@@ -154,6 +155,9 @@ const Layout = () => {
           <Box sx={{ height: '64px' }} /> {/* すべての画面サイズで下部ナビゲーション用スペース */}
         </Main>
       </Box>
+      
+      {/* ネットワーク状態通知 */}
+      <NetworkStatusIndicator mode="snackbar" />
       
       {/* 下部ナビゲーション - すべての画面サイズで表示 */}
       <BottomNavigation>

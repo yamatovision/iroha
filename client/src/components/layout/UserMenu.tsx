@@ -13,11 +13,14 @@ import Typography from '@mui/material/Typography'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
+import CircularProgress from '@mui/material/CircularProgress'
+import LoadingIndicator from '../../components/common/LoadingIndicator'
 
 const UserMenu = () => {
-  const { userProfile, logout } = useAuth()
+  const { userProfile, logout, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [logoutLoading, setLogoutLoading] = useState(false)
   const open = Boolean(anchorEl)
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -29,11 +32,14 @@ const UserMenu = () => {
   }
 
   const handleLogout = async () => {
+    setLogoutLoading(true)
     try {
       await logout()
       navigate('/login')
     } catch (error) {
       console.error('ログアウトエラー:', error)
+    } finally {
+      setLogoutLoading(false)
     }
   }
 
@@ -55,6 +61,15 @@ const UserMenu = () => {
       : '?'
   }
 
+  // 認証状態のロード中は小さなローディングアイコンを表示
+  if (authLoading) {
+    return (
+      <Box sx={{ ml: 2, display: 'flex', alignItems: 'center' }}>
+        <LoadingIndicator size="small" />
+      </Box>
+    );
+  }
+  
   return (
     <Box>
       <Tooltip title="アカウント設定">
@@ -103,11 +118,15 @@ const UserMenu = () => {
         {/* Firebase認証関連のメニュー項目を削除 */}
         
         <Divider />
-        <MenuItem onClick={handleLogout}>
+        <MenuItem onClick={handleLogout} disabled={logoutLoading}>
           <ListItemIcon>
-            <LogoutIcon fontSize="small" />
+            {logoutLoading ? (
+              <CircularProgress size={20} />
+            ) : (
+              <LogoutIcon fontSize="small" />
+            )}
           </ListItemIcon>
-          ログアウト
+          {logoutLoading ? 'ログアウト中...' : 'ログアウト'}
         </MenuItem>
       </Menu>
     </Box>

@@ -77,7 +77,7 @@ export class ChatService {
           
           // JWT認証トークンの取得
           const tokenService = await import('./auth/token.service').then(m => m.default);
-          const token = tokenService.getAccessToken();
+          const token = await tokenService.getAccessToken();
           
           if (!token) {
             throw new Error('JWT認証トークンが取得できませんでした。再ログインしてください。');

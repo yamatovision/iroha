@@ -1,7 +1,7 @@
 import { IStorageService } from './storage.interface';
 import { CapacitorStorageService } from './capacitor-storage.service';
 import { WebStorageService } from './web-storage.service';
-import { isNativePlatform, detectPlatform, PlatformType } from './platform-detector';
+import { isNativePlatform, detectPlatform } from './platform-detector';
 
 /**
  * ストレージサービスを作成するファクトリクラス

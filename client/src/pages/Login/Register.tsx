@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { 
   Box, 
   Container, 
@@ -7,12 +7,12 @@ import {
   Button, 
   Avatar, 
   InputAdornment,
-  CircularProgress,
   Alert
 } from '@mui/material';
 import { Email, Lock, Person, Psychology } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -21,8 +21,15 @@ const Register = () => {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { register } = useAuth();
+  const { register, currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
+  // ユーザーが既にログインしている場合はメインページにリダイレクト
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/fortune');
+    }
+  }, [currentUser, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -71,6 +78,11 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  // 認証ロード中の表示
+  if (authLoading) {
+    return <LoadingIndicator message="認証情報を確認中..." fullScreen size="medium" />;
+  }
 
   return (
     <Box
@@ -250,7 +262,12 @@ const Register = () => {
               }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '登録する'}
+              {loading ? 
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <LoadingIndicator size="small" />
+                  <Typography variant="body2">登録中...</Typography>
+                </Box> : '登録する'
+              }
             </Button>
           </Box>
 

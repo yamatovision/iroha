@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import SajuProfileModal from '../profile/SajuProfileModal';
 import { useNavigate } from 'react-router-dom';
+import LoadingIndicator from './LoadingIndicator';
 
 interface RequireSajuProfileProps {
   children: React.ReactNode;
@@ -58,6 +59,11 @@ const RequireSajuProfile: React.FC<RequireSajuProfileProps> = ({ children }) => 
       }
     }
   }, [userProfile, loading, profileChecked]);
+  
+  // ロード中の表示
+  if (loading && !profileChecked) {
+    return <LoadingIndicator message="プロフィール情報を確認中..." size="medium" />;
+  }
   
   const handleProfileComplete = () => {
     console.log('四柱推命プロフィールが正常に登録されました。');

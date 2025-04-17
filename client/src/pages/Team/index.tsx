@@ -60,17 +60,26 @@ const Team: React.FC = () => {
   const { setActiveTeamId } = useAuth();
 
   // チーム選択時の処理
-  const handleTeamSelect = (team: ITeam) => {
+  const handleTeamSelect = async (team: ITeam) => {
     console.log('チーム選択:', team.id, team.name);
     setCurrentTeam(team);
     
-    // 選択されたチームをアクティブチームとして保存
-    setActiveTeamId(team.id);
-    
-    const teamPath = `/team/${team.id}`;
-    console.log('遷移先:', teamPath);
-    navigate(teamPath);
-    setShowTeamSelector(false);
+    try {
+      // 選択されたチームをアクティブチームとして保存（非同期処理）
+      await setActiveTeamId(team.id);
+      console.log('アクティブチームを設定:', team.id);
+      
+      const teamPath = `/team/${team.id}`;
+      console.log('遷移先:', teamPath);
+      navigate(teamPath);
+      setShowTeamSelector(false);
+    } catch (error) {
+      console.error('アクティブチーム保存エラー:', error);
+      // エラーがあってもナビゲーションは続行
+      const teamPath = `/team/${team.id}`;
+      navigate(teamPath);
+      setShowTeamSelector(false);
+    }
   };
 
   // タブの切り替え

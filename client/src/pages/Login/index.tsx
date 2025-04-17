@@ -8,12 +8,12 @@ import {
   Divider, 
   Avatar, 
   InputAdornment,
-  CircularProgress,
   Alert
 } from '@mui/material';
 import { Email, Lock, Psychology } from '@mui/icons-material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingIndicator from '../../components/common/LoadingIndicator';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -210,7 +210,12 @@ const Login = () => {
               }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'ログイン'}
+              {loading ? 
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <LoadingIndicator size="small" />
+                  <Typography variant="body2">ログイン中...</Typography>
+                </Box> : 'ログイン'
+              }
             </Button>
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Link to="/forgot-password" style={{ 

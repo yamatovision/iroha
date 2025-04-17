@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import RequireSajuProfile from './components/common/RequireSajuProfile'
+import LoadingIndicator from './components/common/LoadingIndicator'
 
 // ページコンポーネント
 import Layout from './components/layout/Layout'
@@ -72,7 +73,7 @@ function App() {
 
   if (loading) {
     // 読み込み中表示
-    return <div>Loading...</div>
+    return <LoadingIndicator message="アプリを読み込み中..." fullScreen size="large" />
   }
 
   return (
