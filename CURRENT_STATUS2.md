@@ -97,7 +97,7 @@
 - [x] 69. Firebase App Distribution の設定 (Android)
 - [x] 70. デバッグビルドAPIエンドポイント設定
 - [x] 70a. APIエンドポイントの動作検証とテスト
-- [ ] 71. Android デバッグビルド生成と配布
+- [~] 71. Android デバッグビルド生成と配布
 - [ ] 72. iOS デバッグビルド生成と配布
 - [ ] 73. テスター向け簡易ガイド作成
 
@@ -173,7 +173,7 @@
 ## 進捗管理
 - 完了タスク数: 61/114
 - 進捗率: 53.51%
-- 最終更新日: 2025/4/17
+- 最終更新日: 2025/4/18
 
 ## 開発コマンド集
 
@@ -216,6 +216,9 @@ cd client && npx cap open android
 - [ネイティブアプリ移行計画](/docs/native-app-migration-plan.md) - 移行全体の計画書
 - [Capacitor公式ドキュメント](https://capacitorjs.com/docs) - Capacitorの公式リファレンス
 - [Vite+React+TypeScript構成](https://vitejs.dev/guide/) - ビルド設定の参考
+- [Android ビルドガイド](/client/android-build-guide.md) - Android Studio でのビルド手順
+- [Capacitor HTTP Plugin](https://capacitorjs.com/docs/apis/http) - ネイティブHTTPリクエスト実装
+- [Firebase App Distribution](https://firebase.google.com/docs/app-distribution) - テスト版配布システム
 
 ## エラー引き継ぎログ
 
@@ -263,4 +266,19 @@ cd client && npx cap open android
   4. App.tsxからセッションマネージャーを初期化
 - メモ：Web環境とネイティブ環境の両方でライフサイクルイベントを適切に処理する必要がある
 - 参考：https://capacitorjs.com/docs/apis/app
+
+【71】Android デバッグビルド生成と配布
+- 問題1：Firebase関連のライブラリが見つからないエラー
+- 解決策1：FirebaseのBOMバージョンを34.0.0から32.7.4に更新
+- 問題2：swiperefreshlayoutが見つからないエラー
+- 解決策2：バージョンを1.2.0から1.1.0に更新
+- 問題3：デバッグビルドのアプリIDがFirebaseに登録されていない
+- 解決策3：デバッグビルドの接尾辞（.debug）を一時的に無効化
+- 問題4：Java 21が無効なソースリリースエラー
+- 解決策4：capacitor.build.gradle のJava設定をVERSION_21からVERSION_17に変更
+- 問題5：capacitor-android モジュールでもJava 21エラー
+- 次のステップ：
+  1. capacitor-android関連のJavaバージョン設定を全て確認・修正
+  2. 修正したコードでコマンドラインビルドを再試行
+  3. 必要に応じて英語パスのプロジェクトコピーでビルド
 
