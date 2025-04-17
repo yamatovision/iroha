@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { CapacitorHttp } from '@capacitor/core';
 import tokenService from './auth/token.service';
 import networkMonitorService from './network/network-monitor.service';
 import { IStorageService } from './storage/storage.interface';
@@ -63,8 +64,15 @@ class ApiService {
       this.baseURL = initialBaseURL;
     }
     
+    // Capacitorでの実行時にURLが正しく処理されるよう、特別な対応
+    // 直接APIを使用するフラグが設定されている場合は、allowAbsoluteUrlsを有効にする
+    const useDirectApi = import.meta.env.VITE_USE_DIRECT_API === 'true';
+    
     console.log(`🌐 API baseURL: ${this.baseURL || '(using proxy)'}`);
     console.log(`🔒 HTTPSモード: ${isNativeApp() ? '有効 (ネイティブアプリ)' : '無効 (開発モード)'}`);
+    if (useDirectApi) {
+      console.log('🔌 直接APIモード: 有効（絶対URLを使用）');
+    }
 
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -72,6 +80,8 @@ class ApiService {
         'Content-Type': 'application/json',
       },
       timeout: 45000, // 45秒に延長（特に調和コンパス生成など、AIが関わる処理用）
+      // Capacitorでの実行時に絶対URLを許可
+      allowAbsoluteUrls: useDirectApi
     });
 
     // ネットワーク状態の監視を開始
@@ -120,6 +130,9 @@ class ApiService {
                   
                   console.log('Using refresh token URL (early check):', refreshUrl);
                   
+                  // 直接APIを使用するフラグが設定されている場合
+                  const useDirectApi = import.meta.env.VITE_USE_DIRECT_API === 'true';
+                  
                   const response = await axios({
                     method: 'post',
                     url: refreshUrl,
@@ -127,7 +140,9 @@ class ApiService {
                     headers: {
                       'Content-Type': 'application/json',
                       'X-Direct-Refresh': 'true'
-                    }
+                    },
+                    // Capacitorでの実行時に絶対URLを許可
+                    allowAbsoluteUrls: useDirectApi
                   });
                   
                   if (response.status === 200 && response.data.tokens) {
@@ -248,6 +263,9 @@ class ApiService {
                       
                       console.log('Using refresh token URL:', refreshUrl);
                       
+                      // 直接APIを使用するフラグが設定されている場合
+                      const useDirectApi = import.meta.env.VITE_USE_DIRECT_API === 'true';
+                      
                       const response = await axios({
                         method: 'post',
                         url: refreshUrl,
@@ -255,7 +273,9 @@ class ApiService {
                         headers: {
                           'Content-Type': 'application/json',
                           'X-Direct-Refresh': 'true'
-                        }
+                        },
+                        // Capacitorでの実行時に絶対URLを許可
+                        allowAbsoluteUrls: useDirectApi
                       });
                       
                       if (response.status === 200 && response.data.tokens) {
@@ -731,9 +751,13 @@ class ApiService {
     const skipCache = cacheOptions?.skipCache || false;
     const forceRefresh = cacheOptions?.forceRefresh || false;
     
-    // キャッシュをスキップする場合は通常のリクエスト
+    // キャッシュをスキップする場合はネイティブかどうかによって処理を分岐
     if (skipCache) {
-      return this.api.get<T>(url, config);
+      if (isNativeApp()) {
+        return this.getNativeRequest<T>(url, config);
+      } else {
+        return this.api.get<T>(url, config);
+      }
     }
     
     try {
@@ -764,8 +788,13 @@ class ApiService {
         throw new Error(`オフラインモードでキャッシュが見つかりません: ${url}`);
       }
       
-      // サーバーからデータを取得
-      const response = await this.api.get<T>(url, config);
+      // サーバーからデータを取得（ネイティブかどうかで処理を分岐）
+      let response;
+      if (isNativeApp()) {
+        response = await this.getNativeRequest<T>(url, config);
+      } else {
+        response = await this.api.get<T>(url, config);
+      }
       
       // レスポンスをキャッシュに保存
       await this.cacheResponse<T>(url, params, response.data, ttl);
@@ -795,10 +824,127 @@ class ApiService {
       throw error;
     }
   }
+  
+  /**
+   * ネイティブHTTPクライアントを使用したGETリクエスト
+   */
+  private async getNativeRequest<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    console.log('🔌 ネイティブHTTPクライアントを使用します (GET)');
+    
+    // トレースIDを生成
+    const traceId = generateTraceId();
+    
+    // JWTトークンを設定
+    let headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Trace-ID': traceId
+    };
+    
+    const accessToken = await tokenService.getAccessToken();
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
+    // 完全なURLを構築
+    const fullUrl = url.startsWith('http') 
+      ? url 
+      : this.baseURL + (url.startsWith('/') ? url : '/' + url);
+      
+    // クエリパラメータを処理
+    const params = config?.params;
+    let queryString = '';
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        searchParams.append(key, String(value));
+      });
+      queryString = searchParams.toString();
+      if (queryString) {
+        queryString = '?' + queryString;
+      }
+    }
+    
+    const requestUrl = fullUrl + queryString;
+    console.log(`🌐 ネイティブHTTP GET: ${requestUrl}`);
+    console.log('Headers:', headers);
+    
+    try {
+      // CapacitorHttpを使用してリクエスト送信
+      const nativeResponse = await CapacitorHttp.get({
+        url: requestUrl,
+        headers: headers
+      });
+      
+      console.log('✅ ネイティブHTTPレスポンス:', nativeResponse);
+      
+      // Axiosレスポンス形式に変換
+      return {
+        data: nativeResponse.data,
+        status: nativeResponse.status,
+        statusText: nativeResponse.status.toString(),
+        headers: nativeResponse.headers,
+        config: config || {},
+        request: {}
+      } as AxiosResponse<T>;
+    } catch (error) {
+      console.error('ネイティブHTTPリクエストエラー:', error);
+      throw error;
+    }
+  }
 
   public async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      const response = await this.api.post<T>(url, data, config);
+      let response;
+      
+      // ネイティブアプリの場合はCapacitorHttpを使用
+      if (isNativeApp()) {
+        console.log('🔌 ネイティブHTTPクライアントを使用します');
+        
+        // トレースIDを生成
+        const traceId = generateTraceId();
+        
+        // JWTトークンを設定
+        let headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-Trace-ID': traceId
+        };
+        
+        const accessToken = await tokenService.getAccessToken();
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        // 完全なURLを構築
+        const fullUrl = url.startsWith('http') 
+          ? url 
+          : this.baseURL + (url.startsWith('/') ? url : '/' + url);
+          
+        console.log(`🌐 ネイティブHTTP POST: ${fullUrl}`);
+        console.log('Headers:', headers);
+        console.log('Data:', data);
+        
+        // CapacitorHttpを使用してリクエスト送信
+        const nativeResponse = await CapacitorHttp.post({
+          url: fullUrl,
+          headers: headers,
+          data: data
+        });
+        
+        // Axiosレスポンス形式に変換
+        response = {
+          data: nativeResponse.data,
+          status: nativeResponse.status,
+          statusText: nativeResponse.status.toString(),
+          headers: nativeResponse.headers,
+          config: config || {},
+          request: {}
+        } as AxiosResponse<T>;
+        
+        console.log('✅ ネイティブHTTPレスポンス:', response);
+      } else {
+        // Web環境の場合は通常のAxiosを使用
+        response = await this.api.post<T>(url, data, config);
+      }
       
       // POSTが成功した場合、関連するキャッシュを無効化
       // 例: ユーザープロファイル更新後、そのユーザーのキャッシュをクリア
@@ -815,6 +961,7 @@ class ApiService {
       
       return response;
     } catch (error) {
+      console.error('POST request failed:', error);
       // オフラインモードで操作をキューイングする機能を将来的に追加可能
       throw error;
     }
@@ -822,7 +969,57 @@ class ApiService {
 
   public async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      const response = await this.api.put<T>(url, data, config);
+      let response;
+      
+      // ネイティブアプリの場合はCapacitorHttpを使用
+      if (isNativeApp()) {
+        console.log('🔌 ネイティブHTTPクライアントを使用します (PUT)');
+        
+        // トレースIDを生成
+        const traceId = generateTraceId();
+        
+        // JWTトークンを設定
+        let headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-Trace-ID': traceId
+        };
+        
+        const accessToken = await tokenService.getAccessToken();
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        // 完全なURLを構築
+        const fullUrl = url.startsWith('http') 
+          ? url 
+          : this.baseURL + (url.startsWith('/') ? url : '/' + url);
+          
+        console.log(`🌐 ネイティブHTTP PUT: ${fullUrl}`);
+        console.log('Headers:', headers);
+        console.log('Data:', data);
+        
+        // CapacitorHttpを使用してリクエスト送信
+        const nativeResponse = await CapacitorHttp.put({
+          url: fullUrl,
+          headers: headers,
+          data: data
+        });
+        
+        // Axiosレスポンス形式に変換
+        response = {
+          data: nativeResponse.data,
+          status: nativeResponse.status,
+          statusText: nativeResponse.status.toString(),
+          headers: nativeResponse.headers,
+          config: config || {},
+          request: {}
+        } as AxiosResponse<T>;
+        
+        console.log('✅ ネイティブHTTPレスポンス:', response);
+      } else {
+        // Web環境の場合は通常のAxiosを使用
+        response = await this.api.put<T>(url, data, config);
+      }
       
       // PUTが成功した場合、関連するキャッシュを無効化
       if (url.includes('/users/') || url.includes('/profile')) {
@@ -836,13 +1033,63 @@ class ApiService {
       
       return response;
     } catch (error) {
+      console.error('PUT request failed:', error);
       throw error;
     }
   }
 
   public async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      const response = await this.api.delete<T>(url, config);
+      let response;
+      
+      // ネイティブアプリの場合はCapacitorHttpを使用
+      if (isNativeApp()) {
+        console.log('🔌 ネイティブHTTPクライアントを使用します (DELETE)');
+        
+        // トレースIDを生成
+        const traceId = generateTraceId();
+        
+        // JWTトークンを設定
+        let headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-Trace-ID': traceId
+        };
+        
+        const accessToken = await tokenService.getAccessToken();
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        // 完全なURLを構築
+        const fullUrl = url.startsWith('http') 
+          ? url 
+          : this.baseURL + (url.startsWith('/') ? url : '/' + url);
+          
+        console.log(`🌐 ネイティブHTTP DELETE: ${fullUrl}`);
+        console.log('Headers:', headers);
+        
+        // CapacitorHttpを使用してリクエスト送信 (delete用)
+        const nativeResponse = await CapacitorHttp.request({
+          method: 'DELETE',
+          url: fullUrl,
+          headers: headers
+        });
+        
+        // Axiosレスポンス形式に変換
+        response = {
+          data: nativeResponse.data,
+          status: nativeResponse.status,
+          statusText: nativeResponse.status.toString(),
+          headers: nativeResponse.headers,
+          config: config || {},
+          request: {}
+        } as AxiosResponse<T>;
+        
+        console.log('✅ ネイティブHTTPレスポンス:', response);
+      } else {
+        // Web環境の場合は通常のAxiosを使用
+        response = await this.api.delete<T>(url, config);
+      }
       
       // DELETEが成功した場合、関連するキャッシュを無効化
       if (url.includes('/teams/')) {
@@ -851,13 +1098,66 @@ class ApiService {
       
       return response;
     } catch (error) {
+      console.error('DELETE request failed:', error);
       throw error;
     }
   }
 
   public async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      const response = await this.api.patch<T>(url, data, config);
+      let response;
+      
+      // ネイティブアプリの場合はCapacitorHttpを使用
+      if (isNativeApp()) {
+        console.log('🔌 ネイティブHTTPクライアントを使用します (PATCH)');
+        
+        // トレースIDを生成
+        const traceId = generateTraceId();
+        
+        // JWTトークンを設定
+        let headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-Trace-ID': traceId
+        };
+        
+        const accessToken = await tokenService.getAccessToken();
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+        
+        // 完全なURLを構築
+        const fullUrl = url.startsWith('http') 
+          ? url 
+          : this.baseURL + (url.startsWith('/') ? url : '/' + url);
+          
+        console.log(`🌐 ネイティブHTTP PATCH: ${fullUrl}`);
+        console.log('Headers:', headers);
+        console.log('Data:', data);
+        
+        // CapacitorHttpを使用してリクエスト送信
+        // PATCHメソッドが直接サポートされていないため、request()メソッドを使用
+        const nativeResponse = await CapacitorHttp.request({
+          method: 'PATCH',
+          url: fullUrl,
+          headers: headers,
+          data: data
+        });
+        
+        // Axiosレスポンス形式に変換
+        response = {
+          data: nativeResponse.data,
+          status: nativeResponse.status,
+          statusText: nativeResponse.status.toString(),
+          headers: nativeResponse.headers,
+          config: config || {},
+          request: {}
+        } as AxiosResponse<T>;
+        
+        console.log('✅ ネイティブHTTPレスポンス:', response);
+      } else {
+        // Web環境の場合は通常のAxiosを使用
+        response = await this.api.patch<T>(url, data, config);
+      }
       
       // PATCHが成功した場合、関連するキャッシュを無効化
       if (url.includes('/users/') || url.includes('/profile')) {
@@ -866,6 +1166,7 @@ class ApiService {
       
       return response;
     } catch (error) {
+      console.error('PATCH request failed:', error);
       throw error;
     }
   }
