@@ -7,15 +7,22 @@
 import fetch from 'cross-fetch';
 
 // 環境変数から設定を取得
+// サーバー起動時にはAPIの状態を確認するだけで、エラーはスローしない
 const getConfig = () => {
   const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
   const defaultModel = process.env.CLAUDE_MODEL || 'claude-3-7-sonnet-20250219';
+  const useClaudeApi = process.env.USE_CLAUDE_API === 'true';
   
-  if (!apiKey) {
-    throw new Error('Claude API Key is not configured. Please set ANTHROPIC_API_KEY in your environment variables.');
+  // API使用が有効で、かつAPIキーが設定されていない場合のみ警告
+  if (useClaudeApi && !apiKey) {
+    console.warn('Anthropic APIキーが設定されていませんが、USE_CLAUDE_API=trueとなっています。一部機能が無効になります。');
   }
   
-  return { apiKey, defaultModel };
+  return { 
+    apiKey: apiKey || 'dummy-key-for-disabled-api', 
+    defaultModel,
+    apiEnabled: useClaudeApi && !!apiKey 
+  };
 };
 
 // クライアント設定インターフェース
@@ -47,6 +54,7 @@ export class ClaudeApiClient {
   private apiKey: string;
   private defaultModel: string;
   private debug: boolean;
+  private apiEnabled: boolean;
   
   /**
    * コンストラクタ
@@ -56,12 +64,21 @@ export class ClaudeApiClient {
     this.apiKey = options.apiKey || config.apiKey;
     this.defaultModel = options.defaultModel || config.defaultModel;
     this.debug = options.debug || false;
+    this.apiEnabled = config.apiEnabled;
   }
   
   /**
    * API呼び出し - 標準モード（完全なレスポンスを取得）
    */
   public async callAPI(options: CallOptions): Promise<string> {
+    // APIが無効な場合はモック応答を返す
+    if (!this.apiEnabled) {
+      if (this.debug) {
+        console.log('🤖 Claude API is disabled, returning mock response');
+      }
+      return "Claude APIは現在使用できません。USE_CLAUDE_API=falseに設定されているか、APIキーが設定されていません。";
+    }
+    
     try {
       if (this.debug) {
         console.log('🤖 callAPI: Claude API呼び出し準備');
@@ -192,6 +209,16 @@ export class ClaudeApiClient {
       options.stream = true; // ストリームモードを強制
     }
 
+    // APIが無効な場合はモック応答を返す
+    if (!this.apiEnabled) {
+      if (this.debug) {
+        console.log('🤖 Claude API is disabled, returning mock response');
+      }
+      const mockResponse = "Claude APIは現在使用できません。USE_CLAUDE_API=falseに設定されているか、APIキーが設定されていません。";
+      yield mockResponse;
+      return;
+    }
+
     try {
       // node-fetchをインポートして使用
       const nodeFetch = await import('node-fetch').then(mod => mod.default);
@@ -283,7 +310,10 @@ export class ClaudeApiClient {
       if (this.debug) {
         console.error('Claude API streaming error:', error);
       }
-      throw error;
+      // エラーの場合もフォールバックメッセージを返してアプリケーションの継続を確保
+      const errorMessage = "Claude APIとの通信中にエラーが発生しました。しばらく経ってから再試行してください。";
+      yield errorMessage;
+      return;
     }
   }
 

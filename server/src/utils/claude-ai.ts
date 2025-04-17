@@ -4,20 +4,23 @@
 // ESM形式のnode-fetchをCommonJSで使用するためのworkaround
 import fetch from 'cross-fetch';
 
-/**
- * ClaudeAIのAPIキー
- * ⚠️ 重要: 実際のAPIキーは.envファイルのANTHROPIC_API_KEYに設定
- */
-const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY;
-
-if (!CLAUDE_API_KEY) {
-  throw new Error('Claude API Key is not configured. Please set ANTHROPIC_API_KEY in your environment variables.');
-}
-
-/**
- * 使用するClaudeのモデル
- */
-const CLAUDE_MODEL = process.env.CLAUDE_API_MODEL || 'claude-3-7-sonnet-20250219';
+// 環境変数から設定を取得する関数
+const getConfig = () => {
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  const model = process.env.CLAUDE_API_MODEL || 'claude-3-7-sonnet-20250219';
+  const useClaudeApi = process.env.USE_CLAUDE_API === 'true';
+  
+  // API使用が有効で、かつAPIキーが設定されていない場合のみ警告
+  if (useClaudeApi && !apiKey) {
+    console.warn('Anthropic APIキーが設定されていませんが、USE_CLAUDE_API=trueとなっています。一部機能が無効になります。');
+  }
+  
+  return { 
+    apiKey, 
+    model,
+    apiEnabled: useClaudeApi && !!apiKey 
+  };
+};
 
 /**
  * Claude AI APIを呼び出す関数
@@ -27,16 +30,24 @@ const CLAUDE_MODEL = process.env.CLAUDE_API_MODEL || 'claude-3-7-sonnet-20250219
  */
 export const callClaudeAI = async (prompt: string, systemPrompt?: string): Promise<string> => {
   try {
+    const config = getConfig();
+    
+    // APIが無効な場合は代替テキストを返す
+    if (!config.apiEnabled) {
+      console.log('Claude AI is disabled or API key is not set. Using mock response.');
+      return "Claude APIは現在使用できません。APIキーが設定されていないか、機能が無効化されています。";
+    }
+    
     const url = 'https://api.anthropic.com/v1/messages';
     
     const headers = {
       'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
+      'x-api-key': config.apiKey,
       'anthropic-version': '2023-06-01'
     };
     
     const body = {
-      model: CLAUDE_MODEL,
+      model: config.model,
       max_tokens: 4000,
       messages: [
         {
@@ -65,7 +76,8 @@ export const callClaudeAI = async (prompt: string, systemPrompt?: string): Promi
     
   } catch (error) {
     console.error('Claude AI API呼び出しエラー:', error);
-    throw error;
+    // エラーの場合も代替テキストを返してアプリケーションをクラッシュさせない
+    return "Claude APIリクエスト中にエラーが発生しました。しばらく経ってから再試行してください。";
   }
 };
 

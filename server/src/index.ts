@@ -6,8 +6,18 @@ import { connectToDatabase } from './config/database';
 // 環境変数の読み込み
 dotenv.config();
 
+// 必須の環境変数リスト（USE_CLAUDE_API=falseの場合はANTHROPIC_API_KEYは必須ではない）
+const getRequiredEnvVars = () => {
+  const baseRequired = ['MONGODB_URI'];
+  // Claude APIが有効な場合のみAPIキーを必須とする
+  if (process.env.USE_CLAUDE_API === 'true') {
+    return [...baseRequired, 'ANTHROPIC_API_KEY'];
+  }
+  return baseRequired;
+};
+
 // 重要な環境変数が設定されていることを確認
-const requiredEnvVars = ['MONGODB_URI'];
+const requiredEnvVars = getRequiredEnvVars();
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
@@ -145,6 +155,29 @@ app.use(`${API_BASE_PATH}/chat`, chatRoutes);
 
 // 公開エンドポイントルーターを設定
 app.use(`${API_BASE_PATH}/public`, publicEndpointsRoutes);
+
+// Capacitor用診断エンドポイント
+app.get(`${API_BASE_PATH}/capacitor-status`, (req: Request, res: Response) => {
+  const apiType = process.env.API_TYPE || 'STANDARD';
+  const capacitorEnabled = process.env.ENABLE_CAPACITOR_CORS === 'true';
+  
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    apiType,
+    capacitorEnabled,
+    headers: req.headers,
+    request: {
+      method: req.method,
+      url: req.url,
+      originalUrl: req.originalUrl,
+      path: req.path,
+      protocol: req.protocol,
+      ip: req.ip,
+      isCapacitor: req.headers['x-capacitor-request'] === 'true'
+    }
+  });
+});
 
 // エラーロギングミドルウェア
 app.use(errorLogger);
