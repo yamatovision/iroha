@@ -85,6 +85,7 @@ server/scripts/check-mongo-state.js
 server/scripts/test-jwt-login.js
 server/scripts/test-jwt-objectid.js
 server/scripts/verify-migration.js
+server/deploy-command.sh
 
 # ローカルツール
 .appgenius_temp/

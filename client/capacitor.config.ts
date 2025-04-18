@@ -20,6 +20,7 @@ const config: CapacitorConfig = {
       '192.168.11.6',
       '192.168.11.6:3000',
       '192.168.11.6:8080',
+      'dailyfortune-api-6clpzmy5pa-an.a.run.app',
       'dailyfortune-native-api-235426778039.asia-northeast1.run.app',
       '*.asia-northeast1.run.app',
       'run.app',
