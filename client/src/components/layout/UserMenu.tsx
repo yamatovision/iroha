@@ -35,9 +35,12 @@ const UserMenu = () => {
     setLogoutLoading(true)
     try {
       await logout()
+      // 明示的にログイン画面に遷移
       navigate('/login')
     } catch (error) {
       console.error('ログアウトエラー:', error)
+      // エラーが発生した場合でも、ログイン画面に遷移
+      navigate('/login')
     } finally {
       setLogoutLoading(false)
     }
@@ -47,8 +50,6 @@ const UserMenu = () => {
     navigate('/profile')
     handleClose()
   }
-  
-  // Firebase認証関連の機能を削除
 
   // ユーザーの頭文字を生成
   const getInitials = (name: string) => {
@@ -114,8 +115,6 @@ const UserMenu = () => {
           </ListItemIcon>
           設定
         </MenuItem>
-        
-        {/* Firebase認証関連のメニュー項目を削除 */}
         
         <Divider />
         <MenuItem onClick={handleLogout} disabled={logoutLoading}>

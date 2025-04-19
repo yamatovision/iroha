@@ -14,9 +14,7 @@ import {
   Typography,
   Snackbar,
   Alert,
-  CircularProgress,
-  Switch,
-  FormControlLabel
+  CircularProgress
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { Gender, ExtendedLocation } from '@shared/index';

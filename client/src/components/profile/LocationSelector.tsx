@@ -162,7 +162,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({ value, onChange, er
     // API取得後、valueが未設定なら「東京都」をデフォルト値として通知
     if (!loading && locations.length > 0 && !value) {
       console.log('LocationSelector: 初期値を「東京都」に設定します');
-      handleLocationChange(null, '東京都');
+      handleLocationChange({} as React.SyntheticEvent<Element, Event>, '東京都');
     }
   }, [loading, locations, value]);
   

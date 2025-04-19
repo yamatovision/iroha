@@ -20,25 +20,42 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login, currentUser } = useAuth();
+  const { login, userProfile, tokenError, verifyAuthStatus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // トークン期限切れ時のメッセージを表示
+  // 認証状態のチェックと遷移先決定
   useEffect(() => {
-    // クエリパラメータを確認
-    const params = new URLSearchParams(location.search);
-    const expired = params.get('expired');
+    const checkAuth = async () => {
+      // クエリパラメータを確認
+      const params = new URLSearchParams(location.search);
+      const expired = params.get('expired');
+      
+      if (expired === 'true') {
+        setError('セッションの有効期限が切れたか、トークンの不一致が発生しました。再度ログインしてください。');
+        return; // エラーメッセージを表示する場合は遷移しない
+      }
+      
+      // トークンエラーがある場合は表示
+      if (tokenError === 'token_mismatch') {
+        setError('セッションの有効期限が切れたか、トークンの不一致が発生しました。再度ログインしてください。');
+        return;
+      } else if (tokenError === 'user_id_mismatch') {
+        setError('ユーザー認証の不整合が検出されました。再度ログインしてください。');
+        return;
+      }
+      
+      // 認証状態の確認
+      const isAuthenticated = await verifyAuthStatus();
+      
+      // 既にログイン済みかつ有効な状態の場合はリダイレクト
+      if (isAuthenticated && userProfile) {
+        navigate('/fortune');
+      }
+    };
     
-    if (expired === 'true') {
-      setError('セッションの有効期限が切れたか、トークンの不一致が発生しました。再度ログインしてください。');
-    }
-    
-    // 既にログイン済みの場合はリダイレクト
-    if (currentUser) {
-      navigate('/fortune');
-    }
-  }, [currentUser, navigate, location.search]);
+    checkAuth();
+  }, [userProfile, navigate, location.search, tokenError, verifyAuthStatus]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -75,6 +92,8 @@ const Login = () => {
         setError('パスワードが正しくありません');
       } else if (err.code === 'auth/invalid-credential') {
         setError('ログイン情報が無効です');
+      } else if (err.message === 'ユーザー認証の不整合が検出されました') {
+        setError('ユーザー認証の不整合が検出されました。管理者に連絡してください。');
       } else {
         setError('ログインに失敗しました。再度お試しください');
       }

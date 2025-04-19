@@ -15,9 +15,10 @@ interface SajuProfileModalProps {
   open: boolean;
   onClose: () => void;
   onComplete: () => void;
+  isRequired?: boolean; // 必須モード（オンボーディング時など）
 }
 
-const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onComplete }) => {
+const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onComplete, isRequired = false }) => {
   const { updateUserProfile, refreshUserProfile, loading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +31,17 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
     try {
       // ユーザープロフィールを更新
       setProcessingStep('プロフィール情報を更新中...');
-      await updateUserProfile(profileData);
+      const updatedProfile = await updateUserProfile(profileData);
+      console.log('プロフィール更新完了:', updatedProfile ? '成功' : '失敗');
       
-      // 最新のプロフィール情報で認証コンテキストを更新
+      // 最新のプロフィール情報で認証コンテキストを更新（重要: この完了を待つ）
       setProcessingStep('プロフィール情報を同期中...');
-      await refreshUserProfile();
+      const refreshedProfile = await refreshUserProfile();
+      console.log('プロフィール情報の同期:', refreshedProfile ? '成功' : '失敗');
+      
+      if (!refreshedProfile) {
+        throw new Error('プロフィール情報の同期に失敗しました');
+      }
       
       // デイリーフォーチュンを強制的に更新
       try {
@@ -48,12 +55,14 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
       }
       
       setProcessingStep('完了');
-      // 成功コールバックを呼び出し
+      setIsSubmitting(false);
+      setProcessingStep(null);
+      
+      // 成功コールバックを直接呼び出し（完全に同期完了後に実行されることを保証）
       onComplete();
     } catch (err) {
       console.error('四柱推命プロフィール登録エラー:', err);
       setError('プロフィール情報の登録に失敗しました。ネットワーク接続を確認してください。');
-    } finally {
       setIsSubmitting(false);
       setProcessingStep(null);
     }
@@ -62,8 +71,9 @@ const SajuProfileModal: React.FC<SajuProfileModalProps> = ({ open, onClose, onCo
   return (
     <Modal
       open={open}
-      onClose={isSubmitting ? undefined : onClose} // 送信中は閉じられないように
+      onClose={isSubmitting || isRequired ? undefined : onClose} // 送信中または必須モードの場合は閉じられないように
       aria-labelledby="saju-profile-modal-title"
+      disableEscapeKeyDown={isRequired} // 必須モードの場合はESCキーでも閉じられないように
       sx={{
         display: 'flex',
         alignItems: 'center',

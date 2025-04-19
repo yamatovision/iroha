@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import tokenService from '../../services/auth/token.service'
+// tokenService は verifyAuthStatus によって内部的に使用されるため、直接インポートは不要
 import LoadingIndicator from './LoadingIndicator'
 
 type ProtectedRouteProps = {
@@ -14,21 +14,29 @@ export const ProtectedRoute = ({
   children, 
   requiredRole = 'user'  // デフォルトは一般ユーザー
 }: ProtectedRouteProps) => {
-  const { userProfile, loading, isAdmin, isSuperAdmin } = useAuth()
+  const { userProfile, loading, isAdmin, isSuperAdmin, tokenError, verifyAuthStatus } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [tokenChecking, setTokenChecking] = useState(true)
-  const [hasJwtToken, setHasJwtToken] = useState(false)
+  const [hasValidAuth, setHasValidAuth] = useState(false)
 
   // JWT認証のアクセストークンを確認（非同期処理）
   useEffect(() => {
     const checkToken = async () => {
       try {
-        const token = await tokenService.getAccessToken()
-        const isValid = await tokenService.isAccessTokenValid()
-        setHasJwtToken(!!token && isValid)
+        // 認証状態をチェック
+        const isAuthenticated = await verifyAuthStatus()
+        setHasValidAuth(isAuthenticated)
+        
+        // トークンエラーがある場合の処理
+        if (tokenError) {
+          console.log(`認証エラーが検出されました: ${tokenError}`);
+          navigate('/login', { state: { from: location }, replace: true });
+          return;
+        }
       } catch (error) {
         console.error('トークン検証エラー:', error)
-        setHasJwtToken(false)
+        setHasValidAuth(false)
       } finally {
         setTokenChecking(false)
       }
@@ -37,7 +45,7 @@ export const ProtectedRoute = ({
     if (!loading) {
       checkToken()
     }
-  }, [loading])
+  }, [loading, tokenError, navigate, location, verifyAuthStatus])
 
   // 認証状態またはトークンチェック中はローディングを表示
   if (loading || tokenChecking) {
@@ -45,8 +53,8 @@ export const ProtectedRoute = ({
   }
   
   // 未ログインの場合はログインページにリダイレクト
-  if (!hasJwtToken) {
-    console.log("JWT認証情報がありません。ログイン画面へリダイレクトします。");
+  if (!hasValidAuth) {
+    console.log("有効な認証情報がありません。ログイン画面へリダイレクトします。");
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 

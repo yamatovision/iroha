@@ -157,6 +157,8 @@ class DayPillarService {
         console.error('- ステータスコード:', error.response?.status);
         console.error('- エラーメッセージ:', error.message);
         console.error('- レスポンスデータ:', error.response?.data);
+      } else {
+        console.error('DayPillarService: 不明なエラー:', typeof error === 'object' && error !== null ? Object.toString.call(error) : String(error));
       }
       
       // エラー時の基本的なフォールバック（ハードコードされた時差データ）

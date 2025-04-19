@@ -109,6 +109,10 @@ class AuthManagerService implements AuthManager {
   // Firebase認証でのログイン
   private async firebaseLogin(email: string, password: string): Promise<any> {
     try {
+      // ログイン前に既存のキャッシュをクリア
+      await apiService.clearCache();
+      console.log('Firebase認証ログイン前にキャッシュをクリアしました');
+      
       const result = await signInWithEmailAndPassword(this.auth, email, password);
       // ユーザー情報をAPIから取得
       const profileResponse = await apiService.get(AUTH.PROFILE);
@@ -205,6 +209,10 @@ class AuthManagerService implements AuthManager {
       if (isJwtAuth) {
         console.log('JWTからログアウトします');
         promises.push(jwtAuthService.logout());
+      } else {
+        // JWTサービスを使用しない場合は、ここでキャッシュをクリア
+        console.log('JWTサービスを使用せずにキャッシュをクリアします');
+        promises.push(apiService.clearCache());
       }
       
       if (isFirebaseAuth) {
@@ -217,12 +225,13 @@ class AuthManagerService implements AuthManager {
     } catch (error) {
       console.error('ログアウト処理中にエラーが発生しました', error);
       
-      // エラーが発生してもローカルのトークンをクリア試行
+      // エラーが発生してもローカルのトークンとキャッシュをクリア試行
       try {
+        await apiService.clearCache();
         await tokenService.clearTokens();
-        console.log('エラー後にトークンをクリアしました');
+        console.log('エラー後にトークンとキャッシュをクリアしました');
       } catch (clearError) {
-        console.error('トークンクリア中にエラーが発生しました', clearError);
+        console.error('トークンとキャッシュのクリア中にエラーが発生しました', clearError);
       }
       
       throw error;
@@ -279,7 +288,7 @@ class AuthManagerService implements AuthManager {
             console.warn('リフレッシュトークン更新に失敗しました');
           }
           
-          return result;
+          return result.success;
         } catch (error) {
           console.error('トークン更新エラー:', error);
           return false;

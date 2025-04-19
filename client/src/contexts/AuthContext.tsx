@@ -27,7 +27,9 @@ type AuthContextType = {
   // 認証モード
   authMode: 'firebase' | 'jwt'
   setAuthMode: (mode: 'firebase' | 'jwt') => Promise<void>
-  currentUser: any
+  // 認証状態関連
+  verifyAuthStatus: () => Promise<boolean>
+  tokenError: string | null
 }
 
 // コンテキスト作成
@@ -44,7 +46,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true)
   const [shouldPromptMigration, setShouldPromptMigration] = useState(false)
   const [authMode, setAuthMode] = useState<'firebase' | 'jwt'>('jwt')
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [tokenError, setTokenError] = useState<string | null>(null)
   
   // アクティブチームIDの初期化は空文字列から始めて非同期で更新
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null)
@@ -91,6 +93,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             try {
               // 有効なトークンがある場合はプロフィールを取得
               await loadUserProfile();
+              // トークンエラーをクリア
+              setTokenError(null);
             } catch (error) {
               console.error('JWTトークンでのプロフィール取得エラー:', error);
               setUserProfile(null);
@@ -116,7 +120,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     loadUserAuthentication();
     
-      // セッションマネージャーがトークン管理を行うため、ここでの更新タイマーは不要
+    // セッションマネージャーがトークン管理を行うため、ここでの更新タイマーは不要
     // 代わりに、認証状態の変更を検出するリスナーを追加
     
     return () => {
@@ -134,13 +138,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (isValid && remainingTime !== null && remainingTime < 5 * 60 * 1000) {
         // 残り5分未満ならトークンを更新
-        await jwtAuthService.refreshToken();
+        const refreshResult = await jwtAuthService.refreshToken();
+        if (!refreshResult.success) {
+          if (refreshResult.error === 'token_mismatch') {
+            setTokenError('token_mismatch');
+            return null;
+          }
+        }
       }
       
       // プロフィールを取得
       const response = await apiService.get<IUser>(USER.GET_PROFILE);
       
       if (response.status === 200) {
+        // トークンからユーザーIDを取得
+        const tokenPayload = await tokenService.getTokenPayload();
+        
+        // ユーザーIDの整合性をチェック
+        if (tokenPayload && response.data.id !== tokenPayload.sub) {
+          console.error('ユーザーID不一致エラー', {
+            profileId: response.data.id,
+            tokenSubject: tokenPayload.sub
+          });
+          
+          // トークンをクリアして認証エラー状態に
+          await tokenService.clearTokens();
+          setTokenError('user_id_mismatch');
+          throw new Error('ユーザー認証の不整合が検出されました');
+        }
+        
         setUserProfile(response.data);
         return response.data;
       } else {
@@ -168,12 +194,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const result = await jwtAuthService.login(email, password);
       console.log('ログイン成功、トークン受信完了');
       
+      // ログイン後にキャッシュをクリア
+      await apiService.clearCache('/api/v1/users/profile');
+      console.log('ユーザープロフィールキャッシュをクリアしました');
+      
       // ユーザープロフィールを取得
       const profile = await refreshUserProfile();
       console.log('プロフィール取得成功:', !!profile);
       
-      // カレントユーザーを設定
-      setCurrentUser({ email: email });
+      // トークンエラーをクリア
+      setTokenError(null);
+      
+      // トークンからユーザーIDを取得
+      const tokenPayload = await tokenService.getTokenPayload();
+      
+      // ユーザーIDの整合性をチェック
+      if (profile && tokenPayload && profile.id !== tokenPayload.sub) {
+        console.error('ユーザーID不一致エラー', {
+          profileId: profile.id,
+          tokenSubject: tokenPayload.sub
+        });
+        
+        // トークンをクリアして認証エラー状態に
+        await tokenService.clearTokens();
+        setTokenError('user_id_mismatch');
+        throw new Error('ユーザー認証の不整合が検出されました');
+      }
       
       return result;
     } catch (error: any) {
@@ -222,8 +268,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // ログアウト機能
   const logout = async () => {
     try {
+      // アクティブユーザーがいる場合はログアウト処理を実行
+      
+      // ログアウト実行
       await jwtAuthService.logout();
+      
+      // キャッシュをクリア
+      try {
+        await apiService.clearCache();
+        console.log('アプリキャッシュをクリアしました');
+      } catch (cacheError) {
+        console.error('キャッシュクリアエラー:', cacheError);
+      }
+      
+      // 状態をクリア
       setUserProfile(null);
+      setTokenError(null);
+      
+      return;
     } catch (error) {
       console.error('ログアウトエラー:', error);
       throw error;
@@ -293,11 +355,60 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       const userData = response.data;
+      
+      // トークンからユーザーIDを取得
+      const tokenPayload = await tokenService.getTokenPayload();
+      
+      // ユーザーIDの整合性をチェック
+      if (tokenPayload && userData.id !== tokenPayload.sub) {
+        console.error('ユーザーID不一致エラー', {
+          profileId: userData.id,
+          tokenSubject: tokenPayload.sub
+        });
+        
+        // トークンをクリアして認証エラー状態に
+        await tokenService.clearTokens();
+        setTokenError('user_id_mismatch');
+        throw new Error('ユーザー認証の不整合が検出されました');
+      }
+      
       setUserProfile(userData);
       return userData;
     } catch (error) {
       console.error('プロフィール取得エラー:', error);
       return null;
+    }
+  };
+
+  // 認証状態を検証する関数
+  const verifyAuthStatus = async (): Promise<boolean> => {
+    try {
+      const accessToken = await tokenService.getAccessToken();
+      if (!accessToken) {
+        return false;
+      }
+      
+      const isValid = await tokenService.isAccessTokenValid();
+      if (!isValid) {
+        const refreshResult = await jwtAuthService.refreshToken();
+        if (!refreshResult.success) {
+          if (refreshResult.error === 'token_mismatch') {
+            setTokenError('token_mismatch');
+          }
+          return false;
+        }
+      }
+      
+      // トークンは有効だがユーザープロフィールがない場合、取得を試みる
+      if (!userProfile) {
+        const profile = await refreshUserProfile();
+        return !!profile;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('認証状態検証エラー:', error);
+      return false;
     }
   };
 
@@ -369,7 +480,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     migrateToJwt,
     authMode,
     setAuthMode: handleSetAuthMode,
-    currentUser
+    verifyAuthStatus,
+    tokenError
   };
 
   return (

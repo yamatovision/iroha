@@ -41,15 +41,18 @@ const RequireSajuProfile: React.FC<RequireSajuProfileProps> = ({ children }) => 
   };
   
   useEffect(() => {
+    // すでにチェック済みの場合は何もしない（重要）
+    if (profileChecked) return;
+    
     // 認証ロード完了時のみチェックを実行
     if (!loading) {
       // ユーザープロフィールのロード完了後に四柱推命情報をチェック
       if (userProfile) {
-        if (!hasSajuProfile() && !profileChecked) {
+        if (!hasSajuProfile()) {
           console.log('四柱推命プロフィールが見つかりません。入力モーダルを表示します。');
           setShowProfileModal(true);
           setProfileChecked(true);
-        } else if (hasSajuProfile() && !profileChecked) {
+        } else {
           console.log('四柱推命プロフィールが存在します。続行します。');
           setProfileChecked(true);
         }
@@ -68,9 +71,10 @@ const RequireSajuProfile: React.FC<RequireSajuProfileProps> = ({ children }) => 
   const handleProfileComplete = () => {
     console.log('四柱推命プロフィールが正常に登録されました。');
     setShowProfileModal(false);
+    setProfileChecked(true);
     
-    // 現在のURLをリロードして最新データを表示
-    window.location.reload();
+    // リロードせずにRedirect to /fortune
+    navigate('/fortune');
   };
   
   const handleModalClose = () => {
@@ -88,7 +92,8 @@ const RequireSajuProfile: React.FC<RequireSajuProfileProps> = ({ children }) => 
       <SajuProfileModal 
         open={showProfileModal} 
         onClose={handleModalClose}
-        onComplete={handleProfileComplete} 
+        onComplete={handleProfileComplete}
+        isRequired={true} // オンボーディング時は必須モードに設定
       />
     </>
   );

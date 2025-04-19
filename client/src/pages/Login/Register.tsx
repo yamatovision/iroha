@@ -21,15 +21,15 @@ const Register = () => {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { register, currentUser, loading: authLoading } = useAuth();
+  const { register, userProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
   // ユーザーが既にログインしている場合はメインページにリダイレクト
   useEffect(() => {
-    if (currentUser) {
+    if (userProfile) {
       navigate('/fortune');
     }
-  }, [currentUser, navigate]);
+  }, [userProfile, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

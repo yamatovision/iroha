@@ -7,7 +7,7 @@ export interface JwtAuthService {
   login(email: string, password: string): Promise<any>;
   register(email: string, password: string, displayName: string): Promise<any>;
   logout(): Promise<void>;
-  refreshToken(): Promise<boolean>;
+  refreshToken(): Promise<{success: boolean; error?: string}>;
   migrateToJwt(password: string): Promise<any>;
   isAuthenticated(): Promise<boolean>;
 }
@@ -17,6 +17,10 @@ class JwtAuthServiceImpl implements JwtAuthService {
   async login(email: string, password: string): Promise<any> {
     try {
       console.log('JWT認証ログイン開始 - リクエスト送信先:', JWT_AUTH.LOGIN);
+      
+      // ログイン前に既存のキャッシュをクリア
+      await apiService.clearCache();
+      console.log('ログイン前にキャッシュをクリアしました');
       
       // Augment login data with additional information for debugging on server
       const loginData = { 
@@ -140,24 +144,28 @@ class JwtAuthServiceImpl implements JwtAuthService {
         await apiService.post(JWT_AUTH.LOGOUT, { refreshToken });
       }
       
+      // すべてのキャッシュをクリア
+      await apiService.clearCache();
+      
       // ローカルのトークンをクリア
       await tokenService.clearTokens();
     } catch (error) {
       console.error('JWT認証ログアウトエラー:', error);
-      // エラーが発生してもローカルのトークンは必ずクリア
+      // エラーが発生してもローカルのトークンとキャッシュは必ずクリア
+      await apiService.clearCache();
       await tokenService.clearTokens();
       throw error;
     }
   }
 
   // トークンリフレッシュ処理
-  async refreshToken(): Promise<boolean> {
+  async refreshToken(): Promise<{success: boolean; error?: string}> {
     try {
       const refreshToken = await tokenService.getRefreshToken();
       
       if (!refreshToken) {
         console.warn('リフレッシュトークンがありません');
-        return false;
+        return { success: false, error: 'no_refresh_token' };
       }
       
       // デバッグ用にリフレッシュトークンの一部を表示（セキュリティのため完全なトークンは表示しない）
@@ -203,15 +211,15 @@ class JwtAuthServiceImpl implements JwtAuthService {
         await tokenService.setTokens(accessToken, newRefreshToken);
         console.log('新しいトークンを保存しました');
         
-        return true;
+        return { success: true };
       } else {
         console.warn('リフレッシュレスポンスにトークンが含まれていません');
-        return false;
+        return { success: false, error: 'invalid_response' };
       }
     } catch (error: any) {
       console.error('トークンリフレッシュエラー:', error);
       
-      // リフレッシュトークンの不一致エラーを特定して自動修復を試みる
+      // リフレッシュトークンの不一致エラーを特定
       if (error.response?.status === 401 && 
           (error.response?.data?.message === 'リフレッシュトークンが一致しません' ||
            error.response?.data?.message === 'トークンバージョンが一致しません')) {
@@ -221,14 +229,14 @@ class JwtAuthServiceImpl implements JwtAuthService {
         // リフレッシュトークンをクリアして次回ログイン時に再取得させる
         await tokenService.clearTokens();
         
-        // ページを再読み込みして再認証を促す
-        // 注意: この部分はUIで適切に処理すべきですが、緊急対応として実装
-        setTimeout(() => {
-          window.location.href = '/login?expired=true';
-        }, 500);
+        // エラー情報を返す（画面遷移はAuthContextなど上位レイヤーで処理）
+        return { 
+          success: false, 
+          error: 'token_mismatch' 
+        };
       }
       
-      return false;
+      return { success: false, error: 'refresh_failed' };
     }
   }
   
