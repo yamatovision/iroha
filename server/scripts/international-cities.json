@@ -1,0 +1,192 @@
+{
+  "countries": [
+    {
+      "name": "アメリカ合衆国",
+      "englishName": "United States",
+      "cities": [
+        {"name": "ニューヨーク", "englishName": "New York", "timezone": "America/New_York"},
+        {"name": "ロサンゼルス", "englishName": "Los Angeles", "timezone": "America/Los_Angeles"},
+        {"name": "シカゴ", "englishName": "Chicago", "timezone": "America/Chicago"},
+        {"name": "ヒューストン", "englishName": "Houston", "timezone": "America/Chicago"},
+        {"name": "フェニックス", "englishName": "Phoenix", "timezone": "America/Phoenix"},
+        {"name": "フィラデルフィア", "englishName": "Philadelphia", "timezone": "America/New_York"},
+        {"name": "サンアントニオ", "englishName": "San Antonio", "timezone": "America/Chicago"},
+        {"name": "サンディエゴ", "englishName": "San Diego", "timezone": "America/Los_Angeles"},
+        {"name": "ダラス", "englishName": "Dallas", "timezone": "America/Chicago"},
+        {"name": "サンノゼ", "englishName": "San Jose", "timezone": "America/Los_Angeles"},
+        {"name": "マリーナデルレイ", "englishName": "Marina Del Rey", "timezone": "America/Los_Angeles"}
+      ]
+    },
+    {
+      "name": "カナダ",
+      "englishName": "Canada",
+      "cities": [
+        {"name": "トロント", "englishName": "Toronto", "timezone": "America/Toronto"},
+        {"name": "モントリオール", "englishName": "Montreal", "timezone": "America/Montreal"},
+        {"name": "バンクーバー", "englishName": "Vancouver", "timezone": "America/Vancouver"},
+        {"name": "カルガリー", "englishName": "Calgary", "timezone": "America/Edmonton"},
+        {"name": "エドモントン", "englishName": "Edmonton", "timezone": "America/Edmonton"},
+        {"name": "オタワ", "englishName": "Ottawa", "timezone": "America/Toronto"}
+      ]
+    },
+    {
+      "name": "イギリス",
+      "englishName": "United Kingdom",
+      "cities": [
+        {"name": "ロンドン", "englishName": "London", "timezone": "Europe/London"},
+        {"name": "マンチェスター", "englishName": "Manchester", "timezone": "Europe/London"},
+        {"name": "バーミンガム", "englishName": "Birmingham", "timezone": "Europe/London"},
+        {"name": "グラスゴー", "englishName": "Glasgow", "timezone": "Europe/London"},
+        {"name": "リバプール", "englishName": "Liverpool", "timezone": "Europe/London"}
+      ]
+    },
+    {
+      "name": "ドイツ",
+      "englishName": "Germany",
+      "cities": [
+        {"name": "ベルリン", "englishName": "Berlin", "timezone": "Europe/Berlin"},
+        {"name": "ハンブルク", "englishName": "Hamburg", "timezone": "Europe/Berlin"},
+        {"name": "ミュンヘン", "englishName": "Munich", "timezone": "Europe/Berlin"},
+        {"name": "ケルン", "englishName": "Cologne", "timezone": "Europe/Berlin"},
+        {"name": "フランクフルト", "englishName": "Frankfurt", "timezone": "Europe/Berlin"}
+      ]
+    },
+    {
+      "name": "フランス",
+      "englishName": "France",
+      "cities": [
+        {"name": "パリ", "englishName": "Paris", "timezone": "Europe/Paris"},
+        {"name": "マルセイユ", "englishName": "Marseille", "timezone": "Europe/Paris"},
+        {"name": "リヨン", "englishName": "Lyon", "timezone": "Europe/Paris"},
+        {"name": "トゥールーズ", "englishName": "Toulouse", "timezone": "Europe/Paris"},
+        {"name": "ニース", "englishName": "Nice", "timezone": "Europe/Paris"}
+      ]
+    },
+    {
+      "name": "イタリア",
+      "englishName": "Italy",
+      "cities": [
+        {"name": "ローマ", "englishName": "Rome", "timezone": "Europe/Rome"},
+        {"name": "ミラノ", "englishName": "Milan", "timezone": "Europe/Rome"},
+        {"name": "ナポリ", "englishName": "Naples", "timezone": "Europe/Rome"},
+        {"name": "トリノ", "englishName": "Turin", "timezone": "Europe/Rome"},
+        {"name": "フィレンツェ", "englishName": "Florence", "timezone": "Europe/Rome"}
+      ]
+    },
+    {
+      "name": "スペイン",
+      "englishName": "Spain",
+      "cities": [
+        {"name": "マドリード", "englishName": "Madrid", "timezone": "Europe/Madrid"},
+        {"name": "バルセロナ", "englishName": "Barcelona", "timezone": "Europe/Madrid"},
+        {"name": "バレンシア", "englishName": "Valencia", "timezone": "Europe/Madrid"},
+        {"name": "セビリア", "englishName": "Seville", "timezone": "Europe/Madrid"}
+      ]
+    },
+    {
+      "name": "ロシア",
+      "englishName": "Russia",
+      "cities": [
+        {"name": "モスクワ", "englishName": "Moscow", "timezone": "Europe/Moscow"},
+        {"name": "サンクトペテルブルク", "englishName": "Saint Petersburg", "timezone": "Europe/Moscow"},
+        {"name": "ノヴォシビルスク", "englishName": "Novosibirsk", "timezone": "Asia/Novosibirsk"},
+        {"name": "ウラジオストク", "englishName": "Vladivostok", "timezone": "Asia/Vladivostok"}
+      ]
+    },
+    {
+      "name": "中国",
+      "englishName": "China",
+      "cities": [
+        {"name": "北京", "englishName": "Beijing", "timezone": "Asia/Shanghai"},
+        {"name": "上海", "englishName": "Shanghai", "timezone": "Asia/Shanghai"},
+        {"name": "広州", "englishName": "Guangzhou", "timezone": "Asia/Shanghai"},
+        {"name": "深セン", "englishName": "Shenzhen", "timezone": "Asia/Shanghai"},
+        {"name": "重慶", "englishName": "Chongqing", "timezone": "Asia/Shanghai"},
+        {"name": "香港", "englishName": "Hong Kong", "timezone": "Asia/Hong_Kong"}
+      ]
+    },
+    {
+      "name": "韓国",
+      "englishName": "South Korea",
+      "cities": [
+        {"name": "ソウル", "englishName": "Seoul", "timezone": "Asia/Seoul"},
+        {"name": "釜山", "englishName": "Busan", "timezone": "Asia/Seoul"},
+        {"name": "仁川", "englishName": "Incheon", "timezone": "Asia/Seoul"},
+        {"name": "大邱", "englishName": "Daegu", "timezone": "Asia/Seoul"}
+      ]
+    },
+    {
+      "name": "台湾",
+      "englishName": "Taiwan",
+      "cities": [
+        {"name": "台北", "englishName": "Taipei", "timezone": "Asia/Taipei"},
+        {"name": "高雄", "englishName": "Kaohsiung", "timezone": "Asia/Taipei"},
+        {"name": "台中", "englishName": "Taichung", "timezone": "Asia/Taipei"}
+      ]
+    },
+    {
+      "name": "シンガポール",
+      "englishName": "Singapore",
+      "cities": [
+        {"name": "シンガポール", "englishName": "Singapore", "timezone": "Asia/Singapore"}
+      ]
+    },
+    {
+      "name": "タイ",
+      "englishName": "Thailand",
+      "cities": [
+        {"name": "バンコク", "englishName": "Bangkok", "timezone": "Asia/Bangkok"},
+        {"name": "チェンマイ", "englishName": "Chiang Mai", "timezone": "Asia/Bangkok"},
+        {"name": "プーケット", "englishName": "Phuket", "timezone": "Asia/Bangkok"}
+      ]
+    },
+    {
+      "name": "ベトナム",
+      "englishName": "Vietnam",
+      "cities": [
+        {"name": "ハノイ", "englishName": "Hanoi", "timezone": "Asia/Ho_Chi_Minh"},
+        {"name": "ホーチミン", "englishName": "Ho Chi Minh City", "timezone": "Asia/Ho_Chi_Minh"},
+        {"name": "ダナン", "englishName": "Da Nang", "timezone": "Asia/Ho_Chi_Minh"}
+      ]
+    },
+    {
+      "name": "インドネシア",
+      "englishName": "Indonesia",
+      "cities": [
+        {"name": "ジャカルタ", "englishName": "Jakarta", "timezone": "Asia/Jakarta"},
+        {"name": "スラバヤ", "englishName": "Surabaya", "timezone": "Asia/Jakarta"},
+        {"name": "バリ", "englishName": "Bali", "timezone": "Asia/Makassar"}
+      ]
+    },
+    {
+      "name": "インド",
+      "englishName": "India",
+      "cities": [
+        {"name": "ニューデリー", "englishName": "New Delhi", "timezone": "Asia/Kolkata"},
+        {"name": "ムンバイ", "englishName": "Mumbai", "timezone": "Asia/Kolkata"},
+        {"name": "バンガロール", "englishName": "Bangalore", "timezone": "Asia/Kolkata"},
+        {"name": "チェンナイ", "englishName": "Chennai", "timezone": "Asia/Kolkata"}
+      ]
+    },
+    {
+      "name": "オーストラリア",
+      "englishName": "Australia",
+      "cities": [
+        {"name": "シドニー", "englishName": "Sydney", "timezone": "Australia/Sydney"},
+        {"name": "メルボルン", "englishName": "Melbourne", "timezone": "Australia/Melbourne"},
+        {"name": "ブリスベン", "englishName": "Brisbane", "timezone": "Australia/Brisbane"},
+        {"name": "パース", "englishName": "Perth", "timezone": "Australia/Perth"},
+        {"name": "アデレード", "englishName": "Adelaide", "timezone": "Australia/Adelaide"}
+      ]
+    },
+    {
+      "name": "ニュージーランド",
+      "englishName": "New Zealand",
+      "cities": [
+        {"name": "オークランド", "englishName": "Auckland", "timezone": "Pacific/Auckland"},
+        {"name": "ウェリントン", "englishName": "Wellington", "timezone": "Pacific/Auckland"},
+        {"name": "クライストチャーチ", "englishName": "Christchurch", "timezone": "Pacific/Auckland"}
+      ]
+    }
+  ]
+}

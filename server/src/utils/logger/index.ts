@@ -1,14 +1,7 @@
 import winston from 'winston';
 import { Request } from 'express';
 
-// ログレベル定義
-const levels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  debug: 4,
-};
+// ログレベル定義は logColors.levels に移動しました
 
 // 現在の環境に基づいてログレベルを決定
 const level = () => {
@@ -16,17 +9,24 @@ const level = () => {
   return env === 'development' ? 'debug' : 'info';
 };
 
-// カスタムカラーの定義
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'blue',
+// Winstonカラーレベルの設定
+// winston 3.xでは直接addColorsを利用するのではなく
+const logColors = {
+  levels: {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    debug: 4,
+  },
+  colors: {
+    error: 'red',
+    warn: 'yellow',
+    info: 'green',
+    http: 'magenta',
+    debug: 'blue',
+  }
 };
-
-// Winstonに色を登録
-winston.addColors(colors);
 
 // コンソール出力のためのカスタムフォーマット
 const consoleFormat = winston.format.combine(
@@ -56,7 +56,7 @@ export const getRequestInfo = (req: Request): Record<string, any> => {
 // ロガーインスタンスを作成
 const logger = winston.createLogger({
   level: level(),
-  levels,
+  levels: logColors.levels,
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
     winston.format.errors({ stack: true }),

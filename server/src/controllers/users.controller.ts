@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/hybrid-auth.middleware';
 import { User } from '../models';
 import { handleError, ValidationError, AuthenticationError, NotFoundError } from '../utils';
 import { SajuEngineService } from '../services/saju-engine.service';
-import { SajuResult } from '../../sajuengine_package/src';
+import { SajuResult } from 'saju-engine';
 import { harmonyCompassService } from '../services/harmony-compass.service';
 
 // 型定義を直接定義

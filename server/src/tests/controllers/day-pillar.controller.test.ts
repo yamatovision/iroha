@@ -33,7 +33,80 @@ jest.mock('../../services/saju-engine.service', () => {
           heavenlyStem: '乙',
           earthlyBranch: '丑',
           energyDescription: 'テスト用エネルギー説明'
-        }))
+        })),
+        
+        // 都道府県リストのモック
+        getAvailableCities: jest.fn().mockReturnValue([
+          '北海道', '青森県', '東京都', '大阪府', '福岡県', '沖縄県', '海外'
+        ]),
+        
+        // 新しいメソッド：すべての場所情報
+        getAllLocationsWithInfo: jest.fn().mockReturnValue([
+          {
+            name: '北海道',
+            adjustment: 25,
+            description: '北海道: +25分',
+            isOverseas: false
+          },
+          {
+            name: '東京都',
+            adjustment: 19,
+            description: '東京都: +19分',
+            isOverseas: false
+          },
+          {
+            name: '大阪府',
+            adjustment: 2,
+            description: '大阪府: +2分',
+            isOverseas: false
+          },
+          {
+            name: '海外',
+            adjustment: 0,
+            description: '海外の場合は現地時間をそのまま入力してください',
+            isOverseas: true
+          }
+        ]),
+        
+        // 新しいメソッド：カテゴリー別リスト
+        getLocationCategories: jest.fn().mockReturnValue({
+          prefectures: ['北海道', '東京都', '大阪府', '福岡県', '沖縄県'],
+          overseas: ['海外']
+        }),
+        
+        // タイムゾーン情報のモック
+        getTimezoneInfo: jest.fn().mockImplementation((locationName) => {
+          if (locationName === '東京都') {
+            return {
+              locationName: '東京都',
+              adjustment: 19,
+              description: '東京都: +19分',
+              isOverseas: false
+            };
+          } else if (locationName === '大阪府') {
+            return {
+              locationName: '大阪府',
+              adjustment: 2,
+              description: '大阪府: +2分',
+              isOverseas: false
+            };
+          } else if (locationName === '海外') {
+            return {
+              locationName: '海外',
+              adjustment: 0,
+              description: '海外の場合は現地時間をそのまま入力してください',
+              isOverseas: true
+            };
+          } else {
+            // その他の都道府県のデフォルト値
+            return {
+              locationName: locationName,
+              adjustment: 10,
+              description: `${locationName}: +10分`,
+              isOverseas: false
+            };
+          }
+        })
       };
     })
   };
@@ -198,6 +271,83 @@ describe('DayPillar Controller', () => {
       // テストでは成功を検証（実際の実装時には400を確認すべき）
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('dayPillars');
+    });
+  });
+  
+  // 新しく追加：getAvailableCitiesテスト
+  describe('getAvailableCities', () => {
+    it('利用可能な都道府県と海外のリストを取得できる', async () => {
+      // リクエスト実行
+      const response = await request(app)
+        .get(`${API_BASE_PATH}/day-pillars/available-cities`);
+
+      // 検証
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('count');
+      expect(response.body).toHaveProperty('locations');
+      expect(Array.isArray(response.body.locations)).toBe(true);
+      
+      // カテゴリー情報の検証
+      expect(response.body).toHaveProperty('categories');
+      expect(response.body.categories).toHaveProperty('prefectures');
+      expect(response.body.categories).toHaveProperty('overseas');
+      
+      // 海外カテゴリには「海外」が含まれているか
+      expect(response.body.categories.overseas).toContain('海外');
+      
+      // 都道府県カテゴリには「東京都」が含まれているか
+      expect(response.body.categories.prefectures).toContain('東京都');
+      
+      // locationsには詳細情報が含まれているか
+      const tokyo = response.body.locations.find((loc: any) => loc.name === '東京都');
+      expect(tokyo).toBeDefined();
+      expect(tokyo).toHaveProperty('adjustment', 19);
+      expect(tokyo).toHaveProperty('description');
+      expect(tokyo).toHaveProperty('isOverseas', false);
+      
+      // 海外の情報は正しいか
+      const overseas = response.body.locations.find((loc: any) => loc.name === '海外');
+      expect(overseas).toBeDefined();
+      expect(overseas).toHaveProperty('adjustment', 0);
+      expect(overseas).toHaveProperty('isOverseas', true);
+    });
+  });
+  
+  describe('getTimezoneInfo', () => {
+    it('東京都のタイムゾーン情報を取得できる', async () => {
+      // リクエスト実行
+      const response = await request(app)
+        .get(`${API_BASE_PATH}/day-pillars/timezone-info?location=東京都`);
+
+      // 検証
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('locationName', '東京都');
+      expect(response.body).toHaveProperty('adjustment', 19);
+      expect(response.body).toHaveProperty('description', '東京都: +19分');
+      expect(response.body).toHaveProperty('isOverseas', false);
+    });
+    
+    it('海外のタイムゾーン情報を取得できる', async () => {
+      // リクエスト実行
+      const response = await request(app)
+        .get(`${API_BASE_PATH}/day-pillars/timezone-info?location=海外`);
+
+      // 検証
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('locationName', '海外');
+      expect(response.body).toHaveProperty('adjustment', 0);
+      expect(response.body.description).toContain('現地時間をそのまま入力');
+      expect(response.body).toHaveProperty('isOverseas', true);
+    });
+    
+    it('位置情報が指定されていない場合は400エラーを返す', async () => {
+      // リクエスト実行
+      const response = await request(app)
+        .get(`${API_BASE_PATH}/day-pillars/timezone-info`);
+
+      // 検証
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('message');
     });
   });
 });

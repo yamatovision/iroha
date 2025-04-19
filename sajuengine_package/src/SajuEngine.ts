@@ -7,8 +7,7 @@ import { DateTimeProcessor, ProcessedDateTime } from './DateTimeProcessor';
 // 新しい国際対応のモジュールをインポート
 import { 
   DateTimeProcessor as InternationalDateTimeProcessor, 
-  GeoCoordinates,
-  TimeZoneUtils 
+  GeoCoordinates
 } from './international';
 import { calculateKoreanYearPillar } from './koreanYearPillarCalculator';
 import { calculateKoreanMonthPillar } from './koreanMonthPillarCalculator';
@@ -158,7 +157,7 @@ export class SajuEngine {
       let timezoneInfo: TimezoneAdjustmentInfo | undefined;
       
       if (this.useInternationalMode) {
-        const internationalDateTime = processedDateTime as unknown as import('./international/DateTimeProcessor').ProcessedDateTime;
+        const internationalDateTime = processedDateTime as unknown as import('./international').ProcessedDateTime;
         
         // LocationInfoの構築
         locationInfo = {};
@@ -187,12 +186,9 @@ export class SajuEngine {
         if (typeof location === 'string') {
           locationInfo.name = location;
           
-          // 都市名からタイムゾーンを推論
+          // 都市名からタイムゾーンを推論 - シンプル版ではUTCを使用
           if (!internationalDateTime.politicalTimeZone) {
-            const cityTimeZone = TimeZoneUtils.getTimezoneForCity(location);
-            if (cityTimeZone) {
-              locationInfo.timeZone = cityTimeZone;
-            }
+            locationInfo.timeZone = 'UTC';
           }
         } else if (location && 'name' in location) {
           locationInfo.name = location.name;
@@ -205,16 +201,8 @@ export class SajuEngine {
         } else if (location && typeof location !== 'string' && 'timeZone' in location) {
           locationInfo.timeZone = location.timeZone;
         } else if (locationInfo.coordinates) {
-          // 座標からタイムゾーンを推論
-          const coords = locationInfo.coordinates;
-          const tzFromCoords = TimeZoneUtils.getTimezoneIdentifier(
-            coords.latitude, 
-            coords.longitude, 
-            birthDate
-          );
-          if (tzFromCoords && tzFromCoords !== 'UTC') {
-            locationInfo.timeZone = tzFromCoords;
-          }
+          // 座標からタイムゾーン - シンプル版ではUTCを使用
+          locationInfo.timeZone = 'UTC';
         }
         
         // TimezoneInfoの構築
@@ -236,25 +224,30 @@ export class SajuEngine {
         
         // 歴史的サマータイムの処理（日本1948-1951）
         if (this.options.useHistoricalDST && 
-            locationInfo.timeZone === 'Asia/Tokyo' && 
-            TimeZoneUtils.isJapaneseHistoricalDST(birthDate)) {
-          timezoneInfo.isDST = true;
+            locationInfo.timeZone === 'Asia/Tokyo') {
+          // 簡易実装 - 1948-1951年の5月-9月のみDSTを適用
+          const year = birthDate.getFullYear();
+          const month = birthDate.getMonth() + 1; // 0-indexed → 1-indexed
           
-          // adjustmentDetailsが未定義の場合は初期化
-          if (!timezoneInfo.adjustmentDetails) {
-            timezoneInfo.adjustmentDetails = {
-              politicalTimeZoneAdjustment: 0,
-              longitudeBasedAdjustment: 0,
-              dstAdjustment: 0,
-              regionalAdjustment: 0,
-              totalAdjustmentMinutes: 0,
-              totalAdjustmentSeconds: 0
-            };
+          if (year >= 1948 && year <= 1951 && month >= 5 && month <= 9) {
+            timezoneInfo.isDST = true;
+            
+            // adjustmentDetailsが未定義の場合は初期化
+            if (!timezoneInfo.adjustmentDetails) {
+              timezoneInfo.adjustmentDetails = {
+                politicalTimeZoneAdjustment: 0,
+                longitudeBasedAdjustment: 0,
+                dstAdjustment: 0,
+                regionalAdjustment: 0,
+                totalAdjustmentMinutes: 0,
+                totalAdjustmentSeconds: 0
+              };
+            }
+            
+            timezoneInfo.adjustmentDetails.dstAdjustment = -60; // 1時間マイナス
+            timezoneInfo.adjustmentDetails.totalAdjustmentMinutes += -60;
+            timezoneInfo.adjustmentDetails.totalAdjustmentSeconds += -3600;
           }
-          
-          timezoneInfo.adjustmentDetails.dstAdjustment = -60; // 1時間マイナス
-          timezoneInfo.adjustmentDetails.totalAdjustmentMinutes += -60;
-          timezoneInfo.adjustmentDetails.totalAdjustmentSeconds += -3600;
         }
       }
       
@@ -828,7 +821,7 @@ export class SajuEngine {
       let errorTimezoneInfo: TimezoneAdjustmentInfo | undefined;
       
       if (this.useInternationalMode) {
-        const internationalDateTime = errorProcessedDateTime as unknown as import('./international/DateTimeProcessor').ProcessedDateTime;
+        const internationalDateTime = errorProcessedDateTime as unknown as import('./international').ProcessedDateTime;
         errorLocationInfo = {};
         
         if (internationalDateTime.coordinates) {

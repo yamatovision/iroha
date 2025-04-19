@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "145847104422",
+    "project_id": "sys-76614112762438486420044584",
+    "storage_bucket": "sys-76614112762438486420044584.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145847104422:android:4182cab8cb3f9dae701567",
+        "android_client_info": {
+          "package_name": "jp.dailyfortune.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "145847104422-19rk7gj9gmvt8l1k4gn9jd3cn8k2rm6o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2ZKxQB_K6tiWg1uMNpJDNtnQIP74PdSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145847104422-19rk7gj9gmvt8l1k4gn9jd3cn8k2rm6o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

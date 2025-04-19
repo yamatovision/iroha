@@ -14,19 +14,19 @@ import {
   Typography,
   Snackbar,
   Alert,
-  Autocomplete,
   CircularProgress,
   Switch,
   FormControlLabel
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { Gender, ExtendedLocation, TimezoneAdjustmentInfo } from '@shared/index';
+import { Gender, ExtendedLocation } from '@shared/index';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker, TimePicker } from '@mui/x-date-pickers';
 import ja from 'date-fns/locale/ja';
 import { format } from 'date-fns';
 import sajuProfileService, { GeoCoordinates } from '../../services/saju-profile.service';
-import InternationalLocationForm from './InternationalLocationForm';
+import TimezoneSelector from './TimezoneSelector';
+import LocationSelector from './LocationSelector';
 
 interface SajuProfileFormProps {
   onSubmit: (profileData: any) => void;
@@ -80,11 +80,8 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
   const [extendedLocation, setExtendedLocation] = useState<ExtendedLocation | null>(
     initialData?.extendedLocation || null
   );
-  const [timezoneInfo, setTimezoneInfo] = useState<TimezoneAdjustmentInfo | null>(null);
   
   // 都市選択のための状態
-  const [availableCities, setAvailableCities] = useState<string[]>([]);
-  const [loadingCities, setLoadingCities] = useState(false);
   const [loadingCoordinates, setLoadingCoordinates] = useState(false);
   const [localTimeOffset, setLocalTimeOffset] = useState<number | null>(
     initialData?.localTimeOffset !== undefined ? initialData.localTimeOffset : null
@@ -103,24 +100,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [debugMessage, setDebugMessage] = useState('');
   
-  // 利用可能な都市の一覧を取得
-  useEffect(() => {
-    const fetchCities = async () => {
-      setLoadingCities(true);
-      try {
-        const cities = await sajuProfileService.getAvailableCities();
-        setAvailableCities(cities);
-      } catch (error) {
-        console.error('都市リストの取得に失敗しました:', error);
-        // フォールバック都市リスト
-        setAvailableCities(['東京', '大阪', '名古屋', '札幌', '福岡', 'ソウル', '北京']);
-      } finally {
-        setLoadingCities(false);
-      }
-    };
-    
-    fetchCities();
-  }, []);
+  // 不要な都市リスト取得コードを削除（LocationSelectorが内部で行うため）
 
   // 都市名から座標を取得する関数
   const fetchCityCoordinates = async (cityName: string) => {
@@ -131,7 +111,6 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
       if (useInternationalMode) {
         // 国際モードの場合はタイムゾーン情報も一緒に取得
         const tzInfo = await sajuProfileService.getTimezoneInfo(cityName);
-        setTimezoneInfo(tzInfo);
         
         if (tzInfo.politicalTimeZone) {
           setTimeZone(tzInfo.politicalTimeZone);
@@ -209,24 +188,13 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
     }
   };
   
-  // 都市選択時の処理
-  const handleCityChange = (_: React.SyntheticEvent, value: string | null) => {
-    if (value) {
-      setBirthPlace(value);
-      fetchCityCoordinates(value);
-    }
-  };
-  
   // 手動入力時にも座標を取得
   useEffect(() => {
     if (birthPlace && birthPlace.trim() !== '') {
       // ユーザーが直接入力を変更した場合は少し遅延させて座標取得
       const timer = setTimeout(() => {
-        // 既に選択された都市リストにあるかチェック
-        if (availableCities && availableCities.includes(birthPlace)) {
-          fetchCityCoordinates(birthPlace);
-        } else if (birthPlace.length >= 2) {
-          // リストにない場合でも、2文字以上入力されていれば座標取得を試みる
+        // 2文字以上入力されていれば座標取得を試みる
+        if (birthPlace.length >= 2) {
           fetchCityCoordinates(birthPlace);
         } else {
           // 条件を満たさない場合は座標をクリア
@@ -236,7 +204,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
       
       return () => clearTimeout(timer);
     }
-  }, [birthPlace, availableCities]);
+  }, [birthPlace]);
 
   const validateForm = () => {
     const newErrors = {
@@ -482,96 +450,121 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
               </Grid>
               
               <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={useInternationalMode}
-                      onChange={(e) => setUseInternationalMode(e.target.checked)}
-                      color="primary"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" color={useInternationalMode ? "primary" : "text.secondary"}>
-                      国際タイムゾーン対応モード（海外出生の場合）
-                    </Typography>
-                  }
-                />
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  bgcolor: useInternationalMode ? 'info.50' : 'grey.50',
+                  border: '1px solid',
+                  borderColor: useInternationalMode ? 'info.200' : 'grey.300'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={useInternationalMode}
+                        onChange={(e) => setUseInternationalMode(e.target.checked)}
+                        color="info"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body2" fontWeight={useInternationalMode ? 600 : 400} color={useInternationalMode ? "info.main" : "text.secondary"}>
+                          海外出生の詳細設定
+                        </Typography>
+                        <Typography variant="caption" color={useInternationalMode ? "info.dark" : "text.secondary"}>
+                          {useInternationalMode ? "海外出生詳細モードが有効です" : "海外で生まれた場合はこの設定を有効にしてください"}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Box>
               </Grid>
               
-              {useInternationalMode ? (
-                // 国際タイムゾーン対応モード
-                <Grid item xs={12}>
-                  <InternationalLocationForm
-                    value={extendedLocation || {
-                      name: birthPlace || '',
-                      coordinates: birthplaceCoordinates || { longitude: 139.6917, latitude: 35.6895 },
-                      timeZone: timeZone || 'Asia/Tokyo'
-                    }}
-                    onChange={(location) => {
-                      setExtendedLocation(location);
-                      if (location.name) setBirthPlace(location.name);
-                      if (location.coordinates) setBirthplaceCoordinates(location.coordinates);
-                      if (location.timeZone) setTimeZone(location.timeZone);
-                    }}
-                    timezoneInfo={timezoneInfo || undefined}
-                    onTimezoneInfoChange={(info) => setTimezoneInfo(info)}
-                  />
-                </Grid>
-              ) : (
-                // 通常モード
-                <Grid item xs={12}>
-                  <Autocomplete
-                    id="birthplace-autocomplete"
-                    options={availableCities}
-                    value={birthPlace}
-                    onChange={handleCityChange}
-                    loading={loadingCities}
-                    freeSolo
-                    filterOptions={(options, state) => {
-                      // 2文字以上入力されている場合のみフィルタリングを行う
-                      if (state.inputValue.length < 2) return [];
-                      return options.filter(option => 
-                        option.toLowerCase().includes(state.inputValue.toLowerCase())
-                      );
-                    }}
-                    renderOption={(props, option) => (
-                      <li {...props}>
-                        <LocationOnIcon fontSize="small" sx={{ mr: 1, color: 'primary.light' }} />
-                        {option}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="出生地"
-                        fullWidth
-                        required
-                        value={birthPlace}
-                        onChange={(e) => setBirthPlace(e.target.value)}
-                        error={!!errors.birthPlace || !!errors.coordinates}
-                        helperText={errors.birthPlace || errors.coordinates || '都市名を選択または入力してください（2文字以上で検索）'}
-                        InputProps={{
-                          ...params.InputProps,
-                          startAdornment: (
-                            <LocationOnIcon color="action" sx={{ ml: 0.5, mr: -0.5 }} />
-                          ),
-                          endAdornment: (
-                            <>
-                              {loadingCities ? <CircularProgress color="inherit" size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                        sx={{
-                          '& .MuiInputBase-root': {
-                            borderRadius: 2,
+              <Grid item xs={12}>
+                {/* 新しいLocationSelectorを使用 */}
+                <LocationSelector
+                  value={birthPlace}
+                  onChange={(newLocation, locationInfo) => {
+                    if (newLocation) {
+                      setBirthPlace(newLocation);
+                      
+                      // 時差調整値を設定
+                      if (locationInfo) {
+                        setLocalTimeOffset(locationInfo.adjustment);
+                        
+                        // 海外の場合とそれ以外で処理を分ける
+                        if (locationInfo.isOverseas) {
+                          // 海外の場合はタイムゾーン情報を更新
+                          if (useInternationalMode) {
+                            setExtendedLocation({
+                              name: newLocation,
+                              coordinates: { longitude: 0, latitude: 0 }, // 仮の座標
+                              timeZone: timeZone || 'UTC' // デフォルトUTC
+                            });
                           }
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
-              )}
+                          setBirthplaceCoordinates(undefined);
+                        } else {
+                          // 国内の場合は仮の座標情報を設定（都道府県の代表点）
+                          // 実際の計算ではSimplifiedTimeZoneManagerの調整値が使われる
+                          // このコードは互換性のために座標を設定しているだけ
+                          let defaultCoords;
+                          switch(newLocation) {
+                            case '北海道': defaultCoords = { longitude: 141.3469, latitude: 43.0642 }; break;
+                            case '東京都': defaultCoords = { longitude: 139.6917, latitude: 35.6895 }; break;
+                            case '大阪府': defaultCoords = { longitude: 135.5023, latitude: 34.6937 }; break;
+                            case '福岡県': defaultCoords = { longitude: 130.4017, latitude: 33.6068 }; break;
+                            default: defaultCoords = { longitude: 139.6917, latitude: 35.6895 }; // デフォルト東京
+                          }
+                          
+                          setBirthplaceCoordinates(defaultCoords);
+                          
+                          if (useInternationalMode) {
+                            setExtendedLocation({
+                              name: newLocation,
+                              coordinates: defaultCoords,
+                              timeZone: 'Asia/Tokyo'
+                            });
+                          }
+                        }
+                        
+                        // エラーをクリア
+                        setErrors({...errors, coordinates: '', birthPlace: ''});
+                      }
+                    }
+                  }}
+                  error={errors.birthPlace || errors.coordinates}
+                />
+                
+                {/* 海外出生の詳細設定が有効な場合のみタイムゾーン選択を表示 */}
+                {useInternationalMode && (
+                  <Box sx={{ 
+                    mt: 2, 
+                    p: 1.5, 
+                    borderRadius: 1, 
+                    bgcolor: 'info.50', 
+                    border: '1px solid',
+                    borderColor: 'info.200'
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      color="info.main" 
+                      sx={{ mb: 1 }}
+                    >
+                      海外出生の詳細設定
+                    </Typography>
+                    
+                    <TimezoneSelector
+                      value={timeZone}
+                      onChange={(newTimeZone) => setTimeZone(newTimeZone)}
+                      error={errors.timeZone}
+                    />
+                    
+                    <Alert severity="info" sx={{ mt: 1, p: 0.5, fontSize: '0.75rem' }}>
+                      海外出生の場合は現地時間をそのまま入力してください。タイムゾーンは記録用です。
+                    </Alert>
+                  </Box>
+                )}
+              </Grid>
               
               <Grid item xs={12}>
                 {loadingCoordinates ? (

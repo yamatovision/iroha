@@ -1,6 +1,7 @@
 // メインエクスポートファイル
 export { SajuEngine, SajuResult } from './SajuEngine';
-export { DateTimeProcessor, ProcessedDateTime } from './DateTimeProcessor';
+export { DateTimeProcessor } from './DateTimeProcessor';
+export { ProcessedDateTime } from './international';
 export { 
   Pillar, 
   FourPillars, 
@@ -33,11 +34,13 @@ export { determineKakukyoku } from './kakukyokuCalculator';
 
 // 国際対応モジュールをエクスポート
 export { 
-  TimeZoneUtils, 
-  SecondAdjuster, 
-  TimeZoneDatabase,
   CityTimeZoneData,
   DateTimeProcessor as InternationalDateTimeProcessor,
   GeoCoordinates,
-  SimpleDateTime
+  SimpleDateTime,
+  SimplifiedTimeZoneManager,
+  SimplifiedDateTimeProcessor,
+  LocationData,
+  SimplifiedProcessedDateTime,
+  TimezoneAdjustmentInfo as InternationalTimezoneInfo
 } from './international';
