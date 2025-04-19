@@ -25,8 +25,8 @@ import { LocalizationProvider, DatePicker, TimePicker } from '@mui/x-date-picker
 import ja from 'date-fns/locale/ja';
 import { format } from 'date-fns';
 import sajuProfileService, { GeoCoordinates } from '../../services/saju-profile.service';
-import TimezoneSelector from './TimezoneSelector';
 import LocationSelector from './LocationSelector';
+import { LocationInfo } from '../../services/day-pillar.service';
 
 interface SajuProfileFormProps {
   onSubmit: (profileData: any) => void;
@@ -70,12 +70,14 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
   const [birthPlace, setBirthPlace] = useState(initialData?.birthPlace || '東京都');
   const [gender, setGender] = useState<string>(initialData?.gender || 'M');
   const [goal, setGoal] = useState<string>(initialData?.goal || '');
+  const [selectedLocation, setSelectedLocation] = useState<LocationInfo | null>(null);
   const [birthplaceCoordinates, setBirthplaceCoordinates] = useState<GeoCoordinates | undefined>(
     initialData?.birthplaceCoordinates
   );
   
-  // 国際対応拡張情報
-  const [useInternationalMode, setUseInternationalMode] = useState<boolean>(!!initialData?.timeZone || false);
+  // 国際対応拡張情報 - シンプル化のため自動処理
+  // 海外選択時のタイムゾーン対応（内部処理のみ、UIからは非表示）
+  const useInternationalMode = selectedLocation?.isOverseas || !!initialData?.timeZone;
   const [timeZone, setTimeZone] = useState<string | null>(initialData?.timeZone || null);
   const [extendedLocation, setExtendedLocation] = useState<ExtendedLocation | null>(
     initialData?.extendedLocation || null
@@ -221,9 +223,9 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
     if (!birthPlace) newErrors.birthPlace = '出生地は必須です';
     if (!gender) newErrors.gender = '性別は必須です';
     
-    // 国際モードの場合はタイムゾーンのバリデーション
-    if (useInternationalMode && !timeZone) {
-      newErrors.timeZone = 'タイムゾーンを選択してください';
+    // 海外選択時には時差調整値が0であることを確認
+    if (selectedLocation?.isOverseas && localTimeOffset !== 0) {
+      setLocalTimeOffset(0); // 念のため強制的に0に設定
     }
     
     // 座標があるかチェック（座標はオプションだが、精度向上のために推奨）
@@ -315,10 +317,16 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
       goal: goal
     };
     
-    // 国際モードが有効な場合は追加データを設定
-    if (useInternationalMode) {
-      profileData.timeZone = timeZone || undefined;
+    // 海外選択時は追加データを設定（国際対応）
+    if (selectedLocation?.isOverseas || useInternationalMode) {
+      // 海外の場合はタイムゾーンを設定
+      profileData.timeZone = selectedLocation?.isOverseas ? 'UTC' : (timeZone || undefined);
       profileData.extendedLocation = extendedLocation || undefined;
+      
+      // 海外の場合は時差調整値を必ず0に設定（最終確認）
+      if (selectedLocation?.isOverseas) {
+        profileData.localTimeOffset = 0;
+      }
     }
     
     // デバッグログの強化
@@ -449,35 +457,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12}>
-                <Box sx={{ 
-                  p: 1.5, 
-                  borderRadius: 1, 
-                  bgcolor: useInternationalMode ? 'info.50' : 'grey.50',
-                  border: '1px solid',
-                  borderColor: useInternationalMode ? 'info.200' : 'grey.300'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={useInternationalMode}
-                        onChange={(e) => setUseInternationalMode(e.target.checked)}
-                        color="info"
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography variant="body2" fontWeight={useInternationalMode ? 600 : 400} color={useInternationalMode ? "info.main" : "text.secondary"}>
-                          海外出生の詳細設定
-                        </Typography>
-                        <Typography variant="caption" color={useInternationalMode ? "info.dark" : "text.secondary"}>
-                          {useInternationalMode ? "海外出生詳細モードが有効です" : "海外で生まれた場合はこの設定を有効にしてください"}
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Box>
-              </Grid>
+              {/* 海外出生の詳細設定トグルは削除 - UI簡略化のため */}
               
               <Grid item xs={12}>
                 {/* 新しいLocationSelectorを使用 */}
@@ -487,22 +467,18 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                     if (newLocation) {
                       setBirthPlace(newLocation);
                       
-                      // 時差調整値を設定
+                      // 選択された場所情報を保存
                       if (locationInfo) {
-                        setLocalTimeOffset(locationInfo.adjustment);
+                        setSelectedLocation(locationInfo);
                         
                         // 海外の場合とそれ以外で処理を分ける
                         if (locationInfo.isOverseas) {
-                          // 海外の場合はタイムゾーン情報を更新
-                          if (useInternationalMode) {
-                            setExtendedLocation({
-                              name: newLocation,
-                              coordinates: { longitude: 0, latitude: 0 }, // 仮の座標
-                              timeZone: timeZone || 'UTC' // デフォルトUTC
-                            });
-                          }
+                          // 海外の場合は時差調整値を0にする（単純明快な解決策）
+                          setLocalTimeOffset(0); // 明示的に0に設定
                           setBirthplaceCoordinates(undefined);
                         } else {
+                          // 国内の場合は通常の調整値を設定
+                          setLocalTimeOffset(locationInfo.adjustment);
                           // 国内の場合は仮の座標情報を設定（都道府県の代表点）
                           // 実際の計算ではSimplifiedTimeZoneManagerの調整値が使われる
                           // このコードは互換性のために座標を設定しているだけ
@@ -516,14 +492,13 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                           }
                           
                           setBirthplaceCoordinates(defaultCoords);
-                          
-                          if (useInternationalMode) {
-                            setExtendedLocation({
-                              name: newLocation,
-                              coordinates: defaultCoords,
-                              timeZone: 'Asia/Tokyo'
-                            });
-                          }
+
+                          // 国内の場合も必要に応じて拡張データを設定
+                          setExtendedLocation({
+                            name: newLocation,
+                            coordinates: defaultCoords,
+                            timeZone: 'Asia/Tokyo'
+                          });
                         }
                         
                         // エラーをクリア
@@ -534,36 +509,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                   error={errors.birthPlace || errors.coordinates}
                 />
                 
-                {/* 海外出生の詳細設定が有効な場合のみタイムゾーン選択を表示 */}
-                {useInternationalMode && (
-                  <Box sx={{ 
-                    mt: 2, 
-                    p: 1.5, 
-                    borderRadius: 1, 
-                    bgcolor: 'info.50', 
-                    border: '1px solid',
-                    borderColor: 'info.200'
-                  }}>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight={600} 
-                      color="info.main" 
-                      sx={{ mb: 1 }}
-                    >
-                      海外出生の詳細設定
-                    </Typography>
-                    
-                    <TimezoneSelector
-                      value={timeZone}
-                      onChange={(newTimeZone) => setTimeZone(newTimeZone)}
-                      error={errors.timeZone}
-                    />
-                    
-                    <Alert severity="info" sx={{ mt: 1, p: 0.5, fontSize: '0.75rem' }}>
-                      海外出生の場合は現地時間をそのまま入力してください。タイムゾーンは記録用です。
-                    </Alert>
-                  </Box>
-                )}
+                {/* 海外出生の詳細設定UI（タイムゾーン選択等）を削除（UI簡略化） */}
               </Grid>
               
               <Grid item xs={12}>
@@ -574,7 +520,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                       座標情報を取得中...
                     </Typography>
                   </Box>
-                ) : birthplaceCoordinates ? (
+                ) : birthplaceCoordinates && selectedLocation && !selectedLocation.isOverseas ? (
                   <Box sx={{ mt: 1, p: 1, borderRadius: 1, bgcolor: 'background.paper', border: '1px dashed', borderColor: 'primary.light' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <LocationOnIcon color="primary" sx={{ mr: 1, fontSize: 18 }} />
@@ -590,7 +536,7 @@ const SajuProfileForm: React.FC<SajuProfileFormProps> = ({ onSubmit, initialData
                         緯度: {birthplaceCoordinates.latitude.toFixed(4)}° {birthplaceCoordinates.latitude >= 0 ? '北緯' : '南緯'}
                       </Typography>
                       
-                      {localTimeOffset !== null && (
+                      {localTimeOffset !== null && localTimeOffset !== 0 && (
                         <Typography 
                           variant="caption" 
                           sx={{ 
