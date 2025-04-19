@@ -549,6 +549,35 @@ class ApiService {
       console.error('キャッシュクリアエラー:', error);
     }
   }
+  
+  /**
+   * キャッシュを更新（上書き）
+   * @param url 更新するキャッシュのURL
+   * @param data 新しいデータ
+   * @param params リクエストパラメータ（オプション）
+   * @param ttl キャッシュの有効期間（ミリ秒、オプション）
+   */
+  public async updateCache<T = any>(url: string, data: T, params?: any, ttl: number = this.DEFAULT_CACHE_TTL): Promise<void> {
+    try {
+      await this.initCacheStorage();
+      
+      if (!this.cacheStorage) {
+        console.error('キャッシュストレージが初期化されていません');
+        return;
+      }
+      
+      // 既存のキャッシュアイテムを確認
+      const cacheKey = this.generateCacheKey(url, params || {});
+      const existingCache = await this.cacheStorage.getObject<CacheItem>(`cache_${cacheKey}`);
+      
+      // キャッシュアイテムを更新
+      await this.cacheResponse(url, params || {}, data, ttl);
+      
+      console.log(`📦 キャッシュを更新しました: ${url}`);
+    } catch (error) {
+      console.error('キャッシュ更新エラー:', error);
+    }
+  }
 
   /**
    * 期限切れのキャッシュを削除
@@ -946,16 +975,24 @@ class ApiService {
         response = await this.api.post<T>(url, data, config);
       }
       
-      // POSTが成功した場合、関連するキャッシュを無効化
-      // 例: ユーザープロファイル更新後、そのユーザーのキャッシュをクリア
+      // POSTが成功した場合、関連するキャッシュを更新
+      // 例: ユーザープロファイル更新後、そのユーザーのキャッシュを更新
       if (url.includes('/users/') || url.includes('/profile')) {
-        // ユーザー関連のキャッシュをクリア
-        await this.clearCache('/api/v1/users/me');
+        // レスポンスデータがあればユーザー関連のキャッシュを更新
+        if (response.data) {
+          await this.updateCache('/api/v1/users/me', response.data);
+          await this.updateCache('/api/v1/users/profile', response.data);
+        }
       } else if (url.includes('/teams/')) {
-        // チーム関連のキャッシュをクリア
+        // チーム関連のキャッシュを更新
         const teamId = url.match(/\/teams\/([^\/]+)/)?.[1];
-        if (teamId) {
-          await this.clearCache(`/api/v1/teams/${teamId}`);
+        if (teamId && response.data) {
+          await this.updateCache(`/api/v1/teams/${teamId}`, response.data);
+        }
+      } else if (url.includes('/fortune/')) {
+        // 運勢関連のキャッシュを更新
+        if (response.data) {
+          await this.updateCache('/api/v1/fortune/daily', response.data);
         }
       }
       
@@ -1021,13 +1058,18 @@ class ApiService {
         response = await this.api.put<T>(url, data, config);
       }
       
-      // PUTが成功した場合、関連するキャッシュを無効化
+      // PUTが成功した場合、関連するキャッシュを更新
       if (url.includes('/users/') || url.includes('/profile')) {
-        await this.clearCache('/api/v1/users/me');
+        // レスポンスデータがあればユーザー関連のキャッシュを更新
+        if (response.data) {
+          await this.updateCache('/api/v1/users/me', response.data);
+          await this.updateCache('/api/v1/users/profile', response.data);
+        }
       } else if (url.includes('/teams/')) {
+        // チーム関連のキャッシュを更新
         const teamId = url.match(/\/teams\/([^\/]+)/)?.[1];
-        if (teamId) {
-          await this.clearCache(`/api/v1/teams/${teamId}`);
+        if (teamId && response.data) {
+          await this.updateCache(`/api/v1/teams/${teamId}`, response.data);
         }
       }
       
@@ -1091,9 +1133,15 @@ class ApiService {
         response = await this.api.delete<T>(url, config);
       }
       
-      // DELETEが成功した場合、関連するキャッシュを無効化
+      // DELETEが成功した場合は対象リソースが削除されるため、関連するキャッシュをクリア
       if (url.includes('/teams/')) {
         await this.clearCache('/api/v1/teams');
+        
+        // 特定のチームが削除された場合は、そのチームのキャッシュも削除
+        const teamId = url.match(/\/teams\/([^\/]+)/)?.[1];
+        if (teamId) {
+          await this.clearCache(`/api/v1/teams/${teamId}`);
+        }
       }
       
       return response;
@@ -1159,9 +1207,13 @@ class ApiService {
         response = await this.api.patch<T>(url, data, config);
       }
       
-      // PATCHが成功した場合、関連するキャッシュを無効化
+      // PATCHが成功した場合、関連するキャッシュを更新
       if (url.includes('/users/') || url.includes('/profile')) {
-        await this.clearCache('/api/v1/users/me');
+        // レスポンスデータがあればユーザー関連のキャッシュを更新
+        if (response.data) {
+          await this.updateCache('/api/v1/users/me', response.data);
+          await this.updateCache('/api/v1/users/profile', response.data);
+        }
       }
       
       return response;
