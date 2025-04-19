@@ -22,8 +22,8 @@ interface ChatContainerProps {
 }
 
 const ChatContainer: React.FC<ChatContainerProps> = ({
-  // 運勢相談モードを無効化しているため、デフォルトを相性相談モードに変更
-  initialMode = ChatMode.TEAM_MEMBER,
+  // 運勢相談モードをデフォルトに戻す
+  initialMode = ChatMode.PERSONAL,
   onBack,
   fullscreen = false
 }) => {
@@ -44,8 +44,13 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       try {
         setIsLoading(true);
         
+        console.log('チャット初期化開始 - モード:', mode);
+        
+        // モードが未設定・未定義の場合はデフォルトのモードに設定
+        const chatMode = mode || ChatMode.PERSONAL;
+        
         // モードを設定して初期メッセージを取得
-        const response = await chatService.setMode(mode);
+        const response = await chatService.setMode(chatMode);
         
         // 初期メッセージ - AIからのウェルカムメッセージのみを表示
         setMessages([{
@@ -55,16 +60,24 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         }]);
         
         setChatId(response.chatHistory.id);
-      } catch (error) {
+        console.log('チャット初期化完了:', { chatId: response.chatHistory.id, mode: chatMode });
+      } catch (error: any) {
         console.error('Chat initialization error:', error);
-        setError('チャットの初期化に失敗しました。');
+        // エラーメッセージをより詳細に
+        setError(error.message || 'チャットの初期化に失敗しました。');
+        
+        // エラー時はフォールバックとして運勢相談モードを試す
+        if (mode !== ChatMode.PERSONAL) {
+          console.log('フォールバック: 運勢相談モードで再試行');
+          setMode(ChatMode.PERSONAL);
+        }
       } finally {
         setIsLoading(false);
       }
     };
     
     initializeChat();
-  }, []);
+  }, [mode]); // モード変更時にも再初期化するように修正
 
   // メッセージリストの末尾に自動スクロール
   useEffect(() => {

@@ -322,8 +322,18 @@ export class ChatService {
     };
   }> {
     try {
+      // モードが未定義の場合はデフォルトを使用
+      const safeMode = mode || ChatMode.PERSONAL;
+      
+      console.log('ChatMode設定リクエスト準備:', { 
+        送信するモード: safeMode, 
+        元のモード値: mode, 
+        リクエストURL: CHAT.SET_CHAT_MODE 
+      });
+      
+      // APIリクエスト送信（モードを文字列として明示的に送信）
       const response = await api.put(CHAT.SET_CHAT_MODE, {
-        mode,
+        mode: String(safeMode),
         contextInfo
       });
 

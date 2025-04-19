@@ -144,14 +144,13 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
   const getModeText = () => {
     switch (currentMode) {
       case ChatMode.PERSONAL:
-        // 運勢相談モードは無効化中だが、初期表示のためのテキストは維持
-        return "AI相談"; // 「運勢相談」から「AI相談」に変更
+        return "運勢相談"; // 元の「運勢相談」に戻す
       case ChatMode.TEAM_MEMBER:
         return "相性相談";
       case ChatMode.TEAM_GOAL:
         return "目標相談";
       default:
-        return "AI相談"; // デフォルトテキストも変更
+        return "運勢相談"; // デフォルトテキストも変更
     }
   };
 
@@ -179,7 +178,6 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
         
         {/* モード選択チップ */}
         <Box sx={{ flexGrow: 1, display: 'flex', flexWrap: 'nowrap', overflowX: 'auto' }}>
-          {/* 運勢相談モードは一時的に無効化
           <StyledChip
             icon={<Person />}
             label="運勢相談"
@@ -191,7 +189,6 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
             }}
             clickable
           />
-          */}
           
           <StyledChip
             icon={<People />}

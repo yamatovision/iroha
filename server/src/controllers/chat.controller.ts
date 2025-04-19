@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+// 最初にChatModeをインポート
 import { ChatMode, ChatMessageRequest, ChatModeRequest } from '../types';
+import { chatService } from '../services/chat/chat.service';
 
 // 拡張されたRequestの型定義
 interface AuthRequest extends Request {
@@ -9,7 +11,15 @@ interface AuthRequest extends Request {
     [key: string]: any;
   };
 }
-import { chatService } from '../services/chat/chat.service';
+
+// ChatModeの実装が正しくインポートされていることを確認（実際の列挙値を出力）
+const CHAT_MODES = Object.values(ChatMode || {});
+console.log('ChatMode検証:', { 
+  ChatMode,
+  値: CHAT_MODES,
+  存在確認: !!ChatMode,
+  型: typeof ChatMode
+});
 
 /**
  * チャットコントローラー
@@ -51,12 +61,34 @@ export class ChatController {
         return;
       }
 
-      if (!Object.values(ChatMode).includes(mode)) {
+      // ChatModeが正しく定義されているかを確認し、安全に検証
+      try {
+        // 事前定義したCHAT_MODESを使用
+        console.log('チャットモード受信値:', { 
+          mode, 
+          typeOfMode: typeof mode, 
+          chatTypeList: CHAT_MODES 
+        });
+        
+        if (!mode) {
+          throw new Error('モードが指定されていません');
+        }
+        
+        // 安全なChatMode検証 - 定義された配列を使用
+        const isValidMode = CHAT_MODES.includes(mode) || 
+                           ['personal', 'team_member', 'team_goal'].includes(mode);
+        
+        if (!isValidMode) {
+          console.error(`無効なモード値 [${mode}], 有効な値: ${CHAT_MODES.join(', ')}`);
+          throw new Error(`無効なチャットモードです: ${mode}`);
+        }
+      } catch (error: any) {
+        console.error('チャットモード検証エラー:', error);
         res.status(400).json({
           success: false,
           error: {
             code: 'INVALID_MODE',
-            message: '無効なチャットモードです'
+            message: error.message || '無効なチャットモードです'
           }
         });
         return;
@@ -274,6 +306,12 @@ export class ChatController {
    */
   public async setMode(req: AuthRequest, res: Response): Promise<void> {
     try {
+      console.log('Chat setMode リクエスト受信:', {
+        body: req.body,
+        headers: req.headers,
+        method: req.method
+      });
+      
       const { mode, contextInfo } = req.body as ChatModeRequest;
       const userId = req.user?.id;
 
@@ -288,19 +326,42 @@ export class ChatController {
         return;
       }
 
-      if (!Object.values(ChatMode).includes(mode)) {
+      // ChatModeが正しく定義されているかを確認し、安全に検証
+      try {
+        // 事前定義したCHAT_MODESを使用
+        console.log('チャットモード受信値:', { 
+          mode, 
+          typeOfMode: typeof mode, 
+          chatTypeList: CHAT_MODES 
+        });
+        
+        if (!mode) {
+          throw new Error('モードが指定されていません');
+        }
+        
+        // 安全なChatMode検証 - 定義された配列を使用
+        const isValidMode = CHAT_MODES.includes(mode) || 
+                           ['personal', 'team_member', 'team_goal'].includes(mode);
+        
+        if (!isValidMode) {
+          console.error(`無効なモード値 [${mode}], 有効な値: ${CHAT_MODES.join(', ')}`);
+          throw new Error(`無効なチャットモードです: ${mode}`);
+        }
+      } catch (error: any) {
+        console.error('チャットモード検証エラー:', error);
         res.status(400).json({
           success: false,
           error: {
             code: 'INVALID_MODE',
-            message: '無効なチャットモードです'
+            message: error.message || '無効なチャットモードです'
           }
         });
         return;
       }
 
       // チームメンバーモードでメンバーIDが指定されていない場合
-      if (mode === ChatMode.TEAM_MEMBER && (!contextInfo || !contextInfo.memberId)) {
+      // 直接列挙値と比較して、ChatModeの参照エラーを回避
+      if (mode === 'team_member' && (!contextInfo || !contextInfo.memberId)) {
         res.status(400).json({
           success: false,
           error: {
@@ -312,7 +373,8 @@ export class ChatController {
       }
 
       // チーム目標モードで目標IDが指定されていない場合
-      if (mode === ChatMode.TEAM_GOAL && (!contextInfo || !contextInfo.teamGoalId)) {
+      // 直接列挙値と比較して、ChatModeの参照エラーを回避
+      if (mode === 'team_goal' && (!contextInfo || !contextInfo.teamGoalId)) {
         res.status(400).json({
           success: false,
           error: {

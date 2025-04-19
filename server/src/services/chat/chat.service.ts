@@ -260,7 +260,7 @@ export class ChatService {
    */
   public async changeMode(
     userId: string,
-    mode: ChatMode,
+    mode: string | ChatMode, // 文字列としても受け付けるように変更
     contextInfo?: {
       memberId?: string;
       teamGoalId?: string;
@@ -270,6 +270,8 @@ export class ChatService {
     chatHistory: IChatHistoryDocument;
   }> {
     try {
+      console.log('ChatService.changeMode開始:', { userId, mode, contextInfoExists: !!contextInfo });
+      
       // ユーザー情報の取得 - 柔軟な検索ヘルパーを使用
       const user = await this.findUserById(userId);
       if (!user) {
@@ -430,19 +432,22 @@ export class ChatService {
    */
   private async createNewChatSession(
     userId: string,
-    mode: ChatMode,
+    mode: string | ChatMode, // 文字列としても受け付ける
     contextInfo?: {
       memberId?: string;
       teamGoalId?: string;
     },
     aiModel: 'sonnet' | 'haiku' = 'haiku'
   ): Promise<IChatHistoryDocument> {
+    console.log('createNewChatSession開始:', { userId, mode, contextInfo, aiModel });
+    
     // relatedInfoの構築
     const relatedInfo: any = {};
     if (contextInfo) {
-      if (mode === ChatMode.TEAM_MEMBER && contextInfo.memberId) {
+      // 文字列として比較
+      if (mode === 'team_member' && contextInfo.memberId) {
         relatedInfo.teamMemberId = new Types.ObjectId(contextInfo.memberId);
-      } else if (mode === ChatMode.TEAM_GOAL && contextInfo.teamGoalId) {
+      } else if (mode === 'team_goal' && contextInfo.teamGoalId) {
         relatedInfo.teamGoalId = new Types.ObjectId(contextInfo.teamGoalId);
       }
     }
@@ -502,31 +507,34 @@ export class ChatService {
    * チャットモードに応じたウェルカムメッセージを生成
    */
   private async generateWelcomeMessage(
-    mode: ChatMode,
+    mode: string | ChatMode,
     contextInfo?: {
       memberId?: string;
       teamGoalId?: string;
     }
   ): Promise<string> {
-    switch (mode) {
-      case ChatMode.PERSONAL:
-        return 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。';
-
-      case ChatMode.TEAM_MEMBER:
-        if (contextInfo?.memberId) {
-          // メンバー名を取得 - 柔軟な検索を使用
-          const member = await this.findUserById(contextInfo.memberId);
-          if (member) {
-            return `${member.displayName}さんとの相性について相談モードに切り替えました。何について知りたいですか？`;
-          }
+    console.log('generateWelcomeMessage - モード:', mode);
+    
+    // 文字列として比較
+    if (mode === 'personal') {
+      return 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。';
+    } 
+    else if (mode === 'team_member') {
+      if (contextInfo?.memberId) {
+        // メンバー名を取得 - 柔軟な検索を使用
+        const member = await this.findUserById(contextInfo.memberId);
+        if (member) {
+          return `${member.displayName}さんとの相性について相談モードに切り替えました。何について知りたいですか？`;
         }
-        return 'チームメンバーとの相性について相談モードに切り替えました。相談したいメンバーを選択してください。';
-
-      case ChatMode.TEAM_GOAL:
-        return 'チーム目標達成のための相談モードに切り替えました。目標達成に向けたアドバイスが必要な場合は、具体的な状況を教えてください。';
-
-      default:
-        return 'こんにちは。何かお手伝いできることはありますか？';
+      }
+      return 'チームメンバーとの相性について相談モードに切り替えました。相談したいメンバーを選択してください。';
+    }
+    else if (mode === 'team_goal') {
+      return 'チーム目標達成のための相談モードに切り替えました。目標達成に向けたアドバイスが必要な場合は、具体的な状況を教えてください。';
+    }
+    else {
+      // デフォルトのメッセージ
+      return 'こんにちは。何かお手伝いできることはありますか？';
     }
   }
 
@@ -534,20 +542,25 @@ export class ChatService {
    * チャットモードに応じた関連情報の検証
    */
   private async validateContextInfo(
-    mode: ChatMode,
+    mode: string | ChatMode,
     contextInfo?: {
       memberId?: string;
       teamGoalId?: string;
     }
   ): Promise<void> {
-    if (mode === ChatMode.TEAM_MEMBER && contextInfo?.memberId) {
+    console.log('validateContextInfo - モード検証:', { mode, contextType: typeof mode });
+    
+    // 文字列として比較して安全に処理
+    if (mode === 'team_member' && contextInfo?.memberId) {
       // メンバーIDの検証
+      console.log('チームメンバーモード - メンバーID検証:', contextInfo.memberId);
       const member = await User.findById(contextInfo.memberId);
       if (!member) {
         throw new Error('指定されたチームメンバーが見つかりません');
       }
-    } else if (mode === ChatMode.TEAM_GOAL && contextInfo?.teamGoalId) {
+    } else if (mode === 'team_goal' && contextInfo?.teamGoalId) {
       // チーム目標IDの検証
+      console.log('チーム目標モード - 目標ID検証:', contextInfo.teamGoalId);
       const TeamGoal = require('../../models/TeamGoal').TeamGoal;
       const teamGoal = await TeamGoal.findById(contextInfo.teamGoalId);
       if (!teamGoal) {

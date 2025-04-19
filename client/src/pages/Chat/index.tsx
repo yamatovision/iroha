@@ -88,7 +88,7 @@ const ChatPage: React.FC = () => {
             letterSpacing: '0.5px',
           }}
         >
-          AI相談
+          運勢相談
         </Typography>
         <Box sx={{ width: '40px' }} /> {/* Spacer for visual balance */}
       </Box>
