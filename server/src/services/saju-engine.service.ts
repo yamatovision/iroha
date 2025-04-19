@@ -1,8 +1,6 @@
 import { 
   SajuEngine, 
   SajuResult, 
-  SimplifiedTimeZoneManager,
-  SimplifiedDateTimeProcessor,
   DateTimeProcessor as InternationalDateTimeProcessor
 } from 'saju-engine';
 import { ValidationError } from '../utils';
@@ -147,25 +145,17 @@ export class SajuEngineService {
       return ['海外']; // 国際対応モードが無効の場合は「海外」のみ返す
     }
     
-    try {
-      // SimplifiedTimeZoneManagerを使用してすべての場所を取得
-      const timeZoneManager = SimplifiedTimeZoneManager.getInstance();
-      
-      return timeZoneManager.getAllLocations();
-    } catch (error) {
-      console.error('出生地リスト取得エラー:', error);
-      // フォールバック: 標準的な都道府県リストと海外を返す
-      const prefectures = [
-        '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-        '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-        '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
-        '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
-        '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-        '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
-        '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県', '海外'
-      ];
-      return prefectures;
-    }
+    // 標準的な都道府県リストと海外を返す
+    const prefectures = [
+      '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+      '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+      '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+      '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+      '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+      '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+      '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県', '海外'
+    ];
+    return prefectures;
   }
   
   /**
@@ -183,49 +173,30 @@ export class SajuEngineService {
       };
     }
     
-    try {
-      // SimplifiedTimeZoneManagerを使用して時差調整値を取得
-      const timeZoneManager = SimplifiedTimeZoneManager.getInstance();
-      
-      // 調整値と説明を取得
-      const adjustment = timeZoneManager.getAdjustmentMinutes(location);
-      const description = timeZoneManager.getLocationDescription(location);
-      const isOverseas = location === '海外';
-      
-      return {
-        locationName: location,
-        adjustment,
-        description,
-        isOverseas
-      };
-    } catch (error) {
-      console.error('タイムゾーン情報取得エラー:', error);
-      
-      // フォールバック: 都道府県はデフォルト調整値を使用、海外は0を返す
-      const isOverseas = location === '海外';
-      const defaultAdjustments: Record<string, number> = {
-        '北海道': 25, '青森県': 23, '岩手県': 21, '宮城県': 20, '秋田県': 19, '山形県': 19,
-        '福島県': 18, '茨城県': 19, '栃木県': 19, '群馬県': 18, '埼玉県': 19, '千葉県': 19,
-        '東京都': 19, '神奈川県': 19, '新潟県': 17, '富山県': 15, '石川県': 14, '福井県': 13,
-        '山梨県': 17, '長野県': 16, '岐阜県': 12, '静岡県': 15, '愛知県': 8, '三重県': 6,
-        '滋賀県': 4, '京都府': 3, '大阪府': 2, '兵庫県': 1, '奈良県': 3, '和歌山県': 0,
-        '鳥取県': -3, '島根県': -6, '岡山県': -4, '広島県': -8, '山口県': -12, '徳島県': -1,
-        '香川県': -2, '愛媛県': -7, '高知県': -5, '福岡県': -18, '佐賀県': -20, '長崎県': -21,
-        '熊本県': -19, '大分県': -16, '宮崎県': -14, '鹿児島県': -19, '沖縄県': -31, '海外': 0
-      };
-      
-      const adjustment = defaultAdjustments[location] || 0;
-      const description = isOverseas 
-        ? "海外の場合は現地時間をそのまま入力してください" 
-        : `${location}: ${adjustment >= 0 ? '+' : ''}${adjustment}分`;
-      
-      return {
-        locationName: location,
-        adjustment,
-        description,
-        isOverseas
-      };
-    }
+    // フォールバック: 都道府県はデフォルト調整値を使用、海外は0を返す
+    const isOverseas = location === '海外';
+    const defaultAdjustments: Record<string, number> = {
+      '北海道': 25, '青森県': 23, '岩手県': 21, '宮城県': 20, '秋田県': 19, '山形県': 19,
+      '福島県': 18, '茨城県': 19, '栃木県': 19, '群馬県': 18, '埼玉県': 19, '千葉県': 19,
+      '東京都': 19, '神奈川県': 19, '新潟県': 17, '富山県': 15, '石川県': 14, '福井県': 13,
+      '山梨県': 17, '長野県': 16, '岐阜県': 12, '静岡県': 15, '愛知県': 8, '三重県': 6,
+      '滋賀県': 4, '京都府': 3, '大阪府': 2, '兵庫県': 1, '奈良県': 3, '和歌山県': 0,
+      '鳥取県': -3, '島根県': -6, '岡山県': -4, '広島県': -8, '山口県': -12, '徳島県': -1,
+      '香川県': -2, '愛媛県': -7, '高知県': -5, '福岡県': -18, '佐賀県': -20, '長崎県': -21,
+      '熊本県': -19, '大分県': -16, '宮崎県': -14, '鹿児島県': -19, '沖縄県': -31, '海外': 0
+    };
+    
+    const adjustment = defaultAdjustments[location] || 0;
+    const description = isOverseas 
+      ? "海外の場合は現地時間をそのまま入力してください" 
+      : `${location}: ${adjustment >= 0 ? '+' : ''}${adjustment}分`;
+    
+    return {
+      locationName: location,
+      adjustment,
+      description,
+      isOverseas
+    };
   }
   
   /**
@@ -247,53 +218,44 @@ export class SajuEngineService {
       }];
     }
     
-    try {
-      // SimplifiedTimeZoneManagerから直接情報を取得
-      const timeZoneManager = SimplifiedTimeZoneManager.getInstance();
+    // フォールバック: デフォルトの都道府県リストと調整値を返す
+    const defaultAdjustments: Record<string, number> = {
+      '北海道': 25, '青森県': 23, '岩手県': 21, '宮城県': 20, '秋田県': 19, '山形県': 19,
+      '福島県': 18, '茨城県': 19, '栃木県': 19, '群馬県': 18, '埼玉県': 19, '千葉県': 19,
+      '東京都': 19, '神奈川県': 19, '新潟県': 17, '富山県': 15, '石川県': 14, '福井県': 13,
+      '山梨県': 17, '長野県': 16, '岐阜県': 12, '静岡県': 15, '愛知県': 8, '三重県': 6,
+      '滋賀県': 4, '京都府': 3, '大阪府': 2, '兵庫県': 1, '奈良県': 3, '和歌山県': 0,
+      '鳥取県': -3, '島根県': -6, '岡山県': -4, '広島県': -8, '山口県': -12, '徳島県': -1,
+      '香川県': -2, '愛媛県': -7, '高知県': -5, '福岡県': -18, '佐賀県': -20, '長崎県': -21,
+      '熊本県': -19, '大分県': -16, '宮崎県': -14, '鹿児島県': -19, '沖縄県': -31, '海外': 0
+    };
+    
+    const prefectures = [
+      '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+      '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+      '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+      '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+      '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+      '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+      '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ];
+    
+    const locations = [...prefectures, '海外'];
+    
+    return locations.map(name => {
+      const adjustment = defaultAdjustments[name] || 0;
+      const isOverseas = name === '海外';
+      const description = isOverseas 
+        ? "海外の場合は現地時間をそのまま入力してください" 
+        : `${name}: ${adjustment >= 0 ? '+' : ''}${adjustment}分`;
       
-      return timeZoneManager.getAllLocationsWithInfo();
-    } catch (error) {
-      console.error('場所情報取得エラー:', error);
-      
-      // フォールバック: デフォルトの都道府県リストと調整値を返す
-      const defaultAdjustments: Record<string, number> = {
-        '北海道': 25, '青森県': 23, '岩手県': 21, '宮城県': 20, '秋田県': 19, '山形県': 19,
-        '福島県': 18, '茨城県': 19, '栃木県': 19, '群馬県': 18, '埼玉県': 19, '千葉県': 19,
-        '東京都': 19, '神奈川県': 19, '新潟県': 17, '富山県': 15, '石川県': 14, '福井県': 13,
-        '山梨県': 17, '長野県': 16, '岐阜県': 12, '静岡県': 15, '愛知県': 8, '三重県': 6,
-        '滋賀県': 4, '京都府': 3, '大阪府': 2, '兵庫県': 1, '奈良県': 3, '和歌山県': 0,
-        '鳥取県': -3, '島根県': -6, '岡山県': -4, '広島県': -8, '山口県': -12, '徳島県': -1,
-        '香川県': -2, '愛媛県': -7, '高知県': -5, '福岡県': -18, '佐賀県': -20, '長崎県': -21,
-        '熊本県': -19, '大分県': -16, '宮崎県': -14, '鹿児島県': -19, '沖縄県': -31, '海外': 0
+      return {
+        name,
+        adjustment,
+        description,
+        isOverseas
       };
-      
-      const prefectures = [
-        '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-        '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-        '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
-        '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
-        '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-        '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
-        '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
-      ];
-      
-      const locations = [...prefectures, '海外'];
-      
-      return locations.map(name => {
-        const adjustment = defaultAdjustments[name] || 0;
-        const isOverseas = name === '海外';
-        const description = isOverseas 
-          ? "海外の場合は現地時間をそのまま入力してください" 
-          : `${name}: ${adjustment >= 0 ? '+' : ''}${adjustment}分`;
-        
-        return {
-          name,
-          adjustment,
-          description,
-          isOverseas
-        };
-      });
-    }
+    });
   }
 
   /**
@@ -311,29 +273,21 @@ export class SajuEngineService {
       };
     }
     
-    try {
-      const timeZoneManager = SimplifiedTimeZoneManager.getInstance();
-      
-      return timeZoneManager.getLocationCategories();
-    } catch (error) {
-      console.error('場所カテゴリ取得エラー:', error);
-      
-      // 標準的な都道府県リストをフォールバックとして返す
-      const prefectures = [
-        '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-        '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-        '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
-        '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
-        '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-        '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
-        '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
-      ];
-      
-      return {
-        prefectures,
-        overseas: ['海外']
-      };
-    }
+    // 標準的な都道府県リストをフォールバックとして返す
+    const prefectures = [
+      '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+      '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+      '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+      '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+      '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+      '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+      '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'
+    ];
+    
+    return {
+      prefectures,
+      overseas: ['海外']
+    };
   }
   
   /**

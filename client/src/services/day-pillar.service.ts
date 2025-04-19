@@ -148,17 +148,20 @@ class DayPillarService {
       }
       
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('DayPillarService: 拡張都市情報取得エラー:', error);
       
       // エラー詳細を出力
       if (axios.isAxiosError(error)) {
         console.error('DayPillarService: Axiosエラー詳細:');
-        console.error('- ステータスコード:', error.response?.status);
-        console.error('- エラーメッセージ:', error.message);
-        console.error('- レスポンスデータ:', error.response?.data);
+        console.error('- ステータスコード:', error.response?.status || 'なし');
+        console.error('- エラーメッセージ:', String(error.message) || 'なし');
+        console.error('- レスポンスデータ:', error.response?.data || 'なし');
       } else {
-        console.error('DayPillarService: 不明なエラー:', typeof error === 'object' && error !== null ? Object.toString.call(error) : String(error));
+        const errorString = typeof error === 'object' && error !== null 
+          ? Object.prototype.toString.call(error) 
+          : String(error);
+        console.error('DayPillarService: 不明なエラー:', errorString);
       }
       
       // エラー時の基本的なフォールバック（ハードコードされた時差データ）

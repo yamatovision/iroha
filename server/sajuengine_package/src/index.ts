@@ -39,5 +39,7 @@ export {
   CityTimeZoneData,
   DateTimeProcessor as InternationalDateTimeProcessor,
   GeoCoordinates,
-  SimpleDateTime
+  SimpleDateTime,
+  SimplifiedTimeZoneManager,
+  SimplifiedDateTimeProcessor
 } from './international';

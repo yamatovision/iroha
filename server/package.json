@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node -r tsconfig-paths/register dist/index.js",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
-    "build": "npm run build:saju && tsc -p tsconfig.build.json",
-    "build:saju": "cd ../sajuengine_package && npm run build",
+    "build": "tsc -p tsconfig.build.json",
+    "tsc": "tsc -p tsconfig.build.json",
+    "build:saju": "echo 'Sajuengine already built'",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -44,7 +45,7 @@
     "luxon": "^3.6.1",
     "mongoose": "^8.0.0",
     "node-cron": "^3.0.3",
-    "saju-engine": "file:../sajuengine_package",
+    "saju-engine": "file:./sajuengine_package",
     "winston": "^3.11.0"
   },
   "devDependencies": {

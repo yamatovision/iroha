@@ -566,11 +566,7 @@ class ApiService {
         return;
       }
       
-      // 既存のキャッシュアイテムを確認
-      const cacheKey = this.generateCacheKey(url, params || {});
-      const existingCache = await this.cacheStorage.getObject<CacheItem>(`cache_${cacheKey}`);
-      
-      // キャッシュアイテムを更新
+      // キャッシュアイテムを直接更新
       await this.cacheResponse(url, params || {}, data, ttl);
       
       console.log(`📦 キャッシュを更新しました: ${url}`);
