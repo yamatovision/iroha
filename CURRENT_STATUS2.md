@@ -226,6 +226,87 @@ cd client && npx cap open android
 - [Capacitor HTTP Plugin](https://capacitorjs.com/docs/apis/http) - ネイティブHTTPリクエスト実装
 - [Firebase App Distribution](https://firebase.google.com/docs/app-distribution) - テスト版配布システム
 
+## 環境変数管理ルール
+
+APIエンドポイントのURLパス重複問題を防ぐため、以下のルールを厳守してください。
+
+### 環境変数設定ルール（重要）
+
+1. **APIベースURLの設定**
+   - `VITE_API_URL` には **絶対に** `/api/v1` を含めないこと
+   - 末尾のスラッシュ（`/`）も含めないこと
+   - 正しい例: `https://dailyfortune-api-6clpzmy5pa-an.a.run.app`
+   - 誤った例: `https://dailyfortune-api-6clpzmy5pa-an.a.run.app/api/v1` または `https://dailyfortune-api-6clpzmy5pa-an.a.run.app/`
+
+2. **APIパスの構築方法**
+   - すべてのAPIパスは `shared/index.ts` で定義された定数を使用すること
+   - 直接文字列でパスを書かないこと（例: `/api/v1/auth/login` ではなく `AUTH.LOGIN` を使用）
+   - URL構築時には必ず重複チェックを行うこと
+
+3. **環境変数の統一**
+   - すべての環境（開発、本番、デバッグ）で同じ形式の環境変数を使用すること
+   - ローカル、Web、ネイティブアプリで環境変数の構造を一致させること
+
+4. **環境変数変更時のチェックリスト**
+   - 変更後、パスの重複が発生していないか確認
+   - `shared/index.ts` との整合性を確認
+   - すべての環境で同じURL構築ロジックが使用されているか確認
+   - 関連ドキュメント（`deploy.md`など）も更新
+
+### URL構築のベストプラクティス
+
+以下の関数を `common/url-utils.ts` などに実装して、すべてのサービスで共有することを推奨します：
+
+```typescript
+/**
+ * API URLを安全に構築するユーティリティ関数
+ * パスの重複を検出して修正します
+ * 
+ * @param apiPath shared/index.tsで定義されたAPIパス（通常は/api/v1で始まる）
+ * @param baseUrl オプション。環境変数から取得したベースURL。指定がない場合はVITE_API_URLを使用
+ * @returns 完全に構築されたURL
+ */
+export function buildApiUrl(apiPath: string, baseUrl?: string): string {
+  // 環境変数から取得したベースURL（末尾スラッシュなし）
+  const envBaseUrl = import.meta.env.VITE_API_URL || '';
+  const baseURL = (baseUrl || envBaseUrl).replace(/\/$/, '');
+  
+  // APIパスのチェックと正規化
+  if (!apiPath) {
+    console.error('APIパスが指定されていません');
+    return baseURL;
+  }
+  
+  // APIパスから二重パスを防止（/api/v1が重複する場合は修正）
+  let cleanPath = apiPath;
+  
+  // 重複パターンの検出
+  const duplicatePatterns = [
+    { pattern: '/api/v1/api/v1', fix: '/api/v1' },
+    { pattern: '/api/v1', base: '/api/v1', condition: (url: string) => url.endsWith('/api/v1') }
+  ];
+  
+  // パス重複チェック - baseURLが/api/v1で終わり、apiPathが/api/v1で始まる場合
+  if (baseURL.endsWith('/api/v1') && apiPath.startsWith('/api/v1')) {
+    cleanPath = apiPath.replace('/api/v1', '');
+    console.warn(`⚠️ URLパス重複を検出: ${baseURL + apiPath}`);
+    console.warn(`🔧 修正後のURL: ${baseURL + cleanPath}`);
+  }
+  
+  // pathの二重スラッシュを修正
+  const finalUrl = (baseURL + cleanPath).replace(/([^:]\/)\/+/g, '$1');
+  
+  // デバッグモードの場合は完全なURLを出力
+  if (import.meta.env.DEV || import.meta.env.VITE_DEBUG_ENABLED === 'true') {
+    console.log(`🔗 API URL: ${finalUrl}`);
+  }
+  
+  return finalUrl;
+}
+```
+
+この関数をすべてのサービスで使用することで、URL構築を一元化し、パス重複問題を防ぐことができます。
+
 ## エラー引き継ぎログ
 
 このセクションには、タスク実行中に発生した問題とその解決策を記録します。タスクが完了したら、そのタスクに関するログは削除して構いません。
@@ -243,6 +324,22 @@ cd client && npx cap open android
 ```
 
 ### 現在のエラーログ
+
+【70a】APIエンドポイントの問題修正（完了）
+- 問題：APIエンドポイントのパスに「/api/v1」が重複していた
+  - 例：`https://dailyfortune-api-6clpzmy5pa-an.a.run.app/api/v1/api/v1/jwt-auth/refresh-token`
+- 原因分析：
+  1. shared/index.tsのAPI定数には既に/api/v1が含まれている
+  2. 環境変数VITE_API_URLにも/api/v1が含まれていた
+  3. これらを結合して使用していたため、パスが重複していた
+- 解決策：
+  1. 環境変数から/api/v1を除去（`.env.production`と`.env.debug`）
+  2. 各サービスで重複検出・修正ロジックを実装（jwt-auth.service.ts, chat.service.ts）
+  3. api.service.tsのログ出力を改善し、問題を明確に表示
+- 実施した修正：
+  1. 環境変数からパスを削除：`VITE_API_URL=https://dailyfortune-api-6clpzmy5pa-an.a.run.app`
+  2. 重複検出ロジック追加：`if (baseURL.includes('/api/v1')) { cleanBaseUrl = baseURL.replace('/api/v1', ''); }`
+  3. APIサービス情報ログの強化：より詳細な情報表示と警告メッセージ
 
 【74-78】四柱推命プロフィール設定後のUX改善（完了）
 - 問題：新規ユーザー登録後、四柱推命プロフィール入力完了後にモーダルが閉じず、再度表示される問題
