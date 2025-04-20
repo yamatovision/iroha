@@ -2,11 +2,14 @@ import apiService from './api.service';
 import { FORTUNE, IFortune } from '../../../shared';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import storageService from './storage/storage-factory';
+import { StorageKeys } from './storage/storage.interface';
 
 class FortuneService {
   private cachedFortune: IFortune | null = null;
   private cacheExpiration: Date | null = null;
   private readonly CACHE_DURATION_MS = 3600000; // 1時間
+  private lastCheckedDate: string | null = null; // YYYY-MM-DD形式で日付を保存
 
   /**
    * 今日の運勢を取得する
@@ -14,23 +17,33 @@ class FortuneService {
    * @returns 運勢データ
    */
   async getDailyFortune(date?: string): Promise<IFortune> {
-    // キャッシュが有効かどうかを確認
-    const now = new Date();
-    if (this.cachedFortune && this.cacheExpiration && now < this.cacheExpiration && !date) {
-      console.log('キャッシュから運勢データを取得');
-      return this.cachedFortune;
+    // 日付指定がない場合はキャッシュチェック
+    if (!date) {
+      this.checkAndClearCache();
+      
+      // キャッシュが有効かどうかを確認
+      const now = new Date();
+      if (this.cachedFortune && this.cacheExpiration && now < this.cacheExpiration) {
+        console.log('キャッシュから運勢データを取得');
+        return this.cachedFortune;
+      }
     }
 
-    // 日付パラメータがある場合は追加
-    const params = date ? { date } : {};
+    // 日付パラメータとタイムゾーン情報を追加
+    const tzInfo = this.getTimezoneInfo();
+    const params = {
+      ...(date ? { date } : {}),
+      timezone: tzInfo.timezone,
+      tzOffset: tzInfo.offset
+    };
 
     try {
       const response = await apiService.get<IFortune>(FORTUNE.GET_DAILY_FORTUNE, { params });
       
-      // キャッシュを更新
+      // キャッシュを更新（日付指定がない場合）
       if (!date) {
         this.cachedFortune = response.data;
-        this.cacheExpiration = new Date(now.getTime() + this.CACHE_DURATION_MS);
+        this.setAdaptiveCacheExpiration();
       }
       
       // 四柱推命属性情報が取得できたかを確認
@@ -60,17 +73,25 @@ class FortuneService {
     this.cachedFortune = null;
     this.cacheExpiration = null;
     
+    // 最新の日付をセット
+    this.lastCheckedDate = this.getCurrentDateString();
+    
     // 四柱推命情報更新後の運勢更新は、サーバーサイドで生成
     try {
+      // タイムゾーン情報を取得
+      const tzInfo = this.getTimezoneInfo();
+      
       // 運勢更新APIを呼び出して最新データを生成（存在する場合は上書き）
       const response = await apiService.post(FORTUNE.UPDATE_FORTUNE, {
-        forceUpdate: true
+        forceUpdate: true,
+        timezone: tzInfo.timezone,
+        tzOffset: tzInfo.offset
       });
       
       if (response.status === 201 || response.status === 200) {
         console.log('サーバーサイドで運勢が更新されました:', response.data);
         this.cachedFortune = response.data;
-        this.cacheExpiration = new Date(new Date().getTime() + this.CACHE_DURATION_MS);
+        this.setAdaptiveCacheExpiration();
         return response.data;
       }
     } catch (error) {
@@ -89,7 +110,25 @@ class FortuneService {
    */
   async generateFortune(): Promise<IFortune> {
     try {
-      const response = await apiService.post(FORTUNE.UPDATE_FORTUNE);
+      // タイムゾーン情報を取得
+      const tzInfo = this.getTimezoneInfo();
+      
+      // 最新の日付をセット
+      this.lastCheckedDate = this.getCurrentDateString();
+      
+      // キャッシュを無効化
+      this.cachedFortune = null;
+      this.cacheExpiration = null;
+      
+      const response = await apiService.post(FORTUNE.UPDATE_FORTUNE, {
+        timezone: tzInfo.timezone,
+        tzOffset: tzInfo.offset
+      });
+      
+      // キャッシュを更新
+      this.cachedFortune = response.data;
+      this.setAdaptiveCacheExpiration();
+      
       return response.data;
     } catch (error) {
       console.error('運勢データの生成に失敗しました', error);
@@ -152,14 +191,27 @@ class FortuneService {
    * @returns 運勢ダッシュボード情報
    */
   async getFortuneDashboard(teamId?: string): Promise<any> {
-    // キャッシュは無効化
-    this.cachedFortune = null;
-    this.cacheExpiration = null;
-    
     try {
+      // 日付変更チェック（更新が必要ならキャッシュをクリア）
+      const wasUpdated = await this.checkDateChange();
+      if (!wasUpdated) {
+        // 手動でキャッシュクリアを試行
+        this.checkAndClearCache();
+      }
+      
+      // タイムゾーン情報を取得
+      const tzInfo = this.getTimezoneInfo();
+      
       console.log('💫 運勢ダッシュボード取得開始：', FORTUNE.GET_FORTUNE_DASHBOARD(teamId));
       const startTime = Date.now();
-      const response = await apiService.get(FORTUNE.GET_FORTUNE_DASHBOARD(teamId));
+      
+      // タイムゾーン情報をクエリパラメータに含める
+      const params = {
+        timezone: tzInfo.timezone,
+        tzOffset: tzInfo.offset
+      };
+      
+      const response = await apiService.get(FORTUNE.GET_FORTUNE_DASHBOARD(teamId), { params });
       console.log(`💫 運勢ダッシュボード取得完了 (${Date.now() - startTime}ms)：`, JSON.stringify(response.data, null, 2));
       
       // レスポンスの内容を検証
@@ -170,6 +222,13 @@ class FortuneService {
         console.log('💫 personalFortune Date:', response.data.personalFortune.date);
         console.log('💫 personalFortune Advice (先頭100文字):', 
           response.data.personalFortune.advice ? response.data.personalFortune.advice.substring(0, 100) + '...' : 'undefined');
+        
+        // 個人運勢データはキャッシュする
+        if (response.data.personalFortune) {
+          this.cachedFortune = response.data.personalFortune;
+          this.setAdaptiveCacheExpiration();
+          this.lastCheckedDate = this.getCurrentDateString();
+        }
       }
       
       return response.data;
@@ -187,6 +246,25 @@ class FortuneService {
   formatDate(date: Date | string): string {
     const dateObj = date instanceof Date ? date : new Date(date);
     return format(dateObj, 'yyyy年M月d日 (E)', { locale: ja });
+  }
+  
+  /**
+   * クライアント側のタイムゾーンを考慮した現在日付を取得
+   * @returns YYYY-MM-DD形式の日付文字列
+   */
+  getCurrentDateString(): string {
+    const now = new Date();
+    return now.toISOString().split('T')[0]; // YYYY-MM-DD形式
+  }
+  
+  /**
+   * サーバー要求用のタイムゾーン情報を準備
+   * @returns タイムゾーン情報
+   */
+  getTimezoneInfo(): { timezone: string, offset: number } {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const offset = new Date().getTimezoneOffset();
+    return { timezone, offset };
   }
 
   /**
@@ -279,6 +357,110 @@ class FortuneService {
     if (score >= 40) return "neutral";
     if (score >= 20) return "poor";
     return "bad";
+  }
+
+  /**
+   * キャッシュの有効性をチェックし、必要に応じてクリア
+   * @returns キャッシュがクリアされたかどうか
+   */
+  checkAndClearCache(): boolean {
+    const now = new Date();
+    
+    // 1. 日付が変わっていないか確認
+    const currentDateStr = this.getCurrentDateString();
+    const cachedDateStr = this.cachedFortune?.date 
+      ? new Date(this.cachedFortune.date).toISOString().split('T')[0]
+      : null;
+    
+    // 2. キャッシュの期限切れを確認
+    const isCacheExpired = !this.cacheExpiration || now > this.cacheExpiration;
+    
+    // 3. 日付が変わっているか、キャッシュが期限切れならクリア
+    if (cachedDateStr !== currentDateStr || isCacheExpired) {
+      console.log('キャッシュをクリア: 日付変更または期限切れ', {
+        currentDate: currentDateStr,
+        cachedDate: cachedDateStr,
+        isExpired: isCacheExpired
+      });
+      
+      this.cachedFortune = null;
+      this.cacheExpiration = null;
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * キャッシュ期限の適応的設定
+   * 日付が変わるまでの時間に応じて期限を設定
+   */
+  setAdaptiveCacheExpiration(): void {
+    const now = new Date();
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    // 日付が変わるまでの時間（ミリ秒）
+    const timeUntilEndOfDay = endOfDay.getTime() - now.getTime();
+    
+    // 標準のキャッシュ期間か日付変更までの時間の短い方を採用
+    const cacheTime = Math.min(this.CACHE_DURATION_MS, timeUntilEndOfDay);
+    
+    this.cacheExpiration = new Date(now.getTime() + cacheTime);
+    console.log(`キャッシュ期限を設定: ${this.cacheExpiration.toISOString()}`);
+  }
+
+  /**
+   * 日付が変わったかどうかを確認し、変わっていたら運勢データを更新する
+   * @returns 更新が必要だった場合はtrue、そうでなければfalse
+   */
+  async checkDateChange(): Promise<boolean> {
+    const today = new Date();
+    const currentDateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD形式
+    
+    // 初回実行時は前回のチェック日付を取得（プラットフォーム共通ストレージから）
+    if (!this.lastCheckedDate) {
+      try {
+        // ストレージから前回チェック日を取得
+        const storedDate = await storageService.get(StorageKeys.LAST_FORTUNE_CHECK_DATE);
+        
+        if (storedDate) {
+          this.lastCheckedDate = storedDate;
+          console.log('前回のチェック日を復元:', this.lastCheckedDate);
+        } else {
+          // 初回実行時は現在の日付を保存（通知なし）
+          this.lastCheckedDate = currentDateStr;
+          await storageService.set(StorageKeys.LAST_FORTUNE_CHECK_DATE, currentDateStr);
+          console.log('初回実行: 日付をセット:', currentDateStr);
+          return false;
+        }
+      } catch (e) {
+        // ストレージアクセスエラー時は現在日付をセット
+        this.lastCheckedDate = currentDateStr;
+        console.warn('ストレージからの日付読み込みエラー:', e);
+      }
+    }
+    
+    // 日付が変わった場合
+    if (this.lastCheckedDate !== currentDateStr) {
+      console.log('日付が変更されました。運勢データを更新します:', currentDateStr);
+      this.lastCheckedDate = currentDateStr;
+      
+      // 永続ストレージに最新の日付を保存
+      try {
+        await storageService.set(StorageKeys.LAST_FORTUNE_CHECK_DATE, currentDateStr);
+      } catch (e) {
+        console.warn('日付の保存に失敗:', e);
+      }
+      
+      // キャッシュをクリア
+      this.cachedFortune = null;
+      this.cacheExpiration = null;
+      
+      return true;
+    }
+    
+    return false;
   }
 
   /**

@@ -66,4 +66,5 @@ export const StorageKeys = {
   THEME_PREFERENCE: 'df_theme_preference',
   LAST_SYNC: 'df_last_sync',
   NOTIFICATION_SETTINGS: 'df_notification_settings',
+  LAST_FORTUNE_CHECK_DATE: 'df_last_fortune_check_date',
 };

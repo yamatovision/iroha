@@ -10,6 +10,7 @@ import AiConsultButton from '../../components/fortune/AiConsultButton';
 import fortuneService from '../../services/fortune.service';
 import { IFortune, IFortuneDashboardResponse } from '../../../../shared';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNetworkAwareDataSync } from '../../components/network';
 import './../../components/fortune/styles.css';
 
 interface Team {
@@ -35,6 +36,47 @@ const Fortune: React.FC = () => {
 
   // 認証コンテキストから userProfile を取得
   const { userProfile } = useAuth();
+  
+  // ネットワークの状態監視と運勢データ連携
+  const { wasDisconnected } = useNetworkAwareDataSync((connected) => {
+    // オンラインに戻ったときの処理
+    if (connected && wasDisconnected) {
+      setNotification({
+        open: true,
+        message: 'ネットワークに接続されました。最新データを取得しています...',
+        severity: 'info'
+      });
+      
+      // 運勢データを再取得
+      if (userProfile) {
+        fetchDashboard();
+      }
+    }
+  });
+
+  // アプリマウント時に日付チェックを行う
+  useEffect(() => {
+    const checkForDateChange = async () => {
+      try {
+        // 日付変更チェックを実行
+        const wasUpdated = await fortuneService.checkDateChange();
+        if (wasUpdated && userProfile) {
+          // 日付が変わっていた場合のみロード表示
+          setLoading(true);
+          setNotification({
+            open: true,
+            message: '日付が変わりました。今日の運勢を取得しています...',
+            severity: 'info'
+          });
+          // データ取得は fetchDashboard 内で行われる
+        }
+      } catch (error) {
+        console.error('運勢ページでの日付チェックエラー:', error);
+      }
+    };
+    
+    checkForDateChange();
+  }, []); // コンポーネントマウント時に1回だけ実行
 
   // userProfile の変更を監視して運勢データとチームリストを取得
   useEffect(() => {
@@ -44,74 +86,76 @@ const Fortune: React.FC = () => {
       return;
     }
 
-    const fetchDashboard = async () => {
-      try {
-        setLoading(true);
-        console.log('認証済みユーザープロファイルでの運勢ダッシュボード取得開始', { userId: userProfile.id });
-        
-        // 統合ダッシュボードデータを取得
-        const dashboardData: IFortuneDashboardResponse = await fortuneService.getFortuneDashboard();
-        
-        // 個人運勢を設定
-        if (dashboardData.personalFortune) {
-          setFortune(dashboardData.personalFortune);
-          setError(null);
-
-          // 日付をフォーマット
-          const date = dashboardData.personalFortune.date instanceof Date 
-            ? dashboardData.personalFortune.date 
-            : new Date(dashboardData.personalFortune.date);
-          
-          setCurrentDate(fortuneService.formatDate(date));
-        }
-        
-        // チーム一覧を設定（管理者用、または所属チームがある場合）
-        if (dashboardData.teamsList && dashboardData.teamsList.length > 0) {
-          setTeams(dashboardData.teamsList);
-          
-          // ユーザーの所属チームがあればデフォルトで選択
-          if (userProfile && userProfile.teamId) {
-            const team = dashboardData.teamsList.find(t => t.id === userProfile.teamId);
-            if (team) {
-              setSelectedTeamId(team.id);
-            }
-          }
-        }
-        
-      } catch (err: any) {
-        console.error('運勢ダッシュボードの取得に失敗しました', err);
-        
-        // エラーメッセージを設定
-        if (err.response && err.response.status === 404) {
-          // 運勢データがない場合は特定のエラータイプを設定（後でボタン表示の判断に使用）
-          setError('FORTUNE_NOT_FOUND');
-        } else if (err.response && err.response.status === 400 && 
-                 err.response.data && err.response.data.code === 'MISSING_SAJU_PROFILE') {
-          // 四柱推命プロフィールがない場合
-          setError('SAJU_PROFILE_REQUIRED');
-        } else if (err.response && err.response.status === 401) {
-          // 認証エラーの場合、少し待機してから再試行 (認証処理完了待ち)
-          console.log('認証エラー、3秒後に再試行します');
-          setTimeout(() => {
-            // ローディング状態を維持したまま再試行フラグを設定
-            setError(null);
-            fetchDashboard();
-          }, 3000);
-          return; // ここでreturnして下のfinallyブロックを実行しない
-        } else {
-          // その他のエラー
-          setError('運勢データの取得に失敗しました。しばらくしてからもう一度お試しください。');
-        }
-        
-        // 失敗時はデータをクリア
-        setFortune(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    // ダッシュボードのフェッチ処理
     fetchDashboard();
   }, [userProfile]); // userProfileが変更されたときに再実行
+  
+  // ダッシュボードデータを取得する関数
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      console.log('認証済みユーザープロファイルでの運勢ダッシュボード取得開始', { userId: userProfile?.id });
+      
+      // 統合ダッシュボードデータを取得
+      const dashboardData: IFortuneDashboardResponse = await fortuneService.getFortuneDashboard();
+      
+      // 個人運勢を設定
+      if (dashboardData.personalFortune) {
+        setFortune(dashboardData.personalFortune);
+        setError(null);
+
+        // 日付をフォーマット
+        const date = dashboardData.personalFortune.date instanceof Date 
+          ? dashboardData.personalFortune.date 
+          : new Date(dashboardData.personalFortune.date);
+        
+        setCurrentDate(fortuneService.formatDate(date));
+      }
+      
+      // チーム一覧を設定（管理者用、または所属チームがある場合）
+      if (dashboardData.teamsList && dashboardData.teamsList.length > 0) {
+        setTeams(dashboardData.teamsList);
+        
+        // ユーザーの所属チームがあればデフォルトで選択
+        if (userProfile && userProfile.teamId) {
+          const team = dashboardData.teamsList.find(t => t.id === userProfile.teamId);
+          if (team) {
+            setSelectedTeamId(team.id);
+          }
+        }
+      }
+      
+    } catch (err: any) {
+      console.error('運勢ダッシュボードの取得に失敗しました', err);
+      
+      // エラーメッセージを設定
+      if (err.response && err.response.status === 404) {
+        // 運勢データがない場合は特定のエラータイプを設定（後でボタン表示の判断に使用）
+        setError('FORTUNE_NOT_FOUND');
+      } else if (err.response && err.response.status === 400 && 
+               err.response.data && err.response.data.code === 'MISSING_SAJU_PROFILE') {
+        // 四柱推命プロフィールがない場合
+        setError('SAJU_PROFILE_REQUIRED');
+      } else if (err.response && err.response.status === 401) {
+        // 認証エラーの場合、少し待機してから再試行 (認証処理完了待ち)
+        console.log('認証エラー、3秒後に再試行します');
+        setTimeout(() => {
+          // ローディング状態を維持したまま再試行フラグを設定
+          setError(null);
+          fetchDashboard();
+        }, 3000);
+        return; // ここでreturnして下のfinallyブロックを実行しない
+      } else {
+        // その他のエラー
+        setError('運勢データの取得に失敗しました。しばらくしてからもう一度お試しください。');
+      }
+      
+      // 失敗時はデータをクリア
+      setFortune(null);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // チーム選択が変更されたときの処理
   useEffect(() => {

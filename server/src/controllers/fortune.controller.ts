@@ -23,8 +23,12 @@ export class FortuneController {
         return;
       }
 
-      // クエリパラメータから日付を取得（指定がなければ今日の日付）
+      // クエリパラメータから日付とタイムゾーン情報を取得
       const dateParam = req.query.date as string;
+      // タイムゾーン情報を取得（クライアントから送信された場合）
+      const timezone = req.query.timezone as string || 'Asia/Tokyo';
+      const tzOffset = parseInt(req.query.tzOffset as string || '-540', 10);
+      
       let targetDate: Date | undefined;
 
       if (dateParam) {
@@ -35,12 +39,28 @@ export class FortuneController {
           return;
         }
         targetDate = new Date(dateParam);
+      } else {
+        // 日付が指定されていない場合は、クライアントのタイムゾーンに合わせた「今日」を計算
+        const now = new Date();
+        // tzOffsetはマイナス値で渡されるため、反転して適用
+        const offsetHours = Math.floor(Math.abs(tzOffset) / 60);
+        const offsetMinutes = Math.abs(tzOffset) % 60;
+        
+        // タイムゾーンオフセットを適用（日本時間の場合、+9時間）
+        if (tzOffset < 0) {
+          now.setHours(now.getHours() + offsetHours);
+          now.setMinutes(now.getMinutes() + offsetMinutes);
+        } else {
+          now.setHours(now.getHours() - offsetHours);
+          now.setMinutes(now.getMinutes() - offsetMinutes);
+        }
+        
+        targetDate = now;
+        console.log(`🕒 クライアントタイムゾーン: ${timezone}, オフセット: ${tzOffset}分, 計算された日付: ${targetDate.toISOString()}`);
       }
 
-      // 日付または今日の運勢を取得
-      const fortune = targetDate
-        ? await fortuneService.getUserFortune(userId, targetDate)
-        : await fortuneService.getTodayFortune(userId);
+      // 日付または今日の運勢を取得（今日の場合も明示的に日付を渡す）
+      const fortune = await fortuneService.getUserFortune(userId, targetDate);
 
       res.status(200).json(fortune);
     } catch (error: any) {
@@ -268,6 +288,29 @@ export class FortuneController {
 
       // チームIDパラメータの取得（オプション）
       const teamId = req.query.teamId as string | undefined;
+      
+      // タイムゾーン情報を取得（クライアントから送信された場合）
+      const timezone = req.query.timezone as string || 'Asia/Tokyo';
+      const tzOffset = parseInt(req.query.tzOffset as string || '-540', 10);
+      
+      // 日付が指定されていない場合は、クライアントのタイムゾーンに合わせた「今日」を計算
+      const now = new Date();
+      // tzOffsetはマイナス値で渡されるため、反転して適用
+      const offsetHours = Math.floor(Math.abs(tzOffset) / 60);
+      const offsetMinutes = Math.abs(tzOffset) % 60;
+      
+      // タイムゾーンオフセットを適用（日本時間の場合、+9時間）
+      if (tzOffset < 0) {
+        now.setHours(now.getHours() + offsetHours);
+        now.setMinutes(now.getMinutes() + offsetMinutes);
+      } else {
+        now.setHours(now.getHours() - offsetHours);
+        now.setMinutes(now.getMinutes() - offsetMinutes);
+      }
+      
+      // 計算された「今日」の日付
+      const targetDate = now;
+      console.log(`🕒 ダッシュボード取得: クライアントタイムゾーン: ${timezone}, オフセット: ${tzOffset}分, 計算された日付: ${targetDate.toISOString()}`);
 
       // ダッシュボード情報を取得
       console.log(`🌟 運勢ダッシュボード取得開始 - userId: ${userId}, teamId: ${teamId || 'なし'}`);

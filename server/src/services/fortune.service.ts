@@ -676,15 +676,27 @@ export class FortuneService {
       console.log(`🔎 ユーザーIDはObjectIDではありません: ${userIdQuery}`);
     }
 
-    // 既存の運勢データを検索（日付に関係なく、ユーザーIDのみで最新のものを取得）
+    // 日付の条件を設定
+    const dateStart = new Date(targetDate);
+    const dateEnd = new Date(dateStart);
+    dateEnd.setDate(dateEnd.getDate() + 1);
+
     console.log(`🔎 運勢データ検索クエリ:`, {
       userId: userIdQuery,
-      queryType: 'findOne with sort by updatedAt desc'
+      date: {
+        $gte: dateStart.toISOString(),
+        $lt: dateEnd.toISOString()
+      }
     });
     
+    // 指定された日付の運勢データを検索
     const fortune = await DailyFortune.findOne({
-      userId: userIdQuery
-    }).sort({ updatedAt: -1 }).populate('dayPillarId');
+      userId: userIdQuery,
+      date: {
+        $gte: dateStart,
+        $lt: dateEnd
+      }
+    }).populate('dayPillarId');
     
     console.log(`🔎 検索結果: ${fortune ? '運勢データ見つかりました' : '運勢データ見つかりません'}`);
     if (fortune) {
@@ -714,6 +726,7 @@ export class FortuneService {
     }
 
     // 運勢データが見つからない場合は新しく生成する
+    console.log(`🔎 ${targetDate.toISOString()} の運勢データが見つからないため、生成します`);
     return this.generateFortune(userId, targetDate, true); // 常に強制上書きモードで生成
   }
 

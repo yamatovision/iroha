@@ -3,6 +3,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { App } from '@capacitor/app';
 import { isNativePlatform } from '../../services/storage/platform-detector';
+import fortuneService from '../../services/fortune.service';
 
 /**
  * アプリ終了処理コンポーネント
@@ -12,6 +13,30 @@ const AppExitHandler: React.FC = () => {
   const [showExitToast, setShowExitToast] = useState(false);
   const [lastBackPress, setLastBackPress] = useState(0);
   const backPressThreshold = 2000; // 2秒
+
+  // アプリがアクティブになったときに実行される処理
+  useEffect(() => {
+    // visibilitychange イベントのハンドラ
+    const handleVisibilityChange = async () => {
+      // アプリがバックグラウンドから復帰したとき
+      if (document.visibilityState === 'visible') {
+        try {
+          // 日付変更チェックを実行
+          await fortuneService.checkDateChange();
+        } catch (error) {
+          console.error('アプリ復帰時の日付チェックエラー:', error);
+        }
+      }
+    };
+    
+    // visibilitychange イベントのリスナーを追加
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // クリーンアップ関数
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isNativePlatform()) return;
