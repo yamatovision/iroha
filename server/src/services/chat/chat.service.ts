@@ -71,6 +71,16 @@ export class ChatService {
 
       // チャットコンテキストの構築
       const context = await buildChatContext(user, mode, contextInfo);
+      
+      console.log(`[${traceId}] processMessage: コンテキストデータ確認:`, {
+        contextKeys: Object.keys(context),
+        contextType: typeof context,
+        hasUser: !!context.user,
+        modeUsed: mode,
+        hasElementAttribute: context.user?.elementAttribute !== undefined,
+        hasKakukyoku: context.user?.kakukyoku !== undefined,
+        hasYojin: context.user?.yojin !== undefined
+      });
 
       // コンテキストプロンプトの構築
       const contextPrompt = createContextPrompt(context);
@@ -173,6 +183,16 @@ export class ChatService {
 
       // チャットコンテキストの構築
       const context = await buildChatContext(user, mode, contextInfo);
+      
+      console.log(`[${traceId}] streamMessage: コンテキストデータ確認:`, {
+        contextKeys: Object.keys(context),
+        contextType: typeof context,
+        hasUser: !!context.user,
+        modeUsed: mode,
+        hasElementAttribute: context.user?.elementAttribute !== undefined,
+        hasKakukyoku: context.user?.kakukyoku !== undefined,
+        hasYojin: context.user?.yojin !== undefined
+      });
 
       // コンテキストプロンプトの構築
       const contextPrompt = createContextPrompt(context);
@@ -548,17 +568,19 @@ export class ChatService {
       teamGoalId?: string;
     }
   ): Promise<void> {
-    console.log('validateContextInfo - モード検証:', { mode, contextType: typeof mode });
+    // 文字列に変換して小文字化（大文字小文字の違いを吸収）
+    const modeStr = String(mode).toLowerCase();
+    console.log('validateContextInfo - モード検証:', { mode, modeStr, contextType: typeof mode });
     
     // 文字列として比較して安全に処理
-    if (mode === 'team_member' && contextInfo?.memberId) {
+    if (modeStr === 'team_member' && contextInfo?.memberId) {
       // メンバーIDの検証
       console.log('チームメンバーモード - メンバーID検証:', contextInfo.memberId);
       const member = await User.findById(contextInfo.memberId);
       if (!member) {
         throw new Error('指定されたチームメンバーが見つかりません');
       }
-    } else if (mode === 'team_goal' && contextInfo?.teamGoalId) {
+    } else if (modeStr === 'team_goal' && contextInfo?.teamGoalId) {
       // チーム目標IDの検証
       console.log('チーム目標モード - 目標ID検証:', contextInfo.teamGoalId);
       const TeamGoal = require('../../models/TeamGoal').TeamGoal;

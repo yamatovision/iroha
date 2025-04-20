@@ -1,5 +1,11 @@
 import { Types } from 'mongoose';
 import { User } from '../../models/User';
+// 列挙型を直接定義（型インポートでの問題を回避）
+const ChatModeEnum = {
+  PERSONAL: 'personal',
+  TEAM_MEMBER: 'team_member',
+  TEAM_GOAL: 'team_goal'
+};
 import { ChatMode } from '../../types';
 import logger from '../../utils/logger';
 
@@ -16,38 +22,46 @@ export async function buildChatContext(
 ): Promise<Record<string, any>> {
   const traceId = Math.random().toString(36).substring(2, 15);
   
+  // デバッグログを追加
+  console.log(`[${traceId}] 🔧 buildChatContext - mode: ${mode}, typeof mode: ${typeof mode}`);
+  console.log(`[${traceId}] 🔧 ChatMode列挙型の値:`, {
+    personal: ChatModeEnum.PERSONAL,
+    team_member: ChatModeEnum.TEAM_MEMBER,
+    team_goal: ChatModeEnum.TEAM_GOAL,
+    rawValue: mode
+  });
+  
   // 標準出力に直接ログを表示
   console.log(`[${traceId}] 🔧 チャットコンテキスト構築開始 - ユーザー: ${user.displayName}, モード: ${mode}`);
   
   try {
     let context;
     
-    switch (mode) {
-      case ChatMode.PERSONAL:
-        context = await buildPersonalContext(user);
-        break;
-      
-      case ChatMode.TEAM_MEMBER:
-        if (!contextInfo?.memberId) {
-          throw new Error('チームメンバー相性相談にはメンバーIDが必要です');
+    // 文字列としてモードを扱う（列挙型の問題を回避）
+    const modeStr = String(mode).toLowerCase();
+    
+    if (modeStr === 'personal') {
+      context = await buildPersonalContext(user);
+    }
+    else if (modeStr === 'team_member') {
+      if (!contextInfo?.memberId) {
+        throw new Error('チームメンバー相性相談にはメンバーIDが必要です');
+      }
+      context = await buildTeamMemberContext(user, contextInfo.memberId);
+    }
+    else if (modeStr === 'team_goal') {
+      if (!contextInfo?.teamGoalId) {
+        context = await buildTeamContext(user);
+      } else {
+        context = await buildTeamGoalContext(user, contextInfo.teamGoalId);
+      }
+    } else {
+      // デフォルトケース
+      context = {
+        user: {
+          displayName: user.displayName
         }
-        context = await buildTeamMemberContext(user, contextInfo.memberId);
-        break;
-      
-      case ChatMode.TEAM_GOAL:
-        if (!contextInfo?.teamGoalId) {
-          context = await buildTeamContext(user);
-        } else {
-          context = await buildTeamGoalContext(user, contextInfo.teamGoalId);
-        }
-        break;
-      
-      default:
-        context = {
-          user: {
-            displayName: user.displayName
-          }
-        };
+      };
     }
     
     // 四柱推命情報の確認

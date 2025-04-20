@@ -4,6 +4,8 @@
 import fetch from 'cross-fetch';
 import { FortuneScoreResult } from '../types';
 
+console.log('claude-ai.ts が読み込まれました');
+
 // チャット用のシステムプロンプト
 const CHAT_SYSTEM_PROMPT = `
 あなたは四柱推命の第一人者として、占術に基づいた運勢予測と人間関係の洞察を提供する専門家です。「デイリーフォーチュン」のプラットフォームを通じて、クライアントの命式と日々の運勢に基づいた専門的アドバイスを提供します。
@@ -134,8 +136,23 @@ const HARMONY_COMPASS_TEMPLATE = `
 `;
 
 // チャットモード別のコンテキストテンプレート
-const CONTEXT_TEMPLATES = {
-  PERSONAL: `
+// chat-contexts.tsのCONTEXT_TEMPLATESを使用するためインポート
+import { CONTEXT_TEMPLATES } from './chat/chat-contexts';
+console.log('claude-ai.ts: CONTEXT_TEMPLATES のインポート状態確認:', { 
+  source: 'import from chat-contexts.ts',
+  keys: Object.keys(CONTEXT_TEMPLATES),
+  hasPersonal: CONTEXT_TEMPLATES.personal !== undefined,
+  hasTeamMember: CONTEXT_TEMPLATES.team_member !== undefined,
+  hasTeamGoal: CONTEXT_TEMPLATES.team_goal !== undefined,
+  hasPERSONAL: CONTEXT_TEMPLATES.PERSONAL !== undefined, 
+  hasTEAM_MEMBER: CONTEXT_TEMPLATES.TEAM_MEMBER !== undefined,
+  hasTEAM_GOAL: CONTEXT_TEMPLATES.TEAM_GOAL !== undefined
+});
+
+// 統合のための変数定義
+const CLAUDE_CONTEXT_TEMPLATES = {
+  // 小文字も大文字も同時定義して互換性を保つ
+  personal: `
 【四柱推命による個人運勢相談】
 
 私は四柱推命の専門家として、あなたの命式と日々の運勢に基づいたアドバイスを提供します。
@@ -159,7 +176,7 @@ const CONTEXT_TEMPLATES = {
 このコンテキスト情報を参考にしながら、四柱推命の専門家としての観点からクライアントの相談に応じてください。特に格局・用神と本日の日柱との相性に留意し、実践的なアドバイスを提供してください。
 `,
 
-  TEAM_MEMBER: `
+  team_member: `
 【チームメンバー相性相談モード】
 相談者: {user.displayName}（{user.elementAttribute}の持ち主）
 対象メンバー: {targetMember.displayName}（{targetMember.elementAttribute}の持ち主）
@@ -169,7 +186,7 @@ const CONTEXT_TEMPLATES = {
 このコンテキスト情報を参考に、ユーザーの質問に対して、特定のチームメンバーとの相性と効果的な協力方法についてアドバイスを提供してください。
 `,
 
-  TEAM_GOAL: `
+  team_goal: `
 【チーム目標相談モード】
 相談者: {user.displayName}（{user.elementAttribute}の持ち主）
 チーム: {team.name}（{team.size}名）
@@ -177,7 +194,13 @@ const CONTEXT_TEMPLATES = {
 期限: {teamGoal.deadline || '未設定'}
 
 このコンテキスト情報を参考に、ユーザーの質問に対して、チーム全体の目標達成に向けたアドバイスを提供してください。
-`
+`,
+
+  // 後方互換性のための大文字キーも残す
+  PERSONAL: `個人運勢モード(claude-ai.ts)`,
+  TEAM_MEMBER: `チームメンバーモード(claude-ai.ts)`,
+  TEAM_GOAL: `チーム目標モード(claude-ai.ts)`
+}
 };
 
 /**
@@ -228,18 +251,22 @@ export async function generateChatResponse(
  */
 function createContextPrompt(context: Record<string, any>): string {
   try {
+    console.log('claude-ai.ts の createContextPrompt が呼ばれました');
     // コンテキスト情報から適切なテンプレートを選択
     let template = '';
     
     if (context.targetMember) {
-      // チームメンバー相性モード
-      template = CONTEXT_TEMPLATES.TEAM_MEMBER;
+      // チームメンバー相性モード - 優先順位: インポートしたもの -> ローカル定義 -> 大文字キー
+      template = CONTEXT_TEMPLATES.team_member || CLAUDE_CONTEXT_TEMPLATES.team_member || CONTEXT_TEMPLATES.TEAM_MEMBER || CLAUDE_CONTEXT_TEMPLATES.TEAM_MEMBER || '';
+      console.log('チームメンバーモードテンプレート選択:', { source: 'claude-ai.ts', template: template.substring(0, 20) + '...' });
     } else if (context.teamGoal) {
       // チーム目標モード
-      template = CONTEXT_TEMPLATES.TEAM_GOAL;
+      template = CONTEXT_TEMPLATES.team_goal || CLAUDE_CONTEXT_TEMPLATES.team_goal || CONTEXT_TEMPLATES.TEAM_GOAL || CLAUDE_CONTEXT_TEMPLATES.TEAM_GOAL || '';
+      console.log('チーム目標モードテンプレート選択:', { source: 'claude-ai.ts', template: template.substring(0, 20) + '...' });
     } else {
       // 個人運勢モード（デフォルト）
-      template = CONTEXT_TEMPLATES.PERSONAL;
+      template = CONTEXT_TEMPLATES.personal || CLAUDE_CONTEXT_TEMPLATES.personal || CONTEXT_TEMPLATES.PERSONAL || CLAUDE_CONTEXT_TEMPLATES.PERSONAL || '';
+      console.log('個人運勢モードテンプレート選択:', { source: 'claude-ai.ts', template: template.substring(0, 20) + '...' });
     }
     
     // テンプレートの変数をコンテキスト情報で置換

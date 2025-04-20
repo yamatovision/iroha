@@ -325,6 +325,24 @@ export function buildApiUrl(apiPath: string, baseUrl?: string): string {
 
 ### 現在のエラーログ
 
+【ChatMode列挙型の問題】ローカルと本番環境の差異
+- 問題：ローカル環境では四柱推命の詳細情報（elementAttribute、kakukyoku、yojin）が表示されないが、本番環境では正常に表示される
+- エラー内容：`Cannot read properties of undefined (reading 'PERSONAL')`
+- 原因分析：
+  1. ローカル環境と本番環境でChatMode列挙型の扱いに差異がある
+  2. context-builder.service.tsの22行目で`ChatMode.PERSONAL`にアクセスしようとするが、ローカル環境ではundefinedになっている
+  3. 文字列として渡されるモード値('personal')と列挙型(ChatMode.PERSONAL)の比較に問題がある
+  4. モジュールの読み込み順序や環境変数(NODE_ENV)による条件分岐の影響
+- 解決策：
+  1. 列挙型に依存せず、文字列比較を行うようコードを修正
+  2. ChatModeEnumを直接定義して参照する
+  3. buildChatContext内のswitch文をif-else文に変更し、文字列として安全に比較
+  4. 小文字変換を追加して大文字小文字の違いを吸収
+- 教訓：
+  1. Enum値と文字列の比較はTypeScriptの型チェック時とランタイム動作が異なることがある
+  2. 開発環境と本番環境での差異は環境変数やバンドル方法の違いで生じることがある
+  3. モジュールの読み込み順序や最適化により、同じコードでも異なる動作をする可能性がある
+  
 【70a】APIエンドポイントの問題修正（完了）
 - 問題：APIエンドポイントのパスに「/api/v1」が重複していた
   - 例：`https://dailyfortune-api-6clpzmy5pa-an.a.run.app/api/v1/api/v1/jwt-auth/refresh-token`
