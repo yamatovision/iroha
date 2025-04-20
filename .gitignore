@@ -103,3 +103,12 @@ server/scripts/test-kakukyoku-yojin-custom.js
 test-harmony-compass.html
 temp/db/test-connection.js
 temp/db/
+docs/cicd-setup.md
+
+# サービスアカウントと設定ファイル（機密情報）
+*-service-account*.json
+*-config.json
+firebase-config.json
+gcp-service-account.json
+*.key
+*.pem

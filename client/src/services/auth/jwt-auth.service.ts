@@ -180,10 +180,30 @@ class JwtAuthServiceImpl implements JwtAuthService {
         : '';
       
       console.log('リフレッシュトークンリクエスト送信中...');
-      // 本番環境では、baseURLは既に設定済みなのでパスの重複を防ぐ
-      const refreshUrl = baseURL 
-        ? `${baseURL}/api/v1/jwt-auth/refresh-token` // 本番環境: 完全なパスを明示
-        : JWT_AUTH.REFRESH_TOKEN; // 開発環境: 相対パスを使用
+      
+      // 本番環境では、baseURLの重複を確認して処理
+      let refreshUrl;
+      if (baseURL) {
+        // baseURLに '/api/v1' が含まれている場合は重複を防ぐ
+        if (baseURL.includes('/api/v1')) {
+          // '/api/v1'を除去してパスを連結
+          const cleanBaseUrl = baseURL.replace('/api/v1', '');
+          refreshUrl = `${cleanBaseUrl}${JWT_AUTH.REFRESH_TOKEN}`;
+        } else {
+          // 通常通り連結
+          refreshUrl = `${baseURL}${JWT_AUTH.REFRESH_TOKEN}`;
+        }
+      } else {
+        // 開発環境: 相対パスを使用
+        refreshUrl = JWT_AUTH.REFRESH_TOKEN;
+      }
+      
+      // 最終的なURLにパスの重複がないかチェック
+      if (refreshUrl.includes('/api/v1/api/v1/')) {
+        console.warn('⚠️ リフレッシュURLにパスの重複が検出されました: ', refreshUrl);
+        refreshUrl = refreshUrl.replace('/api/v1/api/v1/', '/api/v1/');
+        console.log('🔧 修正後のリフレッシュURL: ', refreshUrl);
+      }
 
       console.log('Refresh URL being used:', refreshUrl);
       console.log('JWT_AUTH.REFRESH_TOKEN value:', JWT_AUTH.REFRESH_TOKEN);

@@ -65,10 +65,30 @@ export class ChatService {
           const baseURL = import.meta.env.PROD 
             ? import.meta.env.VITE_API_URL 
             : '';
-            
-          const url = baseURL 
-            ? `${baseURL}${CHAT.SEND_MESSAGE}?stream=true` // 本番環境: 完全なパスを明示
-            : `${CHAT.SEND_MESSAGE}?stream=true`; // 開発環境: 相対パスを使用
+          
+          // URL構築時にパスの重複を防止
+          let url;
+          if (baseURL) {
+            // baseURLに '/api/v1' が含まれている場合は重複を防ぐ
+            if (baseURL.includes('/api/v1')) {
+              // '/api/v1'を除去してパスを連結
+              const cleanBaseUrl = baseURL.replace('/api/v1', '');
+              url = `${cleanBaseUrl}${CHAT.SEND_MESSAGE}?stream=true`;
+            } else {
+              // 通常通り連結
+              url = `${baseURL}${CHAT.SEND_MESSAGE}?stream=true`;
+            }
+          } else {
+            // 開発環境: 相対パスを使用
+            url = `${CHAT.SEND_MESSAGE}?stream=true`;
+          }
+          
+          // 最終的なURLにパスの重複がないかチェック
+          if (url.includes('/api/v1/api/v1/')) {
+            console.warn('⚠️ URLにパスの重複が検出されました: ', url);
+            url = url.replace('/api/v1/api/v1/', '/api/v1/');
+            console.log('🔧 修正後のURL: ', url);
+          }
           
           console.log('ストリーミングリクエスト送信:', url);
           

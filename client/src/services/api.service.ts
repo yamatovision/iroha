@@ -57,8 +57,11 @@ class ApiService {
     
     // 本番環境で '/api/v1' パスの重複を防ぐための処理
     // APIパスの定数に既に '/api/v1' が含まれているため、環境変数側から除去
-    if (initialBaseURL.includes('/api/v1')) {
-      console.warn('⚠️ Removing duplicate /api/v1 from baseURL to prevent path duplication');
+    const hasApiV1Duplication = initialBaseURL.includes('/api/v1');
+    
+    if (hasApiV1Duplication) {
+      console.warn('⚠️ パス重複検出: 環境変数 VITE_API_URL に /api/v1 が含まれています');
+      console.warn('⚠️ API定義に含まれる /api/v1 と重複するため、baseURLから /api/v1 を除去します');
       this.baseURL = initialBaseURL.replace('/api/v1', '');
     } else {
       this.baseURL = initialBaseURL;
@@ -68,8 +71,13 @@ class ApiService {
     // 直接APIを使用するフラグが設定されている場合は、allowAbsoluteUrlsを有効にする
     const useDirectApi = import.meta.env.VITE_USE_DIRECT_API === 'true';
     
-    console.log(`🌐 API baseURL: ${this.baseURL || '(using proxy)'}`);
-    console.log(`🔒 HTTPSモード: ${isNativeApp() ? '有効 (ネイティブアプリ)' : '無効 (開発モード)'}`);
+    console.log(`🌐 API 設定情報:`);
+    console.log(`- 元のbaseURL: ${initialBaseURL || '(未設定)'}`);
+    console.log(`- 調整後baseURL: ${this.baseURL || '(プロキシ使用)'}`);
+    console.log(`- 重複問題: ${hasApiV1Duplication ? '検出・修正済み' : '問題なし'}`);
+    console.log(`- 環境: ${import.meta.env.PROD ? '本番' : '開発'}`);
+    console.log(`- 🔒 HTTPSモード: ${isNativeApp() ? '有効 (ネイティブアプリ)' : '無効 (開発モード)'}`);
+    
     if (useDirectApi) {
       console.log('🔌 直接APIモード: 有効（絶対URLを使用）');
     }
@@ -256,10 +264,22 @@ class ApiService {
                         baseURL = baseURL.replace('http:', 'https:');
                       }
                       
-                      // Ensure proper URL construction
-                      const refreshUrl = baseURL 
-                        ? `${baseURL}/api/v1/jwt-auth/refresh-token` // Production: explicit full path
-                        : '/api/v1/jwt-auth/refresh-token'; // Development: relative path
+                      // 重複を防ぐURLの構築
+                      let refreshUrl;
+                      if (baseURL) {
+                        // baseURLに '/api/v1' が含まれている場合は重複を防ぐ
+                        if (baseURL.includes('/api/v1')) {
+                          // '/api/v1'を除去してから追加
+                          const cleanBaseUrl = baseURL.replace('/api/v1', '');
+                          refreshUrl = `${cleanBaseUrl}/api/v1/jwt-auth/refresh-token`;
+                        } else {
+                          // 通常通り連結
+                          refreshUrl = `${baseURL}/api/v1/jwt-auth/refresh-token`;
+                        }
+                      } else {
+                        // 開発環境: 相対パスを使用
+                        refreshUrl = '/api/v1/jwt-auth/refresh-token';
+                      }
                       
                       console.log('Using refresh token URL:', refreshUrl);
                       

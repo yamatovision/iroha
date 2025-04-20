@@ -333,89 +333,41 @@ gcloud run deploy dailyfortune-api \
 
 ## 5. 継続的デプロイ（CI/CD）の設定
 
-### 5.1 GitHub Actions設定（推奨）
+DailyFortuneアプリケーションでは、GitHub Actionsを使用して継続的インテグレーション/継続的デプロイ（CI/CD）パイプラインを実装しています。
 
-クライアントとサーバー用の`.github/workflows`ディレクトリに以下のワークフローファイルを作成：
+**詳細なCI/CD設定ガイドは [cicd-setup.md](./cicd-setup.md) を参照してください。**
 
-#### 5.1.1 フロントエンドデプロイ (.github/workflows/deploy-client.yml)
+### 5.1 CI/CDパイプラインの概要
 
-```yaml
-name: Deploy Client
+DailyFortuneのCI/CDパイプラインは以下の3つの主要コンポーネントで構成されています：
 
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'client/**'
-      - 'shared/**'
+1. **サーバー（バックエンド）のビルドとデプロイ** - Cloud Runへの自動デプロイ
+2. **クライアント（フロントエンド）のビルドとデプロイ** - Firebase Hostingへの自動デプロイ
+3. **モバイルアプリビルドの準備** - ネイティブアプリビルド用のファイル生成
 
-jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Install Dependencies
-        run: |
-          cd client
-          npm ci
-      - name: Build
-        run: |
-          cd client
-          npm run build
-      - name: Deploy to Firebase
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          channelId: live
-          projectId: your-firebase-project-id
-          entryPoint: './client'
-```
+### 5.2 必要なGitHub Secrets
 
-#### 5.1.2 バックエンドデプロイ (.github/workflows/deploy-server.yml)
+CI/CDパイプラインの設定に必要なGitHub Secretsは以下の通りです：
 
-```yaml
-name: Deploy Server
+#### Google Cloud関連のSecrets
+- `GCP_PROJECT_ID`: `yamatovision-blue-lamp`
+- `GCP_SA_KEY`: Google Cloudのサービスアカウントキー
+- `MONGODB_URI`: MongoDB接続文字列
 
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'server/**'
-      - 'shared/**'
+#### Firebase関連のSecrets
+- `FIREBASE_SERVICE_ACCOUNT`: Firebaseのサービスアカウントキー
+- `FIREBASE_API_KEY`: `AIzaSyDWKoMg01tx4xxkWFNeNviDAS-wDkz5nLY`
+- `FIREBASE_AUTH_DOMAIN`: `sys-76614112762438486420044584.firebaseapp.com`
+- `FIREBASE_PROJECT_ID`: `sys-76614112762438486420044584`
+- `FIREBASE_STORAGE_BUCKET`: `sys-76614112762438486420044584.firebasestorage.app`
+- `FIREBASE_MESSAGING_SENDER_ID`: `145847104422`
+- `FIREBASE_APP_ID`: `1:145847104422:web:a8f15d9320891909701567`
 
-jobs:
-  build_and_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
-        with:
-          project_id: your-project-id
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-      - name: Build and Deploy to Cloud Run
-        run: |
-          cd server
-          gcloud builds submit --tag gcr.io/your-project-id/dailyfortune-api
-          gcloud run deploy dailyfortune-api \
-            --image gcr.io/your-project-id/dailyfortune-api \
-            --platform managed \
-            --region asia-northeast1 \
-            --allow-unauthenticated
-```
+#### その他のSecrets
+- `JWT_SECRET`: JWT認証で使用するシークレットキー
+- `CLAUDE_API_KEY`: Claude AI APIキー（オプション）
 
-### 5.2 必要なシークレットの設定
-
-GitHub Repositoryの「Settings」→「Secrets」→「New repository secret」で以下を設定：
-
-1. `FIREBASE_SERVICE_ACCOUNT`: Firebase Admin SDKのサービスアカウントキー
-2. `GCP_SA_KEY`: Google Cloud Platformのサービスアカウントキー
+Secretsの詳細な設定方法については、[cicd-setup.md](./cicd-setup.md)を参照してください。
 
 ## 6. デプロイ状況と確認（2025/04/07更新）
 

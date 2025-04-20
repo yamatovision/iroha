@@ -74,7 +74,8 @@ const UsersManagement = () => {
 
   // 初期データ読み込み
   useEffect(() => {
-    loadUsers();
+    // loadUsers関数は後で定義されていますが、JSではホイスティングされます
+    if (typeof loadUsers === 'function') loadUsers();
   }, [page, roleFilter, planFilter]);
 
   // ユーザー一覧の読み込み

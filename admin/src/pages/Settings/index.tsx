@@ -114,11 +114,12 @@ const Settings = () => {
   
   // 初期データの読み込み
   useEffect(() => {
-    loadFortuneUpdateSetting();
-    loadAdminUsers();
-    loadFortuneLogs();
-    loadDayPillars();
-    loadDayPillarLogs();
+    // 初期データ読み込み関数は後で定義されています
+    if (typeof loadFortuneUpdateSetting === 'function') loadFortuneUpdateSetting();
+    if (typeof loadAdminUsers === 'function') loadAdminUsers();
+    if (typeof loadFortuneLogs === 'function') loadFortuneLogs();
+    if (typeof loadDayPillars === 'function') loadDayPillars();
+    if (typeof loadDayPillarLogs === 'function') loadDayPillarLogs();
   }, []);
 
   // タブ変更ハンドラー
@@ -132,7 +133,7 @@ const Settings = () => {
   // };
 
   // 管理者一覧の読み込み
-  const loadAdminUsers = async (_params: { page?: number, search?: string } = {}) => {
+  const loadAdminUsers = async (/* params: { page?: number, search?: string } = {} */) => {
     // 管理者一覧の読み込み機能は将来の実装のために準備
     // 現在は使用されていません
   };
