@@ -156,7 +156,8 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
 
   return (
     <>
-      {/* 現在のモードを示すインジケーター */}
+      {/* 現在のモードを示すインジケーター - 一時的に非表示 */}
+      {/* 
       <ModeIndicator onClick={toggleModeSelector}>
         {getModeIcon()}
         <Typography variant="caption" color="textPrimary">
@@ -164,6 +165,7 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
         </Typography>
         <ExpandMore fontSize="small" sx={{ ml: 0.5 }} />
       </ModeIndicator>
+      */}
       
       {/* モード選択パネル（クリックで表示） */}
       <ModeContainer className={modeSelectorVisible ? 'visible' : ''}>
@@ -227,7 +229,8 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
         </Tooltip>
       </ModeContainer>
       
-      {/* SpeedDial代わりのFAB */}
+      {/* SpeedDial代わりのFAB - 一時的に非表示 */}
+      {/*
       <Fab
         color="primary"
         sx={{
@@ -240,6 +243,7 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       >
         <Psychology />
       </Fab>
+      */}
       
       {/* オプションメニュー */}
       <Menu

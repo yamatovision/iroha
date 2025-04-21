@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チームハブ | DailyFortune</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/material-ui.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* 五行カラー定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+      
+      --primary-color: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #512da8;
+      --primary-bg: #ede7f6;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .app-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding-bottom: 72px; /* ナビゲーションの高さ分の余白 */
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .content {
+      padding: 16px;
+    }
+    
+    .welcome-card {
+      background-color: var(--primary-bg);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+    
+    .welcome-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0 0 8px 0;
+    }
+    
+    .welcome-text {
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    
+    /* チーム作成ボタン */
+    .create-team-button {
+      display: block;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .create-team-button:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .create-team-button i {
+      margin-right: 8px;
+    }
+    
+    /* チームカードグリッド */
+    .team-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    /* チームカード */
+    .team-card {
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      transition: box-shadow 0.3s;
+      cursor: pointer;
+    }
+    
+    .team-card:hover {
+      box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    }
+    
+    .team-header {
+      background-color: var(--primary-bg);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .team-name {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+      color: var(--primary-dark);
+    }
+    
+    .team-members-count {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    .team-members-count i {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    
+    .team-body {
+      padding: 16px;
+    }
+    
+    .team-goal {
+      margin: 0 0 16px 0;
+      font-size: 0.9rem;
+      color: #555;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .team-top-fortune {
+      border-top: 1px solid #eee;
+      padding-top: 12px;
+    }
+    
+    .top-fortune-title {
+      font-size: 0.8rem;
+      color: #666;
+      margin: 0 0 8px 0;
+    }
+    
+    .top-fortune-members {
+      display: flex;
+      align-items: center;
+    }
+    
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 500;
+      font-size: 0.8rem;
+      margin-right: -8px;
+      border: 2px solid white;
+    }
+    
+    .avatar-wood {
+      background-color: var(--wood-color);
+    }
+    
+    .avatar-fire {
+      background-color: var(--fire-color);
+    }
+    
+    .avatar-earth {
+      background-color: var(--earth-color);
+    }
+    
+    .avatar-metal {
+      background-color: var(--metal-color);
+      color: #333;
+    }
+    
+    .avatar-water {
+      background-color: var(--water-color);
+    }
+    
+    .team-more {
+      margin-left: 8px;
+      font-size: 0.8rem;
+      color: var(--primary-color);
+      background-color: var(--primary-bg);
+      border-radius: 16px;
+      padding: 4px 8px;
+    }
+    
+    /* 空の状態 */
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      background-color: white;
+      border-radius: 8px;
+      margin-top: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+    
+    .empty-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    
+    .empty-text {
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 24px;
+    }
+    
+    /* ローディング状態 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 32px 16px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* ボトムナビゲーション */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      display: flex;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      color: #757575;
+      font-size: 0.7rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    /* チーム作成モーダル（デモ用） */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    
+    .modal-content {
+      background-color: white;
+      border-radius: 8px;
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+      color: var(--primary-dark);
+    }
+    
+    .modal-form-group {
+      margin-bottom: 16px;
+    }
+    
+    .modal-form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    
+    .modal-form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    .modal-form-input:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 2px var(--primary-bg);
+    }
+    
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .modal-btn {
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .modal-btn-cancel {
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .modal-btn-create {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    /* レスポンシブ調整 */
+    @media (min-width: 600px) {
+      .team-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 900px) {
+      .app-container {
+        max-width: 1200px;
+      }
+      
+      .team-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1 class="header-title">チームハブ</h1>
+      <div class="header-actions">
+        <i class="material-icons">search</i>
+      </div>
+    </header>
+    
+    <div class="content">
+      <div class="welcome-card">
+        <h2 class="welcome-title">こんにちは、鈴木さん</h2>
+        <p class="welcome-text">所属チームを確認したり、新しいチームを作成できます。</p>
+      </div>
+      
+      <button class="create-team-button" id="create-team-btn">
+        <i class="material-icons">add</i>
+        新しいチームを作成
+      </button>
+      
+      <!-- チームリスト -->
+      <div class="team-grid">
+        <!-- チームカード1 -->
+        <div class="team-card">
+          <div class="team-header">
+            <h3 class="team-name">開発チーム</h3>
+            <div class="team-members-count">
+              <i class="material-icons">people</i>
+              <span>8</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <p class="team-goal">月末までに新機能のリリースを完了し、ユーザー満足度を向上させる</p>
+            <div class="team-top-fortune">
+              <p class="top-fortune-title">今日の運勢TOP</p>
+              <div class="top-fortune-members">
+                <div class="avatar avatar-wood">田</div>
+                <div class="avatar avatar-fire">山</div>
+                <div class="avatar avatar-water">佐</div>
+                <span class="team-more">+2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- チームカード2 -->
+        <div class="team-card">
+          <div class="team-header">
+            <h3 class="team-name">マーケティング部</h3>
+            <div class="team-members-count">
+              <i class="material-icons">people</i>
+              <span>5</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <p class="team-goal">四半期までに新規顧客獲得数20%増加を達成する</p>
+            <div class="team-top-fortune">
+              <p class="top-fortune-title">今日の運勢TOP</p>
+              <div class="top-fortune-members">
+                <div class="avatar avatar-earth">高</div>
+                <div class="avatar avatar-metal">小</div>
+                <span class="team-more">+1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- チームカード3 -->
+        <div class="team-card">
+          <div class="team-header">
+            <h3 class="team-name">営業チームA</h3>
+            <div class="team-members-count">
+              <i class="material-icons">people</i>
+              <span>6</span>
+            </div>
+          </div>
+          <div class="team-body">
+            <p class="team-goal">今月の売上目標1000万円を達成する</p>
+            <div class="team-top-fortune">
+              <p class="top-fortune-title">今日の運勢TOP</p>
+              <div class="top-fortune-members">
+                <div class="avatar avatar-water">渡</div>
+                <div class="avatar avatar-wood">井</div>
+                <div class="avatar avatar-fire">松</div>
+                <span class="team-more">+1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 空の状態 (必要に応じて表示) -->
+      <div class="empty-state" style="display: none;">
+        <i class="material-icons empty-icon">group_add</i>
+        <h2 class="empty-title">チームがありません</h2>
+        <p class="empty-text">新しいチームを作成するか、招待を受け入れてチームに参加しましょう。</p>
+        <button class="create-team-button">
+          <i class="material-icons">add</i>
+          新しいチームを作成
+        </button>
+      </div>
+      
+      <!-- ローディング状態 -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>チーム情報を読み込み中...</p>
+      </div>
+    </div>
+    
+    <!-- ボトムナビゲーション -->
+    <nav class="bottom-nav">
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">home</i>
+        <span>ホーム</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">favorite</i>
+        <span>相性診断</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">chat</i>
+        <span>チャット</span>
+      </a>
+      <a href="#" class="nav-item active">
+        <i class="material-icons nav-icon">groups</i>
+        <span>チーム</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">person</i>
+        <span>マイページ</span>
+      </a>
+    </nav>
+    
+    <!-- チーム作成モーダル (デモ用) -->
+    <div class="modal-overlay" id="create-team-modal">
+      <div class="modal-content">
+        <h2 class="modal-title">新しいチームを作成</h2>
+        
+        <div class="modal-form-group">
+          <label class="modal-form-label">チーム名</label>
+          <input type="text" class="modal-form-input" placeholder="例: 開発チーム">
+        </div>
+        
+        <div class="modal-form-group">
+          <label class="modal-form-label">チームの目標</label>
+          <textarea class="modal-form-input" rows="3" placeholder="チームとして達成したい目標を入力してください"></textarea>
+        </div>
+        
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-cancel" id="modal-cancel-btn">キャンセル</button>
+          <button class="modal-btn modal-btn-create">作成する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // チーム作成ボタンのモーダル表示
+    document.getElementById('create-team-btn').addEventListener('click', () => {
+      document.getElementById('create-team-modal').style.display = 'flex';
+    });
+    
+    // モーダルを閉じる
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+      document.getElementById('create-team-modal').style.display = 'none';
+    });
+    
+    // モーダル外をクリックして閉じる
+    document.getElementById('create-team-modal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('create-team-modal')) {
+        document.getElementById('create-team-modal').style.display = 'none';
+      }
+    });
+    
+    // チームカードのクリックイベント
+    document.querySelectorAll('.team-card').forEach(card => {
+      card.addEventListener('click', () => {
+        // 実際のアプリではチーム詳細ページに遷移
+        alert('チーム詳細ページに遷移します');
+      });
+    });
+  </script>
+</body>
+</html>

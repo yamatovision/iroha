@@ -1,5 +1,65 @@
 # DailyFortuneネイティブアプリ移行チェックリスト
 
+## 🔄 データモデル改善計画: 複数チーム所属対応
+
+### 現状の問題点
+- ユーザーは1つのチームにしか所属できない制約がある
+- `User`モデルは`teamId`フィールドを単一値として保持
+- チーム作成者が他のチームに所属している場合、自身のチームに自動的に所属できない
+- エラーメッセージ: "このユーザーは既に別のチームに所属しています"が発生
+
+### リファクタリング案
+1. **データモデル変更**
+   - `User`モデルの`teamId`を`teamIds`配列に変更
+   - または新しい`TeamMembership`中間テーブルを作成して多対多関係を表現
+
+2. **TeamMembershipモデル案（推奨）**
+   ```typescript
+   const teamMembershipSchema = new Schema({
+     userId: {
+       type: Schema.Types.ObjectId,
+       ref: 'User',
+       required: true
+     },
+     teamId: {
+       type: Schema.Types.ObjectId,
+       ref: 'Team',
+       required: true
+     },
+     role: {
+       type: String,
+       required: true
+     },
+     isAdmin: {
+       type: Boolean,
+       default: false
+     },
+     joinedAt: {
+       type: Date,
+       default: Date.now
+     }
+   });
+   // 複合インデックス
+   teamMembershipSchema.index({ userId: 1, teamId: 1 }, { unique: true });
+   ```
+
+### ビジネスモデルの方向性
+- **誰でもチーム作成可能なオープンモデル採用**
+  - 全ユーザーがチームを自由に作成できる権限を持つ
+  - LINEやSlackのようなグループ作成モデルに近い
+  - ユーザーの主体性を重視し、口コミでの拡散を促進
+
+- **将来的な機能強化の方向性**
+  - ID検索やユーザー検索機能の実装
+  - 相性ベースの人材推奨機能
+  - チームに必要な五行属性の提案
+  - 相性マッチング機能（ビジネスパートナー探し）
+
+- **課金モデル**
+  - 基本機能（プロフィール閲覧、チーム作成）は無料
+  - デイリーフォーチュンなど日常的に価値を感じる機能を有料化
+  - チーム管理機能や高度な分析は上位プランに配置
+
 ## 初期設定・環境構築
 - [x] 1. 新規プロジェクト作成 (`DailyFortune-Native`)
 - [x] 2. 不要ファイル削除 (.git, node_modules など)
@@ -280,6 +340,7 @@ cd client && npx cap open android
 
 - [ネイティブアプリ実装ガイド](/docs/native-app-implementation-guide.md) - Capacitorを使った実装の詳細ガイド
 - [ネイティブアプリ移行計画](/docs/native-app-migration-plan.md) - 移行全体の計画書
+- [チーム機能と友達機能リファクタリング計画](/docs/team-membership-refactoring-plan.md) - チーム機能の多対多関係と友達機能の実装計画
 - [Capacitor公式ドキュメント](https://capacitorjs.com/docs) - Capacitorの公式リファレンス
 - [Vite+React+TypeScript構成](https://vitejs.dev/guide/) - ビルド設定の参考
 - [Android ビルドガイド](/client/android-build-guide.md) - Android Studio でのビルド手順

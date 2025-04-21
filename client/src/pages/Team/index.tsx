@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Tabs, Tab, CircularProgress, Button, Paper } from '@mui/material';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import teamService from '../../services/team.service';
 import TeamList from '../../components/team/TeamList';
@@ -156,35 +155,6 @@ const Team: React.FC = () => {
           <Tab label="経営者ダッシュボード" icon={<PeopleAltIcon />} iconPosition="start" />
         </Tabs>
       </Box>
-      
-      {/* チーム相性ページへのリンク */}
-      <Paper 
-        sx={{ 
-          m: 3, 
-          p: 2, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          bgcolor: 'primary.light',
-          color: 'white',
-          borderRadius: 2,
-          boxShadow: 3,
-        }}
-      >
-        <Box display="flex" alignItems="center">
-          <FavoriteIcon sx={{ mr: 1 }} />
-          <Typography variant="h6">チームメンバーの相性を確認</Typography>
-        </Box>
-        <Button 
-          variant="contained" 
-          color="secondary"
-          component={Link}
-          to={`/team/${currentTeam.id}/aisyou`}
-          sx={{ fontWeight: 'bold' }}
-        >
-          相性分析ページへ
-        </Button>
-      </Paper>
       
       <Box sx={{ p: 3 }}>
         {activeTab === 0 && (

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>相性診断結果共有 | DailyFortune</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/material-ui.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Charts.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      /* 五行カラー定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+      
+      --primary-color: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #512da8;
+      --primary-bg: #ede7f6;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .app-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding-bottom: 24px;
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .header-logo {
+      max-width: 180px;
+      margin-bottom: 8px;
+    }
+    
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .header-subtitle {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+    
+    .content {
+      padding: 16px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary-color);
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: 'Noto Sans JP', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+      border-color: var(--primary-color);
+      outline: none;
+      box-shadow: 0 0 0 2px var(--primary-bg);
+    }
+    
+    .form-caption {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .preview-card {
+      background-color: var(--primary-bg);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .preview-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .preview-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+    }
+    
+    .preview-title {
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    
+    .preview-subtitle {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    .compatibility-score {
+      text-align: center;
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .score-value {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    
+    .score-label {
+      font-size: 0.9rem;
+      color: #777;
+      margin-top: 8px;
+    }
+    
+    .relationship-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 16px 0;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .relationship-icon {
+      margin-right: 8px;
+      font-size: 1.5rem;
+    }
+    
+    .summary-text {
+      text-align: center;
+      margin: 16px 0;
+      line-height: 1.6;
+    }
+    
+    .element-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 8px;
+      color: white;
+    }
+    
+    .element-wood {
+      background-color: var(--wood-color);
+    }
+    
+    .element-fire {
+      background-color: var(--fire-color);
+    }
+    
+    .element-earth {
+      background-color: var(--earth-color);
+    }
+    
+    .element-metal {
+      background-color: var(--metal-color);
+      color: #333;
+    }
+    
+    .element-water {
+      background-color: var(--water-color);
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+    }
+    
+    .btn-outline:hover {
+      background-color: var(--primary-bg);
+    }
+    
+    .btn-full {
+      width: 100%;
+    }
+    
+    .cta-container {
+      text-align: center;
+      margin: 24px 0;
+    }
+    
+    .cta-text {
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background-color: #ddd;
+    }
+    
+    .divider::before {
+      margin-right: 16px;
+    }
+    
+    .divider::after {
+      margin-left: 16px;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 16px;
+      color: #666;
+      font-size: 0.8rem;
+    }
+    
+    .footer-logo {
+      max-width: 120px;
+      margin-bottom: 8px;
+    }
+    
+    /* ローディング状態 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 32px 16px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* レスポンシブ調整 */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 768px;
+      }
+      
+      .form-row {
+        display: flex;
+        gap: 16px;
+      }
+      
+      .form-row .form-group {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1 class="header-title">DailyFortune</h1>
+      <p class="header-subtitle">あなたとの相性診断結果が届いています</p>
+    </header>
+    
+    <div class="content">
+      <div class="preview-card">
+        <div class="preview-header">
+          <div class="preview-icon">
+            <i class="material-icons">person</i>
+          </div>
+          <div>
+            <div class="preview-title">佐藤さん</div>
+            <div class="preview-subtitle">からの相性診断</div>
+          </div>
+        </div>
+        
+        <div class="compatibility-score">
+          <div class="score-value">85</div>
+          <div class="score-label">相性スコア (100点満点)</div>
+        </div>
+        
+        <div class="relationship-type">
+          <span class="relationship-icon" style="color: var(--wood-color);">♻️</span>
+          <span>相生関係（良好）</span>
+        </div>
+        
+        <p class="summary-text">
+          水と木の組み合わせは、互いに高い親和性を持ちます。水が木を育てる相生関係で、互いに良い影響を与え合える関係性です。
+        </p>
+      </div>
+      
+      <div class="card">
+        <h2 class="section-title">あなたの情報を入力して詳細な診断結果を見る</h2>
+        <p>佐藤さんがあなたとの相性を診断しました。あなたの情報を入力すると、詳細な相性診断結果を確認できます。</p>
+        
+        <div class="form-group">
+          <label class="form-label">お名前（ニックネーム）</label>
+          <input type="text" class="form-input" placeholder="例: 田中さん">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">生年月日</label>
+          <input type="date" class="form-input">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">出生時間</label>
+          <input type="time" class="form-input">
+          <div class="form-caption">※わからない場合は空欄でもOK</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">出生地</label>
+          <input type="text" class="form-input" placeholder="例: 東京都渋谷区">
+        </div>
+        
+        <button class="btn btn-primary btn-full" id="check-result-btn">結果を確認する</button>
+      </div>
+      
+      <!-- ローディング状態 -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>診断結果を取得中...</p>
+      </div>
+      
+      <div class="cta-container">
+        <p class="cta-text">DailyFortuneで自分の運勢や相性をもっと詳しく知ろう</p>
+        <button class="btn btn-primary">
+          <i class="material-icons" style="font-size: 16px; margin-right: 4px;">login</i>
+          無料で登録する
+        </button>
+      </div>
+      
+      <div class="divider">さらにできること</div>
+      
+      <div class="card" style="display: flex; align-items: center;">
+        <i class="material-icons" style="font-size: 36px; margin-right: 16px; color: var(--primary-color);">calendar_today</i>
+        <div>
+          <h3 class="section-title" style="margin-bottom: 4px;">デイリー運勢</h3>
+          <p style="margin: 0; font-size: 0.9rem;">毎日の運勢とラッキーアイテムをチェック</p>
+        </div>
+      </div>
+      
+      <div class="card" style="display: flex; align-items: center;">
+        <i class="material-icons" style="font-size: 36px; margin-right: 16px; color: var(--primary-color);">chat</i>
+        <div>
+          <h3 class="section-title" style="margin-bottom: 4px;">AIチャット相談</h3>
+          <p style="margin: 0; font-size: 0.9rem;">あなたの四柱推命情報に基づいたAIアドバイス</p>
+        </div>
+      </div>
+      
+      <div class="card" style="display: flex; align-items: center;">
+        <i class="material-icons" style="font-size: 36px; margin-right: 16px; color: var(--primary-color);">groups</i>
+        <div>
+          <h3 class="section-title" style="margin-bottom: 4px;">チーム相性分析</h3>
+          <p style="margin: 0; font-size: 0.9rem;">チームメンバー間の相性をマトリックスで確認</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>© 2025 DailyFortune All Rights Reserved.</p>
+    </div>
+  </div>
+  
+  <script>
+    // 結果確認ボタンの処理
+    document.getElementById('check-result-btn').addEventListener('click', () => {
+      // ローディング表示
+      document.getElementById('loading').style.display = 'block';
+      
+      // 実際のアプリでは、APIリクエストなどの非同期処理を行う
+      setTimeout(() => {
+        // ローディング非表示
+        document.getElementById('loading').style.display = 'none';
+        
+        // 詳細結果ページへリダイレクト
+        // 実際のアプリではここで遷移するか結果を表示する
+        alert('アプリ内で詳細な相性診断結果を確認できます');
+      }, 1500); // 1.5秒後に結果表示（デモ用）
+    });
+  </script>
+</body>
+</html>

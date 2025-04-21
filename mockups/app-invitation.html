@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DailyFortuneへの招待 | 四柱推命で運勢と相性を診断</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/material-ui.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* 五行カラー定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+      
+      --primary-color: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #512da8;
+      --primary-bg: #ede7f6;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .app-container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      background-color: white;
+      border-radius: 16px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-icon {
+      font-size: 48px;
+      color: var(--primary-color);
+    }
+    
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+    }
+    
+    .header-subtitle {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+    
+    .invitation-info {
+      background-color: var(--primary-bg);
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .invitation-text {
+      font-size: 1rem;
+      margin: 0;
+    }
+    
+    .inviter-name {
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+    
+    .content {
+      padding: 24px 16px;
+    }
+    
+    .cta-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 24px 16px;
+      margin-bottom: 24px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .cta-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: var(--primary-dark);
+    }
+    
+    .cta-subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0 0 24px 0;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      font-family: 'Noto Sans JP', sans-serif;
+      text-decoration: none;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .app-store-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .store-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .store-btn img {
+      height: 24px;
+      margin-right: 8px;
+    }
+    
+    /* 特徴セクション */
+    .features-section {
+      margin-bottom: 24px;
+    }
+    
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      text-align: center;
+      color: var(--primary-dark);
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .feature-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .feature-icon-container {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    
+    .feature-icon {
+      font-size: 24px;
+      color: white;
+    }
+    
+    .feature-content {
+      flex: 1;
+    }
+    
+    .feature-title {
+      font-weight: 500;
+      margin: 0 0 4px 0;
+    }
+    
+    .feature-description {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0;
+    }
+    
+    /* 木: 緑 (#43a047) */
+    .icon-wood {
+      background-color: var(--wood-color);
+    }
+    
+    /* 火: 赤 (#e53935) */
+    .icon-fire {
+      background-color: var(--fire-color);
+    }
+    
+    /* 土: オレンジ (#ff8f00) */
+    .icon-earth {
+      background-color: var(--earth-color);
+    }
+    
+    /* 金: 金色 (#fdd835) */
+    .icon-metal {
+      background-color: var(--metal-color);
+    }
+    
+    /* 水: 青 (#1e88e5) */
+    .icon-water {
+      background-color: var(--water-color);
+    }
+    
+    /* アプリスクリーンショット */
+    .screenshots-section {
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .screenshots-scroll {
+      display: flex;
+      overflow-x: auto;
+      padding: 8px 0 16px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+    }
+    
+    .screenshots-scroll::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge */
+    }
+    
+    .screenshot-item {
+      flex: 0 0 auto;
+      width: 80%;
+      margin-right: 16px;
+      scroll-snap-align: center;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .screenshot-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    /* フッター */
+    .footer {
+      background-color: #f0f0f0;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    
+    .footer-logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .footer-link {
+      color: #666;
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    
+    .footer-copyright {
+      font-size: 0.8rem;
+      color: #999;
+    }
+    
+    /* レスポンシブ調整 */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 768px;
+      }
+      
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .app-store-buttons {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo">
+        <i class="material-icons logo-icon">horoscope</i>
+      </div>
+      <h1 class="header-title">DailyFortune</h1>
+      <p class="header-subtitle">四柱推命で運勢と相性を診断</p>
+    </header>
+    
+    <div class="invitation-info">
+      <p class="invitation-text"><span class="inviter-name">鈴木さん</span>があなたをDailyFortuneに招待しています</p>
+      <p class="invitation-text" style="font-size: 0.8rem; margin-top: 4px;">※登録完了すると、自動的に友達に追加されます</p>
+    </div>
+    
+    <div class="content">
+      <div class="cta-section">
+        <h2 class="cta-title">無料で登録して運勢の可能性を解き放とう</h2>
+        <p class="cta-subtitle">あなたの四柱推命情報に基づいた運勢診断と相性診断を今すぐ体験</p>
+        <a href="#" class="btn btn-primary">登録して友達になる</a>
+        
+        <div class="app-store-buttons">
+          <a href="#" class="store-btn">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9ImZlYXRoZXIgZmVhdGhlci1hcHBsZSI+PHBhdGggZD0iTTEyIDIwLjk0YzEuNSAwIDIuNzUtLjI2IDMuODYtLjciLz48cGF0aCBkPSJNMTYuOCAyMC40YzEuNTgtLjMzIDIuODYtMSAzLjgtMi4wMiIvPjxwYXRoIGQ9Ik0xOC45MSA1LjhjLjQ1LjIzLjg0LjUgMS4xNy44MiIvPjxwYXRoIGQ9Ik0xMi4wOCAxNC45djIuODMiLz48cGF0aCBkPSJNMTYuMzkgMy4zOGMtMS4wMy0uNTUtMi4yNy0uOTEtMy42Ny0xLjA2Ii8+PHBhdGggZD0iTTE3LjEgMTYuMzJoLTMuMDEiLz48cGF0aCBkPSJNMTUuNDcgMTYuMyAxNiAxNy4zIDEzLjAzIDE3LjMiLz48cGF0aCBkPSJNOC4zOCAyLjNjLTQuNzYgMC04LjYgMy44Ni04LjYgOC42IDAgNC43MyAzLjg0IDguNiA4LjYgOC42SDEyIi8+PHBhdGggZD0iTTEyLjI4IDE0LjgzVjEwLjdoLTIuNWMwLTQuNSAyLjMzLTguMTMgNS44Mi04LjEzIi8+PHBhdGggZD0iTTEwLjA3IDcuNzF2Mi45OWgzIi8+PC9zdmc+" alt="App Store">
+            App Storeからダウンロード
+          </a>
+          <a href="#" class="store-btn">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9ImZlYXRoZXIgZmVhdGhlci1wbGF5Ij48cG9seWdvbiBwb2ludHM9IjUgMyAxOSAxMiA1IDIxIDUgMyI+PC9wb2x5Z29uPjwvc3ZnPg==" alt="Google Play">
+            Google Playで入手
+          </a>
+        </div>
+      </div>
+      
+      <div class="features-section">
+        <h3 class="section-title">DailyFortuneの特徴</h3>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-container icon-wood">
+              <i class="material-icons feature-icon">calendar_today</i>
+            </div>
+            <div class="feature-content">
+              <h4 class="feature-title">デイリー運勢</h4>
+              <p class="feature-description">毎日更新される運勢と実践的なアドバイスを提供します。</p>
+            </div>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon-container icon-fire">
+              <i class="material-icons feature-icon">favorite</i>
+            </div>
+            <div class="feature-content">
+              <h4 class="feature-title">友達との相性診断</h4>
+              <p class="feature-description">友達との相性を五行理論に基づいて分析します。</p>
+            </div>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon-container icon-water">
+              <i class="material-icons feature-icon">chat</i>
+            </div>
+            <div class="feature-content">
+              <h4 class="feature-title">AIチャット相談</h4>
+              <p class="feature-description">四柱推命情報に基づいたAIアドバイスが受けられます。</p>
+            </div>
+          </div>
+          
+          <div class="feature-card">
+            <div class="feature-icon-container icon-earth">
+              <i class="material-icons feature-icon">groups</i>
+            </div>
+            <div class="feature-content">
+              <h4 class="feature-title">チーム相性分析</h4>
+              <p class="feature-description">チームメンバー間の相性をマトリックスで確認できます。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="screenshots-section">
+        <h3 class="section-title">アプリの画面</h3>
+        
+        <div class="screenshots-scroll">
+          <!-- 実際のアプリはスクリーンショット画像を使用 -->
+          <div class="screenshot-item">
+            <svg width="100%" viewBox="0 0 320 640" style="background-color: #fff;">
+              <!-- ホーム画面のモックアップ -->
+              <rect x="0" y="0" width="320" height="640" fill="#fff" />
+              <!-- ヘッダー -->
+              <rect x="0" y="0" width="320" height="60" fill="#673ab7" />
+              <text x="16" y="38" font-family="Arial" font-size="18" fill="white" font-weight="bold">今日の運勢</text>
+              <!-- 運勢スコア -->
+              <circle cx="160" cy="160" r="80" fill="#ede7f6" />
+              <circle cx="160" cy="160" r="70" fill="#673ab7" />
+              <text x="160" y="170" font-family="Arial" font-size="40" fill="white" font-weight="bold" text-anchor="middle">85</text>
+              <text x="160" y="195" font-family="Arial" font-size="14" fill="white" text-anchor="middle">今日のスコア</text>
+              <!-- コンテンツ -->
+              <rect x="20" y="260" width="280" height="120" fill="#f5f5f5" rx="8" />
+              <rect x="20" y="400" width="280" height="120" fill="#f5f5f5" rx="8" />
+              <!-- ナビゲーション -->
+              <rect x="0" y="580" width="320" height="60" fill="#fff" />
+              <line x1="0" y1="580" x2="320" y2="580" stroke="#ddd" />
+            </svg>
+          </div>
+          
+          <div class="screenshot-item">
+            <svg width="100%" viewBox="0 0 320 640" style="background-color: #fff;">
+              <!-- 相性診断画面のモックアップ -->
+              <rect x="0" y="0" width="320" height="640" fill="#fff" />
+              <!-- ヘッダー -->
+              <rect x="0" y="0" width="320" height="60" fill="#673ab7" />
+              <text x="16" y="38" font-family="Arial" font-size="18" fill="white" font-weight="bold">相性診断</text>
+              <!-- 友達グリッド -->
+              <rect x="20" y="100" width="85" height="100" fill="#ede7f6" rx="8" />
+              <circle cx="62" cy="130" r="24" fill="#43a047" />
+              <rect x="20" y="160" width="85" height="20" fill="#ede7f6" />
+              
+              <rect x="117" y="100" width="85" height="100" fill="#ede7f6" rx="8" />
+              <circle cx="159" cy="130" r="24" fill="#e53935" />
+              <rect x="117" y="160" width="85" height="20" fill="#ede7f6" />
+              
+              <rect x="214" y="100" width="85" height="100" fill="#ede7f6" rx="8" />
+              <circle cx="256" cy="130" r="24" fill="#1e88e5" />
+              <rect x="214" y="160" width="85" height="20" fill="#ede7f6" />
+              
+              <rect x="20" y="240" width="280" height="50" fill="#673ab7" rx="4" />
+              <text x="160" y="270" font-family="Arial" font-size="16" fill="white" text-anchor="middle">相性を診断</text>
+              
+              <!-- 結果プレビュー -->
+              <rect x="20" y="310" width="280" height="200" fill="#f5f5f5" rx="8" />
+              
+              <!-- ナビゲーション -->
+              <rect x="0" y="580" width="320" height="60" fill="#fff" />
+              <line x1="0" y1="580" x2="320" y2="580" stroke="#ddd" />
+            </svg>
+          </div>
+          
+          <div class="screenshot-item">
+            <svg width="100%" viewBox="0 0 320 640" style="background-color: #fff;">
+              <!-- チャット画面のモックアップ -->
+              <rect x="0" y="0" width="320" height="640" fill="#fff" />
+              <!-- ヘッダー -->
+              <rect x="0" y="0" width="320" height="60" fill="#673ab7" />
+              <text x="16" y="38" font-family="Arial" font-size="18" fill="white" font-weight="bold">AIチャット</text>
+              
+              <!-- チャットメッセージ -->
+              <rect x="20" y="80" width="220" height="80" fill="#ede7f6" rx="16" />
+              <rect x="80" y="180" width="220" height="80" fill="#f5f5f5" rx="16" />
+              <rect x="20" y="280" width="220" height="80" fill="#ede7f6" rx="16" />
+              <rect x="80" y="380" width="220" height="80" fill="#f5f5f5" rx="16" />
+              
+              <!-- 入力エリア -->
+              <rect x="20" y="510" width="240" height="50" fill="#f5f5f5" rx="25" />
+              <circle cx="280" cy="535" r="25" fill="#673ab7" />
+              
+              <!-- ナビゲーション -->
+              <rect x="0" y="580" width="320" height="60" fill="#fff" />
+              <line x1="0" y1="580" x2="320" y2="580" stroke="#ddd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <div class="cta-section">
+        <h2 class="cta-title">今すぐ始めましょう</h2>
+        <p class="cta-subtitle">無料で登録して、運勢と相性の世界を探索</p>
+        <a href="#" class="btn btn-primary">登録して友達になる</a>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <div class="footer-logo">DailyFortune</div>
+      <div class="footer-links">
+        <a href="#" class="footer-link">利用規約</a>
+        <a href="#" class="footer-link">プライバシーポリシー</a>
+        <a href="#" class="footer-link">お問い合わせ</a>
+      </div>
+      <div class="footer-copyright">© 2025 DailyFortune All Rights Reserved.</div>
+    </div>
+  </div>
+</body>
+</html>

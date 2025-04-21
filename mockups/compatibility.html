@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>相性診断 | DailyFortune</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/material-ui.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Charts.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      /* 五行カラー定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+      
+      --primary-color: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #512da8;
+      --primary-bg: #ede7f6;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .app-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding-bottom: 72px; /* ナビゲーションの高さ分の余白 */
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .content {
+      padding: 16px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .form-section {
+      margin-bottom: 24px;
+    }
+    
+    .form-title {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: var(--primary-color);
+    }
+    
+    /* 友達選択セクション */
+    .friend-select-text {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 16px;
+    }
+    
+    .friends-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .friend-card {
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+    
+    .friend-card:hover {
+      background-color: var(--primary-bg);
+    }
+    
+    .friend-card.selected {
+      border-color: var(--primary-color);
+      background-color: var(--primary-bg);
+    }
+    
+    .friend-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      color: white;
+      font-weight: 500;
+      font-size: 1.2rem;
+    }
+    
+    .friend-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .element-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      color: white;
+    }
+    
+    .element-wood {
+      background-color: var(--wood-color);
+    }
+    
+    .element-fire {
+      background-color: var(--fire-color);
+    }
+    
+    .element-earth {
+      background-color: var(--earth-color);
+    }
+    
+    .element-metal {
+      background-color: var(--metal-color);
+      color: #333;
+    }
+    
+    .element-water {
+      background-color: var(--water-color);
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+    
+    .btn-outline:hover {
+      background-color: var(--primary-bg);
+    }
+    
+    .btn-full {
+      width: 100%;
+    }
+    
+    /* タブ */
+    .tabs {
+      display: flex;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #666;
+      text-align: center;
+      flex: 1;
+    }
+    
+    .tab.active {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    /* 相性診断結果 */
+    .result-container {
+      display: none;
+    }
+    
+    .compatibility-score {
+      text-align: center;
+      margin: 24px 0;
+    }
+    
+    .score-value {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    
+    .score-label {
+      font-size: 0.9rem;
+      color: #777;
+      margin-top: 8px;
+    }
+    
+    .compatibility-chart {
+      width: 100%;
+      height: 200px;
+      margin: 24px 0;
+    }
+    
+    .relationship-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 16px 0;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .relationship-icon {
+      margin-right: 8px;
+      font-size: 1.5rem;
+    }
+    
+    .compatibility-detail {
+      margin: 16px 0;
+    }
+    
+    .detail-title {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+    
+    /* 診断履歴 */
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .history-item {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+    }
+    
+    .history-details {
+      flex: 1;
+    }
+    
+    .history-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .history-date {
+      font-size: 0.8rem;
+      color: #777;
+    }
+    
+    .history-score {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-left: 16px;
+    }
+    
+    .history-actions {
+      display: flex;
+      margin-top: 8px;
+    }
+    
+    .history-btn {
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    
+    .history-btn i {
+      font-size: 1rem;
+      margin-right: 4px;
+    }
+    
+    /* 空の状態 */
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: #888;
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+    
+    .empty-text {
+      font-size: 0.9rem;
+    }
+    
+    /* ローディング状態 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 32px 16px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* 相手の情報の表示 */
+    .vs-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 24px 0;
+    }
+    
+    .vs-person {
+      text-align: center;
+      flex: 1;
+    }
+    
+    .vs-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      color: white;
+      font-weight: 500;
+      font-size: 1.5rem;
+    }
+    
+    .vs-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .vs-element {
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    
+    .vs-versus {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #aaa;
+      margin: 0 16px;
+    }
+    
+    /* アプリ招待バナー */
+    .invite-banner {
+      background-color: var(--primary-bg);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .invite-icon {
+      margin-right: 16px;
+      color: var(--primary-color);
+      background-color: white;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .invite-text {
+      flex: 1;
+    }
+    
+    .invite-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .invite-description {
+      font-size: 0.8rem;
+      color: #666;
+      margin: 0;
+    }
+    
+    .invite-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    
+    /* ナビゲーション */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      display: flex;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      color: #757575;
+      font-size: 0.7rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    /* レスポンシブ調整 */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 768px;
+      }
+      
+      .tabs {
+        justify-content: center;
+      }
+      
+      .tab {
+        flex: 0 0 auto;
+        min-width: 120px;
+      }
+      
+      .friends-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1 class="header-title">相性診断</h1>
+      <div class="header-actions">
+        <i class="material-icons">help_outline</i>
+      </div>
+    </header>
+    
+    <div class="content">
+      <div class="tabs">
+        <div class="tab active" data-tab="diagnosis">診断</div>
+        <div class="tab" data-tab="history">履歴</div>
+      </div>
+      
+      <div class="tab-content" id="diagnosis-content">
+        <div class="card">
+          <div class="form-section">
+            <h2 class="form-title">相性を診断したい友達を選択</h2>
+            <p class="friend-select-text">登録された友達の中から選択してください。友達がいない場合は、まず友達を追加しましょう。</p>
+            
+            <div class="friends-grid">
+              <div class="friend-card" data-id="1">
+                <div class="friend-avatar" style="background-color: var(--wood-color);">田</div>
+                <div class="friend-name">田中太郎</div>
+                <span class="element-badge element-wood">木</span>
+              </div>
+              
+              <div class="friend-card" data-id="2">
+                <div class="friend-avatar" style="background-color: var(--fire-color);">山</div>
+                <div class="friend-name">山田花子</div>
+                <span class="element-badge element-fire">火</span>
+              </div>
+              
+              <div class="friend-card" data-id="3">
+                <div class="friend-avatar" style="background-color: var(--water-color);">佐</div>
+                <div class="friend-name">佐藤一郎</div>
+                <span class="element-badge element-water">水</span>
+              </div>
+              
+              <div class="friend-card" data-id="4">
+                <div class="friend-avatar" style="background-color: var(--earth-color);">高</div>
+                <div class="friend-name">高橋誠</div>
+                <span class="element-badge element-earth">土</span>
+              </div>
+              
+              <div class="friend-card" data-id="5">
+                <div class="friend-avatar" style="background-color: var(--metal-color);">小</div>
+                <div class="friend-name">小林美咲</div>
+                <span class="element-badge element-metal">金</span>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+              <a href="friends-list.html" class="btn btn-outline" style="flex: 1;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">person_add</i>
+                友達追加
+              </a>
+              <button class="btn btn-primary" style="flex: 1;" id="diagnose-btn" disabled>
+                <i class="material-icons" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">favorite</i>
+                相性を診断
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 友達がいない場合 -->
+        <div class="empty-state" style="display: none;" id="no-friends">
+          <i class="material-icons empty-icon">people</i>
+          <p class="empty-text">友達がまだいません。友達を追加して相性診断を楽しみましょう。</p>
+          <a href="friends-list.html" class="btn btn-primary">
+            <i class="material-icons" style="font-size: 16px; margin-right: 4px; vertical-align: middle;">person_add</i>
+            友達を追加する
+          </a>
+        </div>
+        
+        <!-- アプリ招待バナー -->
+        <div class="invite-banner">
+          <div class="invite-icon">
+            <i class="material-icons">share</i>
+          </div>
+          <div class="invite-text">
+            <h3 class="invite-title">友達をDailyFortuneに招待しよう</h3>
+            <p class="invite-description">アプリに招待して一緒に相性診断を楽しみましょう</p>
+          </div>
+          <button class="invite-btn">招待する</button>
+        </div>
+        
+        <!-- ローディング状態 -->
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>診断中...</p>
+        </div>
+        
+        <!-- 診断結果 -->
+        <div class="result-container" id="result">
+          <div class="card">
+            <!-- 相手の情報 -->
+            <div class="vs-display">
+              <div class="vs-person">
+                <div class="vs-avatar" style="background-color: var(--water-color);">鈴</div>
+                <div class="vs-name">鈴木さん</div>
+                <span class="element-badge element-water">水</span>
+              </div>
+              
+              <div class="vs-versus">VS</div>
+              
+              <div class="vs-person">
+                <div class="vs-avatar" style="background-color: var(--wood-color);">田</div>
+                <div class="vs-name">田中太郎</div>
+                <span class="element-badge element-wood">木</span>
+              </div>
+            </div>
+            
+            <div class="compatibility-score">
+              <div class="score-value">85</div>
+              <div class="score-label">相性スコア (100点満点)</div>
+            </div>
+            
+            <div class="relationship-type">
+              <span class="relationship-icon" style="color: var(--wood-color);">♻️</span>
+              <span>相生関係（良好）</span>
+            </div>
+            
+            <canvas class="compatibility-chart" id="compatibilityChart"></canvas>
+            
+            <div class="compatibility-detail">
+              <div class="detail-title">あなたの五行属性</div>
+              <span class="element-badge element-water">水</span>
+              <p>知性と創造性に優れ、柔軟な考え方の持ち主です。</p>
+            </div>
+            
+            <div class="compatibility-detail">
+              <div class="detail-title">相手の五行属性</div>
+              <span class="element-badge element-wood">木</span>
+              <p>成長と発展を象徴し、決断力と優しさを兼ね備えています。</p>
+            </div>
+            
+            <div class="compatibility-detail">
+              <div class="detail-title">相性の解説</div>
+              <p>水が木を育てる「相生」の関係です。あなたは相手の成長をサポートする力があり、お互いに良い影響を与え合えるでしょう。コミュニケーションが円滑で、協力関係も築きやすい組み合わせです。</p>
+            </div>
+            
+            <div class="compatibility-detail">
+              <div class="detail-title">アドバイス</div>
+              <p>互いの長所を生かした協力関係を築くことで、さらに良好な関係を維持できます。相手の意見を尊重し、積極的にサポートする姿勢が重要です。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 診断履歴タブ -->
+      <div class="tab-content" id="history-content" style="display: none;">
+        <ul class="history-list">
+          <li class="history-item">
+            <div class="history-details">
+              <div class="history-name">田中太郎</div>
+              <div class="history-date">2025/4/15</div>
+              <div class="history-actions">
+                <button class="history-btn">
+                  <i class="material-icons">visibility</i>
+                  詳細
+                </button>
+              </div>
+            </div>
+            <div class="history-score">85</div>
+          </li>
+          
+          <li class="history-item">
+            <div class="history-details">
+              <div class="history-name">山田花子</div>
+              <div class="history-date">2025/4/10</div>
+              <div class="history-actions">
+                <button class="history-btn">
+                  <i class="material-icons">visibility</i>
+                  詳細
+                </button>
+              </div>
+            </div>
+            <div class="history-score">72</div>
+          </li>
+          
+          <li class="history-item">
+            <div class="history-details">
+              <div class="history-name">佐藤一郎</div>
+              <div class="history-date">2025/4/5</div>
+              <div class="history-actions">
+                <button class="history-btn">
+                  <i class="material-icons">visibility</i>
+                  詳細
+                </button>
+              </div>
+            </div>
+            <div class="history-score">93</div>
+          </li>
+        </ul>
+        
+        <!-- 空の状態 (必要に応じて表示) -->
+        <div class="empty-state" style="display: none;">
+          <i class="material-icons empty-icon">search</i>
+          <p class="empty-text">診断履歴がありません。相性診断をして結果を保存しましょう。</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ボトムナビゲーション -->
+    <nav class="bottom-nav">
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">home</i>
+        <span>ホーム</span>
+      </a>
+      <a href="#" class="nav-item active">
+        <i class="material-icons nav-icon">favorite</i>
+        <span>相性診断</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">chat</i>
+        <span>チャット</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">groups</i>
+        <span>チーム</span>
+      </a>
+      <a href="friends-list.html" class="nav-item">
+        <i class="material-icons nav-icon">people</i>
+        <span>友達</span>
+      </a>
+    </nav>
+  </div>
+  
+  <script>
+    // タブ切り替え
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // タブの切り替え
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // コンテンツの切り替え
+        const tabName = tab.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.style.display = 'none';
+        });
+        document.getElementById(`${tabName}-content`).style.display = 'block';
+      });
+    });
+    
+    // 友達選択
+    let selectedFriend = null;
+    const diagnoseBtn = document.getElementById('diagnose-btn');
+    
+    document.querySelectorAll('.friend-card').forEach(card => {
+      card.addEventListener('click', () => {
+        // 選択状態の切り替え
+        document.querySelectorAll('.friend-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedFriend = card.getAttribute('data-id');
+        
+        // 診断ボタンを有効化
+        diagnoseBtn.disabled = false;
+      });
+    });
+    
+    // 診断ボタンの処理
+    document.getElementById('diagnose-btn').addEventListener('click', () => {
+      if (!selectedFriend) return;
+      
+      // ローディング表示
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('result').style.display = 'none';
+      
+      // 実際のアプリでは、APIリクエストなどの非同期処理を行う
+      setTimeout(() => {
+        // ローディング非表示
+        document.getElementById('loading').style.display = 'none';
+        // 結果表示
+        document.getElementById('result').style.display = 'block';
+        
+        // チャートの描画
+        const ctx = document.getElementById('compatibilityChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: ['相性', '協力', '調和', '信頼', '成長'],
+            datasets: [{
+              label: '相性スコア',
+              data: [85, 90, 75, 88, 92],
+              backgroundColor: 'rgba(103, 58, 183, 0.2)',
+              borderColor: 'rgba(103, 58, 183, 1)',
+              pointBackgroundColor: 'rgba(103, 58, 183, 1)',
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: 'rgba(103, 58, 183, 1)'
+            }]
+          },
+          options: {
+            scales: {
+              r: {
+                angleLines: {
+                  display: true
+                },
+                suggestedMin: 0,
+                suggestedMax: 100
+              }
+            }
+          }
+        });
+      }, 1500); // 1.5秒後に結果表示（デモ用）
+    });
+  </script>
+</body>
+</html>

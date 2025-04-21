@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チームダッシュボード | DailyFortune</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/material-ui.min.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Charts.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      /* 五行カラー定義 */
+      --wood-color: #43a047;
+      --wood-light: #81c784;
+      --wood-dark: #2e7d32;
+      --wood-bg: #e8f5e9;
+      
+      --fire-color: #e53935;
+      --fire-light: #ef5350;
+      --fire-dark: #c62828;
+      --fire-bg: #ffebee;
+      
+      --earth-color: #ff8f00;
+      --earth-light: #ffd54f;
+      --earth-dark: #ef6c00;
+      --earth-bg: #fff8e1;
+      
+      --metal-color: #fdd835;
+      --metal-light: #ffee58;
+      --metal-dark: #f9a825;
+      --metal-bg: #fffde7;
+      
+      --water-color: #1e88e5;
+      --water-light: #64b5f6;
+      --water-dark: #0d47a1;
+      --water-bg: #e3f2fd;
+      
+      --primary-color: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #512da8;
+      --primary-bg: #ede7f6;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .app-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding-bottom: 72px; /* ナビゲーションの高さ分の余白 */
+    }
+    
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 16px;
+    }
+    
+    /* チーム選択ドロップダウン */
+    .team-select {
+      background-color: var(--primary-dark);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .team-select i {
+      margin-left: 4px;
+      font-size: 20px;
+    }
+    
+    .content {
+      padding: 16px;
+    }
+    
+    /* チーム概要カード */
+    .team-summary-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .team-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .team-icon {
+      width: 48px;
+      height: 48px;
+      background-color: var(--primary-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      color: var(--primary-color);
+    }
+    
+    .team-icon i {
+      font-size: 28px;
+    }
+    
+    .team-details {
+      flex: 1;
+    }
+    
+    .team-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin: 0 0 4px 0;
+    }
+    
+    .team-stats {
+      display: flex;
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    .team-stat {
+      display: flex;
+      align-items: center;
+      margin-right: 12px;
+    }
+    
+    .team-stat i {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    
+    /* チーム目標 */
+    .team-goal {
+      margin-bottom: 16px;
+    }
+    
+    .goal-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0 0 8px 0;
+      color: #555;
+    }
+    
+    .goal-text {
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 0.95rem;
+    }
+    
+    /* 進捗バー */
+    .progress-container {
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      background-color: var(--primary-color);
+      width: 65%; /* サンプル値 */
+    }
+    
+    .progress-text {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    /* タブナビゲーション */
+    .tab-nav {
+      display: flex;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    
+    .tab-item {
+      flex: 1;
+      padding: 12px 4px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab-item i {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    
+    .tab-item.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      background-color: var(--primary-bg);
+    }
+    
+    /* タブコンテンツ */
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* 運勢ランキング */
+    .ranking-card {
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      margin-bottom: 16px;
+    }
+    
+    .ranking-header {
+      background-color: var(--primary-bg);
+      padding: 12px 16px;
+      font-weight: 500;
+      color: var(--primary-dark);
+      font-size: 1rem;
+    }
+    
+    .ranking-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .ranking-position {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: #f0f0f0;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .ranking-position-1 {
+      background-color: #ffd700;
+      color: #333;
+    }
+    
+    .ranking-position-2 {
+      background-color: #c0c0c0;
+      color: #333;
+    }
+    
+    .ranking-position-3 {
+      background-color: #cd7f32;
+      color: #fff;
+    }
+    
+    .ranking-user {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      color: white;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .user-info {
+      flex: 1;
+    }
+    
+    .user-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .user-role {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    .user-score {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary-color);
+      margin-left: 12px;
+    }
+    
+    /* 属性バッジ */
+    .element-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      margin-right: 8px;
+      color: white;
+    }
+    
+    .element-wood {
+      background-color: var(--wood-color);
+    }
+    
+    .element-fire {
+      background-color: var(--fire-color);
+    }
+    
+    .element-earth {
+      background-color: var(--earth-color);
+    }
+    
+    .element-metal {
+      background-color: var(--metal-color);
+      color: #333;
+    }
+    
+    .element-water {
+      background-color: var(--water-color);
+    }
+    
+    /* 相性マトリックスプレビュー */
+    .compatibility-preview {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      margin-bottom: 16px;
+    }
+    
+    .preview-title {
+      font-weight: 500;
+      font-size: 1rem;
+      margin: 0 0 16px 0;
+      color: var(--primary-dark);
+    }
+    
+    .matrix-preview {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .matrix-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    
+    .preview-caption {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 12px;
+    }
+    
+    .view-more-btn {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      background-color: var(--primary-bg);
+      color: var(--primary-color);
+      border-radius: 4px;
+      margin-top: 16px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    
+    /* 五行バランスチャート */
+    .element-balance {
+      margin-top: 24px;
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .element-balance-title {
+      font-weight: 500;
+      font-size: 1rem;
+      margin: 0 0 16px 0;
+      color: var(--primary-dark);
+    }
+    
+    .chart-container {
+      width: 100%;
+      margin: 0 auto;
+      max-width: 300px;
+      height: 300px;
+    }
+    
+    /* チーム管理ダッシュボード */
+    .admin-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    
+    .admin-card-title {
+      font-weight: 500;
+      font-size: 1rem;
+      margin: 0 0 16px 0;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .admin-card-title i {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .admin-action-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 8px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .admin-action-btn:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .admin-action-btn i {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: var(--primary-color);
+    }
+    
+    .admin-action-text {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    /* ローディング状態 */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 32px 16px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* ボトムナビゲーション */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      display: flex;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      color: #757575;
+      font-size: 0.7rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    /* レスポンシブ調整 */
+    @media (min-width: 768px) {
+      .app-container {
+        max-width: 768px;
+      }
+      
+      .admin-actions {
+        flex-wrap: nowrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="header-content">
+        <h1 class="header-title">チームダッシュボード</h1>
+        <div class="header-actions">
+          <div class="team-select">
+            開発チーム
+            <i class="material-icons">arrow_drop_down</i>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <div class="content">
+      <!-- チーム概要 -->
+      <div class="team-summary-card">
+        <div class="team-info">
+          <div class="team-icon">
+            <i class="material-icons">group</i>
+          </div>
+          <div class="team-details">
+            <h2 class="team-name">開発チーム</h2>
+            <div class="team-stats">
+              <div class="team-stat">
+                <i class="material-icons">people</i>
+                <span>8名</span>
+              </div>
+              <div class="team-stat">
+                <i class="material-icons">calendar_today</i>
+                <span>2024年10月設立</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="team-goal">
+          <h3 class="goal-title">チーム目標</h3>
+          <p class="goal-text">月末までに新機能のリリースを完了し、ユーザー満足度を向上させる</p>
+          <div class="progress-container">
+            <div class="progress-bar"></div>
+          </div>
+          <div class="progress-text">進捗率: 65%</div>
+        </div>
+      </div>
+      
+      <!-- タブナビゲーション -->
+      <div class="tab-nav">
+        <div class="tab-item active" data-tab="ranking">
+          <i class="material-icons">leaderboard</i>
+          <span>運勢ランキング</span>
+        </div>
+        <div class="tab-item" data-tab="compatibility">
+          <i class="material-icons">compare_arrows</i>
+          <span>相性マトリックス</span>
+        </div>
+        <div class="tab-item" data-tab="manage">
+          <i class="material-icons">settings</i>
+          <span>チーム管理</span>
+        </div>
+      </div>
+      
+      <!-- ランキングタブ -->
+      <div class="tab-content active" id="ranking-tab">
+        <div class="ranking-card">
+          <div class="ranking-header">
+            今日の運勢ランキング（2025年4月21日）
+          </div>
+          <ul class="ranking-list">
+            <li class="ranking-item">
+              <div class="ranking-position ranking-position-1">1</div>
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--wood-color);">田</div>
+                <div class="user-info">
+                  <div class="user-name">田中太郎</div>
+                  <div class="user-role">
+                    <span class="element-badge element-wood">木</span>
+                    <span>エンジニア</span>
+                  </div>
+                </div>
+              </div>
+              <div class="user-score">91</div>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-position ranking-position-2">2</div>
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--fire-color);">山</div>
+                <div class="user-info">
+                  <div class="user-name">山田花子</div>
+                  <div class="user-role">
+                    <span class="element-badge element-fire">火</span>
+                    <span>デザイナー</span>
+                  </div>
+                </div>
+              </div>
+              <div class="user-score">85</div>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-position ranking-position-3">3</div>
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--water-color);">佐</div>
+                <div class="user-info">
+                  <div class="user-name">佐藤一郎</div>
+                  <div class="user-role">
+                    <span class="element-badge element-water">水</span>
+                    <span>プロジェクトマネージャー</span>
+                  </div>
+                </div>
+              </div>
+              <div class="user-score">82</div>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-position">4</div>
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--earth-color);">高</div>
+                <div class="user-info">
+                  <div class="user-name">高橋誠</div>
+                  <div class="user-role">
+                    <span class="element-badge element-earth">土</span>
+                    <span>QAエンジニア</span>
+                  </div>
+                </div>
+              </div>
+              <div class="user-score">78</div>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-position">5</div>
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--metal-color);">小</div>
+                <div class="user-info">
+                  <div class="user-name">小林美咲</div>
+                  <div class="user-role">
+                    <span class="element-badge element-metal">金</span>
+                    <span>プロダクトオーナー</span>
+                  </div>
+                </div>
+              </div>
+              <div class="user-score">73</div>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- 五行バランスチャート -->
+        <div class="element-balance">
+          <h3 class="element-balance-title">チームの五行バランス</h3>
+          <div class="chart-container">
+            <canvas id="elementChart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 相性マトリックスタブ -->
+      <div class="tab-content" id="compatibility-tab">
+        <div class="compatibility-preview">
+          <h3 class="preview-title">チームメンバー相性マトリックス</h3>
+          <div class="matrix-preview">
+            <!-- プレースホルダー画像（実際の実装ではCanvas/SVGなどでマトリックスを描画） -->
+            <svg width="100%" height="200" viewBox="0 0 300 300" style="background-color: #f5f5f5; border-radius: 4px;">
+              <!-- マトリックスの枠 -->
+              <rect x="50" y="50" width="200" height="200" fill="#fff" stroke="#ddd" />
+              
+              <!-- 横方向のラベル -->
+              <text x="70" y="40" font-size="12" text-anchor="middle">田</text>
+              <text x="110" y="40" font-size="12" text-anchor="middle">山</text>
+              <text x="150" y="40" font-size="12" text-anchor="middle">佐</text>
+              <text x="190" y="40" font-size="12" text-anchor="middle">高</text>
+              <text x="230" y="40" font-size="12" text-anchor="middle">小</text>
+              
+              <!-- 縦方向のラベル -->
+              <text x="30" y="70" font-size="12" text-anchor="middle">田</text>
+              <text x="30" y="110" font-size="12" text-anchor="middle">山</text>
+              <text x="30" y="150" font-size="12" text-anchor="middle">佐</text>
+              <text x="30" y="190" font-size="12" text-anchor="middle">高</text>
+              <text x="30" y="230" font-size="12" text-anchor="middle">小</text>
+              
+              <!-- マトリックスのセル -->
+              <!-- 1行目 -->
+              <rect x="50" y="50" width="40" height="40" fill="#eee" />
+              <rect x="90" y="50" width="40" height="40" fill="#e3f2fd" />
+              <rect x="130" y="50" width="40" height="40" fill="#e8f5e9" />
+              <rect x="170" y="50" width="40" height="40" fill="#ffebee" />
+              <rect x="210" y="50" width="40" height="40" fill="#fff8e1" />
+              
+              <!-- 2行目 -->
+              <rect x="50" y="90" width="40" height="40" fill="#e3f2fd" />
+              <rect x="90" y="90" width="40" height="40" fill="#eee" />
+              <rect x="130" y="90" width="40" height="40" fill="#fffde7" />
+              <rect x="170" y="90" width="40" height="40" fill="#e8f5e9" />
+              <rect x="210" y="90" width="40" height="40" fill="#e3f2fd" />
+              
+              <!-- 3行目 -->
+              <rect x="50" y="130" width="40" height="40" fill="#e8f5e9" />
+              <rect x="90" y="130" width="40" height="40" fill="#fffde7" />
+              <rect x="130" y="130" width="40" height="40" fill="#eee" />
+              <rect x="170" y="130" width="40" height="40" fill="#fff8e1" />
+              <rect x="210" y="130" width="40" height="40" fill="#ffebee" />
+              
+              <!-- 4行目 -->
+              <rect x="50" y="170" width="40" height="40" fill="#ffebee" />
+              <rect x="90" y="170" width="40" height="40" fill="#e8f5e9" />
+              <rect x="130" y="170" width="40" height="40" fill="#fff8e1" />
+              <rect x="170" y="170" width="40" height="40" fill="#eee" />
+              <rect x="210" y="170" width="40" height="40" fill="#fffde7" />
+              
+              <!-- 5行目 -->
+              <rect x="50" y="210" width="40" height="40" fill="#fff8e1" />
+              <rect x="90" y="210" width="40" height="40" fill="#e3f2fd" />
+              <rect x="130" y="210" width="40" height="40" fill="#ffebee" />
+              <rect x="170" y="210" width="40" height="40" fill="#fffde7" />
+              <rect x="210" y="210" width="40" height="40" fill="#eee" />
+              
+              <!-- スコア表示（サンプル） -->
+              <text x="70" y="110" font-size="14" font-weight="bold" text-anchor="middle" fill="#1e88e5">85</text>
+              <text x="150" y="70" font-size="14" font-weight="bold" text-anchor="middle" fill="#43a047">92</text>
+              <text x="190" y="230" font-size="14" font-weight="bold" text-anchor="middle" fill="#fdd835">78</text>
+              <text x="230" y="150" font-size="14" font-weight="bold" text-anchor="middle" fill="#e53935">65</text>
+            </svg>
+          </div>
+          <p class="preview-caption">色の濃さが相性の良さを表しています。数字は相性スコア（100点満点）</p>
+          <a href="#" class="view-more-btn">詳細を表示</a>
+        </div>
+        
+        <!-- 相性分析サマリー -->
+        <div class="admin-card">
+          <h3 class="admin-card-title">
+            <i class="material-icons">insights</i>
+            チーム相性分析
+          </h3>
+          <p>チーム全体の相性スコア: <strong>78/100</strong></p>
+          <p><strong>強み:</strong> 「水」と「木」の属性メンバーの相生関係が強く、企画から開発への流れがスムーズです。</p>
+          <p><strong>課題:</strong> 「火」と「水」の属性メンバー間でコミュニケーション不足の可能性があります。</p>
+          <p><strong>アドバイス:</strong> 「火」と「水」の属性メンバー間で定期的なミーティングを設けることで、チーム全体の相性バランスが向上します。</p>
+        </div>
+      </div>
+      
+      <!-- チーム管理タブ -->
+      <div class="tab-content" id="manage-tab">
+        <div class="admin-card">
+          <h3 class="admin-card-title">
+            <i class="material-icons">admin_panel_settings</i>
+            チーム管理
+          </h3>
+          <div class="admin-actions">
+            <div class="admin-action-btn">
+              <i class="material-icons">person_add</i>
+              <span class="admin-action-text">メンバー追加</span>
+            </div>
+            <div class="admin-action-btn">
+              <i class="material-icons">edit</i>
+              <span class="admin-action-text">チーム情報編集</span>
+            </div>
+            <div class="admin-action-btn">
+              <i class="material-icons">flag</i>
+              <span class="admin-action-text">目標設定</span>
+            </div>
+            <div class="admin-action-btn">
+              <i class="material-icons">share</i>
+              <span class="admin-action-text">招待リンク</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- メンバーリスト -->
+        <div class="ranking-card">
+          <div class="ranking-header">
+            チームメンバー一覧
+          </div>
+          <ul class="ranking-list">
+            <li class="ranking-item">
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--wood-color);">田</div>
+                <div class="user-info">
+                  <div class="user-name">田中太郎</div>
+                  <div class="user-role">
+                    <span class="element-badge element-wood">木</span>
+                    <span>エンジニア</span>
+                  </div>
+                </div>
+              </div>
+              <i class="material-icons" style="color: #666;">more_vert</i>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--fire-color);">山</div>
+                <div class="user-info">
+                  <div class="user-name">山田花子</div>
+                  <div class="user-role">
+                    <span class="element-badge element-fire">火</span>
+                    <span>デザイナー</span>
+                  </div>
+                </div>
+              </div>
+              <i class="material-icons" style="color: #666;">more_vert</i>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--water-color);">佐</div>
+                <div class="user-info">
+                  <div class="user-name">佐藤一郎</div>
+                  <div class="user-role">
+                    <span class="element-badge element-water">水</span>
+                    <span>プロジェクトマネージャー</span>
+                  </div>
+                </div>
+              </div>
+              <i class="material-icons" style="color: #666;">more_vert</i>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--earth-color);">高</div>
+                <div class="user-info">
+                  <div class="user-name">高橋誠</div>
+                  <div class="user-role">
+                    <span class="element-badge element-earth">土</span>
+                    <span>QAエンジニア</span>
+                  </div>
+                </div>
+              </div>
+              <i class="material-icons" style="color: #666;">more_vert</i>
+            </li>
+            
+            <li class="ranking-item">
+              <div class="ranking-user">
+                <div class="user-avatar" style="background-color: var(--metal-color);">小</div>
+                <div class="user-info">
+                  <div class="user-name">小林美咲</div>
+                  <div class="user-role">
+                    <span class="element-badge element-metal">金</span>
+                    <span>プロダクトオーナー</span>
+                  </div>
+                </div>
+              </div>
+              <i class="material-icons" style="color: #666;">more_vert</i>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ローディング状態 -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>データを読み込み中...</p>
+    </div>
+    
+    <!-- ボトムナビゲーション -->
+    <nav class="bottom-nav">
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">home</i>
+        <span>ホーム</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">favorite</i>
+        <span>相性診断</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">chat</i>
+        <span>チャット</span>
+      </a>
+      <a href="#" class="nav-item active">
+        <i class="material-icons nav-icon">groups</i>
+        <span>チーム</span>
+      </a>
+      <a href="#" class="nav-item">
+        <i class="material-icons nav-icon">person</i>
+        <span>マイページ</span>
+      </a>
+    </nav>
+  </div>
+  
+  <script>
+    // タブ切り替え機能
+    document.querySelectorAll('.tab-item').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // タブのアクティブ状態を切り替え
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // タブコンテンツの表示/非表示を切り替え
+        const tabName = tab.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+    
+    // 五行バランスチャートの描画
+    const ctx = document.getElementById('elementChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'polarArea',
+      data: {
+        labels: ['木', '火', '土', '金', '水'],
+        datasets: [{
+          data: [2, 1, 1, 1, 3],
+          backgroundColor: [
+            'rgba(67, 160, 71, 0.8)',   // 木
+            'rgba(229, 57, 53, 0.8)',   // 火
+            'rgba(255, 143, 0, 0.8)',   // 土
+            'rgba(253, 216, 53, 0.8)',  // 金
+            'rgba(30, 136, 229, 0.8)'   // 水
+          ],
+          borderColor: [
+            'rgb(67, 160, 71)',
+            'rgb(229, 57, 53)',
+            'rgb(255, 143, 0)',
+            'rgb(253, 216, 53)',
+            'rgb(30, 136, 229)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: {
+                family: "'Noto Sans JP', sans-serif"
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
