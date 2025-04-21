@@ -2,14 +2,38 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware';
 import { teamGoalService } from '../../services/team';
 import { BadRequestError } from '../../utils/error-handler';
+// ユーティリティ関数を直接定義（インポートの問題を回避）
+const ensureString = (value: string | undefined | null, defaultValue: string = ''): string => {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+  return value;
+};
+
+const ensureObjectIdOrString = (value: any): string => {
+  if (!value) {
+    throw new Error('ID値が指定されていません');
+  }
+  
+  if (typeof value === 'string') {
+    return value;
+  }
+  
+  // toString()が使用可能な場合は文字列化
+  if (value && typeof value.toString === 'function') {
+    return value.toString();
+  }
+  
+  throw new Error('有効なIDではありません');
+};
 
 /**
  * チーム目標を取得
  */
 export const getTeamGoal = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { teamId } = req.params;
-    const userId = req.user!.id;
+    const teamId = ensureString(req.params.teamId);
+    const userId = ensureString(req.user?.id);
     
     const goal = await teamGoalService.getTeamGoal(teamId, userId);
     
@@ -45,9 +69,9 @@ export const getTeamGoal = async (req: AuthRequest, res: Response, next: NextFun
  */
 export const createOrUpdateTeamGoal = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { teamId } = req.params;
+    const teamId = ensureString(req.params.teamId);
     const { content, deadline, status, progress, collaborators } = req.body;
-    const adminId = req.user!.id;
+    const adminId = ensureString(req.user?.id);
     
     // 必須パラメータのチェック
     if (!content) {
@@ -103,9 +127,9 @@ export const createOrUpdateTeamGoal = async (req: AuthRequest, res: Response, ne
  */
 export const updateTeamGoalProgress = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { teamId } = req.params;
+    const teamId = ensureString(req.params.teamId);
     const { progress, status } = req.body;
-    const adminId = req.user!.id;
+    const adminId = ensureString(req.user?.id);
     
     // 必須パラメータのチェック
     if (progress === undefined) {

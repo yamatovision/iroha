@@ -339,8 +339,8 @@ export const removeFriend = async (friendshipId: string, currentUserId: string) 
 export const getCompatibilityScore = async (userId1: string, userId2: string) => {
   // ユーザーの存在確認
   const [user1, user2] = await Promise.all([
-    User.findById(userId1),
-    User.findById(userId2)
+    User.findById(userId1).select('displayName email elementAttribute fourPillars'),
+    User.findById(userId2).select('displayName email elementAttribute fourPillars')
   ]);
 
   if (!user1 || !user2) {
@@ -352,7 +352,7 @@ export const getCompatibilityScore = async (userId1: string, userId2: string) =>
     throw new BadRequestError('四柱推命プロフィールが設定されていません');
   }
 
-  // 既存の相性スコアをチェック
+  // 友達関係の確認（オプション - APIによっては不要）
   const friendship = await Friendship.findOne({
     $or: [
       { userId1, userId2, status: 'accepted' },
@@ -360,29 +360,101 @@ export const getCompatibilityScore = async (userId1: string, userId2: string) =>
     ]
   });
 
+  // 相性スコアの確認
   if (friendship?.compatibilityScore) {
-    // 既存のスコアがある場合はそれを返す
-    return {
-      score: friendship.compatibilityScore,
-      friendship: friendship._id,
-      // TODO: 相性の詳細データを追加
-    };
+    // 既存のスコアがある場合はそれを基に詳細データを生成
+    try {
+      // 既存の相性計算サービスを呼び出し
+      const { compatibilityService } = await import('../team');
+      
+      const relationship = compatibilityService.determineRelationship(
+        user1.elementAttribute || 'water',
+        user2.elementAttribute || 'water'
+      );
+      
+      // 詳細な説明を生成
+      const details = await compatibilityService.generateDetailDescription(
+        user1.displayName || '友達1',
+        user2.displayName || '友達2',
+        user1.elementAttribute || 'water',
+        user2.elementAttribute || 'water', 
+        relationship
+      );
+      
+      // 既存のスコアを使い、詳細データを追加
+      return {
+        score: friendship.compatibilityScore,
+        friendship: friendship._id,
+        relationshipType: relationship === 'mutual_generation' ? '相生' : 
+                          relationship === 'mutual_restriction' ? '相克' : '中和',
+        users: [
+          {
+            userId: user1._id,
+            displayName: user1.displayName,
+            elementAttribute: user1.elementAttribute
+          },
+          {
+            userId: user2._id,
+            displayName: user2.displayName,
+            elementAttribute: user2.elementAttribute
+          }
+        ],
+        details: details,
+        description: details.detailDescription || '友達との相性です',
+        teamInsight: details.teamInsight,
+        collaborationTips: details.collaborationTips
+      };
+    } catch (error) {
+      console.error('相性詳細生成エラー:', error);
+      // エラーが発生しても基本情報だけは返す
+      return {
+        score: friendship.compatibilityScore,
+        friendship: friendship._id,
+        users: [
+          {
+            userId: user1._id,
+            displayName: user1.displayName,
+            elementAttribute: user1.elementAttribute
+          },
+          {
+            userId: user2._id,
+            displayName: user2.displayName,
+            elementAttribute: user2.elementAttribute
+          }
+        ]
+      };
+    }
   }
 
   // 相性スコア計算ロジック
-  // NOTE: 実際にはCompatibilityサービスを呼び出す形になります
   // この部分は既存のTeam相性計算ロジックを再利用
   try {
     // 既存の相性計算サービスを呼び出し
     const compatibilityScore = await calculateCompatibilityScore(user1, user2);
     
-    // 友達関係にスコアを保存（オプション）
+    // 友達関係にスコアを保存（可能な場合）
     if (friendship) {
       friendship.compatibilityScore = compatibilityScore.score;
       await friendship.save();
     }
     
-    return compatibilityScore;
+    // 必須の情報を追加
+    return {
+      ...compatibilityScore,
+      users: [
+        {
+          userId: user1._id,
+          displayName: user1.displayName,
+          elementAttribute: user1.elementAttribute
+        },
+        {
+          userId: user2._id,
+          displayName: user2.displayName,
+          elementAttribute: user2.elementAttribute
+        }
+      ],
+      friendship: friendship ? friendship._id : null
+    };
     
   } catch (error) {
     console.error('相性スコア計算エラー:', error);

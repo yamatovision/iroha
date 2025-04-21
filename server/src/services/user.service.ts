@@ -125,7 +125,8 @@ export class UserService {
         role: newUser.role,
         plan: newUser.plan,
         organizationId: newUser.organizationId,
-        teamId: newUser.teamId,
+        // チームメンバーシップを使用するように変更されたため、teamIdは常にundefined
+        // teamId: newUser.teamId,
         isActive: newUser.isActive,
         createdAt: newUser.createdAt
       };

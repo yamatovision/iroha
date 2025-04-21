@@ -40,6 +40,184 @@
    - モックアップのデザインを反映した友達リスト、チームハブなどのUI
    - 直感的な招待・承認フロー
 
+## 不要ファイルとコードの削除計画
+
+### 1. 完全に削除するファイル
+
+1. **クライアント側**:
+   - `/client/src/components/team/TeamMembersList.tsx` - 現在の単一チーム対応の表示を削除し、新しいコンポーネントに置き換え
+   - `/client/src/pages/Team/index.tsx` - 単一チーム前提の画面を削除し、複数チーム対応版に置き換え
+
+2. **サーバー側**:
+   - 該当ファイルはないが、User.teamId に依存した既存のクエリロジックは大幅に変更が必要
+
+### 2. 削除すべきコード（ファイル別）
+
+**ファイル**: `/server/src/models/User.ts`
+
+```typescript
+// 削除対象: teamId フィールド
+teamId: {
+  type: Schema.Types.ObjectId,
+  ref: 'Team',
+  // 必須ではなくする
+  index: true
+},
+```
+**削除理由**: 単一のteamIdフィールドでは複数チーム所属をサポートできないため削除し、代わりにTeamMembershipモデルを新規作成する
+
+**ファイル**: `/server/src/services/team/team-member.service.ts`
+
+```typescript
+// 削除対象: 単一チーム所属チェック
+// ユーザーが既に別のチームに所属しているかチェック
+if (user.teamId && user.teamId.toString() !== teamIdStr) {
+  throw new BadRequestError('このユーザーは既に別のチームに所属しています');
+}
+
+// 削除対象: ユーザーのチーム情報更新方法
+const updatedUser = await User.findByIdAndUpdate(
+  userId,
+  {
+    teamId,
+    teamRole: role || ''
+  },
+  { new: true }
+);
+```
+**削除理由**: 複数チーム所属モデルに移行するため、User.teamIdに基づく単一チーム前提のロジックは不要
+
+**ファイル**: `/server/src/services/team/team.service.ts`
+
+```typescript
+// 削除対象: User.teamId に依存したメンバーシップチェック
+export const isTeamMember = async (userId: string | mongoose.Types.ObjectId, teamId: string | mongoose.Types.ObjectId) => {
+  const user = await User.findById(userId);
+  if (!user || !user.teamId) return false;
+  return user.teamId.toString() === teamId.toString();
+};
+
+// 削除対象: チーム削除時のUser.teamIdリセット
+// チーム削除時にメンバーのチーム関連情報をリセット
+await User.updateMany(
+  { teamId: teamId },
+  { $unset: { teamId: "", teamRole: "" } }
+);
+```
+**削除理由**: TeamMembershipモデルを使用した新しいメンバーシップ管理に置き換える
+
+**ファイル**: `/client/src/services/team.service.ts`
+
+```typescript
+// 削除対象: 単一チーム前提のメンバー管理メソッド
+// チームメンバー追加メソッド
+async addTeamMember(teamId: string, memberData: AddTeamMemberRequest): Promise<any> {
+  // 既存のコード
+}
+
+// 削除対象: ユーザー単体の役割更新
+async updateMemberRole(teamId: string, userId: string, role: string): Promise<any> {
+  // 既存のコード
+}
+
+// 削除対象: メンバー削除メソッド
+async removeTeamMember(teamId: string, userId: string): Promise<{ success: boolean }> {
+  // 既存のコード
+}
+```
+**削除理由**: 新しいメソッドに置き換える。新メソッドは友達からの追加や複数チーム所属をサポート
+
+### 3. 統合計画
+
+#### 3.1 統合対象ファイル
+
+- ファイル対応表
+  - `/client/src/components/team/TeamMembersList.tsx` → 新しいTeamMembersListComponent + TeamMemberAddModalに分割
+  - `/client/src/services/team.service.ts` + 新しい友達関連機能 → シンプルな形に再構築
+  - `/server/src/services/team/team-member.service.ts` + 新しい友達機能 → team-membership.service.ts に再構成
+
+#### 3.2 機能統合ポイント
+
+- チームメンバーシップと友達関係の統合
+  - チームメンバーは自動的に相互友達関係を確立するロジックを導入
+  - TeamMembershipとFriendshipモデルを独立して管理しつつ、相互参照可能に設計
+
+### 4. 単純化計画
+
+#### 4.1 理想的な新構造
+
+```
+server/
+  models/
+    Team.ts             - メンバー参照なしの純粋なチーム情報
+    User.ts             - teamId参照なしで、チーム所属はTeamMembershipから取得
+    TeamMembership.ts   - 新規: ユーザーとチームの多対多関係を管理
+    Friendship.ts       - 新規: ユーザー間の友達関係を管理
+    InvitationLink.ts   - 新規: 招待リンク管理
+
+  services/
+    team/
+      team.service.ts           - チーム基本機能（作成・更新・削除）
+      team-membership.service.ts - メンバーシップ管理（追加・削除・役割）
+    friend/
+      friendship.service.ts     - 新規: 友達関係管理
+      invitation.service.ts     - 新規: 招待管理
+
+client/
+  services/
+    team.service.ts       - 更新: 複数チーム所属対応
+    friendship.service.ts - 新規: 友達関係管理API
+    invitation.service.ts - 新規: 招待機能API
+
+  contexts/
+    TeamContext.tsx       - 新規: チーム選択状態の管理
+
+  components/
+    friend/
+      FriendList.tsx          - 新規: 友達リスト表示
+      FriendRequest.tsx       - 新規: 友達リクエスト管理
+    team/
+      TeamMembersList.tsx     - 更新: 複数チーム対応
+      TeamMemberAddModal.tsx  - 新規: 友達からメンバー追加機能
+      TeamSelector.tsx        - 新規: 複数チーム選択UI
+```
+
+### 5. 実装計画: 削除優先アプローチ
+
+1. **Step 1: User.teamIdの削除**
+   - User.teamIdフィールドを削除して参照を絶つ
+   - これにより強制的に既存の単一チーム前提コードが動作しなくなり、新システムへの移行を促進
+
+2. **Step 2: TeamMembershipモデルの作成**
+   - 新しいモデルを作成し、サービス層を実装
+   - 既存のUser.teamIdデータを一括マイグレーション
+
+3. **Step 3: Friendshipモデルの実装**
+   - 友達関係管理の基盤を構築
+   - TeamMembershipとの連携機能を実装
+
+4. **Step 4: フロントエンドの更新**
+   - バックエンド変更に合わせてフロントエンドコンポーネントを更新
+   - ユーザーエクスペリエンスを向上させる新UIの実装
+
+### 6. 予想される効果
+
+- **コード量**: TeamMembershipとFriendshipを導入することでモデル側のコードは増加するが、サービス層では一貫性のあるシンプルなAPIになり、全体で15%程度の削減
+- **責任の所在**: チームメンバーシップと友達関係が明確に分離され、責任の所在が明確化
+- **保守性**: 複雑な条件分岐や例外処理が減少し、メンテナンス性が向上
+- **拡張性**: 将来的な機能追加（グループ機能など）に対応しやすい設計
+
+### 7. マイグレーション計画
+
+1. **データマイグレーション**:
+   - 既存User.teamIdからTeamMembershipへのデータ移行スクリプトを用意
+   - チーム内のすべてのメンバー間にFriendship関係を自動生成
+
+2. **段階的なデプロイ**:
+   - バックエンド変更を先行して実装
+   - フロントエンドは一時的に両対応（teamIdとTeamMembership）
+   - 全データ移行完了後に旧コードを完全に削除
+
 ## 参考モックアップ
 
 実装の参考とするモックアップファイル：
@@ -2171,42 +2349,3 @@ disabled={loading}
    - チームに新規メンバーが加入すると、全メンバーと相互友達関係を自動確立
    - 承認不要で自動的に処理（チーム参加の承認が間接的な友達承認）
 
-## マイグレーション戦略
-
-1. **データモデルの作成**:
-   - 新規モデル（Friendship, TeamMembership, InvitationLink）を作成
-   - 既存のUser, Teamモデルを更新
-
-2. **既存データの移行**:
-   - ユーザーのteamId情報からTeamMembershipレコードを生成するマイグレーションスクリプト
-
-3. **実装ステップ**:
-   - フェーズ1: バックエンド更新（モデル、サービス層）
-   - フェーズ2: UI/UX実装（友達リスト画面、チームメンバー追加UI更新）
-   - フェーズ3: フローテスト（友達申請、招待、チームメンバー追加）
-
-## 実装ステップ詳細
-
-1. **バックエンドデータモデル実装**
-   - 新規モデル作成
-   - サービス層実装
-   - APIエンドポイント実装
-
-2. **友達機能UIの実装**
-   - 友達リスト画面
-   - 友達検索・申請機能
-   - 相性表示機能
-
-3. **チームメンバー追加UI更新**
-   - 友達からメンバー選択機能
-   - 招待リンク機能
-
-4. **招待リンク処理フロー実装**
-   - 招待リンク生成API
-   - 招待受諾処理
-   - 新規登録との連携
-
-5. **テストとデバッグ**
-   - 単体テスト
-   - E2Eテスト
-   - エッジケース対応

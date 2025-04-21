@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware';
 import { UserService } from '../../services';
-import { handleError, AuthenticationError } from '../../utils';
+import { handleError, AuthenticationError, ensureString } from '../../utils';
 
 /**
  * ユーザー一覧を取得する
@@ -35,8 +35,8 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     
     const userService = new UserService();
     const newUser = await userService.createUser(req.body, {
-      id: req.user.id, // MongoDB ObjectID
-      role: req.user.role
+      id: ensureString(req.user?.id), // MongoDB ObjectID
+      role: req.user?.role || 'User'
     });
     
     return res.status(201).json(newUser);
@@ -59,8 +59,8 @@ export const updateUserRole = async (req: AuthRequest, res: Response) => {
     
     const userService = new UserService();
     const updatedUser = await userService.updateUserRole(userId, role, {
-      id: req.user.id, // MongoDB ObjectID
-      role: req.user.role
+      id: ensureString(req.user?.id), // MongoDB ObjectID
+      role: req.user?.role || 'User'
     });
     
     return res.status(200).json(updatedUser);
@@ -83,8 +83,8 @@ export const updateUserPlan = async (req: AuthRequest, res: Response) => {
     
     const userService = new UserService();
     const updatedUser = await userService.updateUserPlan(userId, plan, {
-      id: req.user.id, // MongoDB ObjectID
-      role: req.user.role
+      id: ensureString(req.user?.id), // MongoDB ObjectID
+      role: req.user?.role || 'User'
     });
     
     return res.status(200).json(updatedUser);
@@ -106,8 +106,8 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     
     const userService = new UserService();
     const result = await userService.deleteUser(userId, {
-      id: req.user.id, // MongoDB ObjectID
-      role: req.user.role
+      id: ensureString(req.user?.id), // MongoDB ObjectID
+      role: req.user?.role || 'User'
     });
     
     return res.status(200).json(result);

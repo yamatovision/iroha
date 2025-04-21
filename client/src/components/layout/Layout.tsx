@@ -77,6 +77,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname === '/chat') return 'AI相談'
   if (pathname === '/admin') return '管理'
   if (pathname === '/fortune') return '運勢詳細'
+  if (pathname === '/friend' || pathname === '/friends') return '友達'
   return 'DailyFortune'
 }
 

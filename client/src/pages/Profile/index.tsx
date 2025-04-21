@@ -22,7 +22,8 @@ import {
   Snackbar,
   Alert,
   Collapse,
-  Paper
+  Paper,
+  IconButton
 } from '@mui/material';
 import ParkIcon from '@mui/icons-material/Park'; // 木
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'; // 火
@@ -34,6 +35,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SajuProfileSection from './SajuProfileSection';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuth } from 'firebase/auth';
@@ -41,7 +43,7 @@ import axios from 'axios';
 import { SAJU, USER, Gender } from '@shared/index';
 import sajuProfileService from '../../services/saju-profile.service';
 import fortuneService from '../../services/fortune.service';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -71,6 +73,10 @@ function TabPanel(props: TabPanelProps) {
 
 const Profile = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  // URLパラメータからユーザーIDを取得
+  const { userId } = useParams<{ userId: string }>();
+  
   // ProtectedRoute から needProfile パラメータが渡された場合、個人情報タブを表示
   const needProfile = location.state && (location.state as any).needProfile === true;
   const [tabValue, setTabValue] = useState(needProfile ? 1 : 0);
@@ -79,6 +85,8 @@ const Profile = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loadingCoordinates, setLoadingCoordinates] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [otherUserProfile, setOtherUserProfile] = useState<any>(null);
+  const [loadingOtherUser, setLoadingOtherUser] = useState(false);
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
@@ -90,6 +98,9 @@ const Profile = () => {
   });
   
   const [passwordExpanded, setPasswordExpanded] = useState(false);
+
+  // 現在表示しているのは自分のプロフィールか他人のプロフィールか
+  const isOwnProfile = !userId || userId === userProfile?.id; 
   
   const [formData, setFormData] = useState({
     // 基本プロフィール情報
@@ -106,8 +117,38 @@ const Profile = () => {
     localTimeOffset: undefined as number | undefined,
   });
 
+  // 他のユーザーのプロフィールを取得
   useEffect(() => {
-    if (userProfile) {
+    // 自分のプロフィールなら何もしない
+    if (isOwnProfile || !userId) {
+      return;
+    }
+
+    const fetchOtherUserProfile = async () => {
+      setLoadingOtherUser(true);
+      try {
+        // USER.GET_USER エンドポイントを使用して他ユーザー情報を取得
+        const response = await axios.get(USER.GET_USER(userId));
+        setOtherUserProfile(response.data);
+        console.log('他ユーザープロフィール取得完了:', response.data);
+      } catch (error) {
+        console.error('他ユーザープロフィールの取得に失敗:', error);
+        setNotification({
+          open: true,
+          message: 'ユーザー情報の取得に失敗しました',
+          severity: 'error'
+        });
+      } finally {
+        setLoadingOtherUser(false);
+      }
+    };
+
+    fetchOtherUserProfile();
+  }, [userId, isOwnProfile]);
+
+  // 自分のプロフィール情報を設定
+  useEffect(() => {
+    if (userProfile && isOwnProfile) {
       console.group('👤 ユーザープロフィールデータを処理');
       console.log('生のプロフィールデータ:', userProfile);
       console.log('生年月日データ:', {
@@ -145,7 +186,30 @@ const Profile = () => {
       
       console.groupEnd();
     }
-  }, [userProfile]);
+  }, [userProfile, isOwnProfile]);
+
+  // 他ユーザーのプロフィール情報をフォームデータに設定
+  useEffect(() => {
+    if (otherUserProfile && !isOwnProfile) {
+      console.group('👤 他ユーザープロフィールデータを処理');
+      console.log('他ユーザープロフィール:', otherUserProfile);
+      
+      // 他ユーザーのプロフィール情報をフォームに反映
+      setFormData({
+        displayName: otherUserProfile.displayName || '',
+        email: otherUserProfile.email || '',
+        goal: otherUserProfile.goal || '',
+        birthDate: otherUserProfile.birthDate ? String(new Date(otherUserProfile.birthDate).toISOString().split('T')[0]) : '',
+        birthTime: otherUserProfile.birthTime || '12:00',
+        birthPlace: otherUserProfile.birthPlace || '東京都',
+        gender: otherUserProfile.gender || 'M',
+        birthplaceCoordinates: otherUserProfile.birthplaceCoordinates,
+        localTimeOffset: otherUserProfile.localTimeOffset,
+      });
+      
+      console.groupEnd();
+    }
+  }, [otherUserProfile, isOwnProfile]);
 
   // プロフィール情報が必要な場合にメッセージを表示
   useEffect(() => {
@@ -438,10 +502,30 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  // メインユーザープロフィールのロード中、または他のユーザープロフィールのロード中
+  if ((loading && isOwnProfile) || (loadingOtherUser && !isOwnProfile)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+  
+  // 他ユーザープロフィール表示時に、そのデータが取得できなかった場合
+  if (!isOwnProfile && !otherUserProfile && !loadingOtherUser) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="error" gutterBottom>
+          ユーザーデータが見つかりませんでした
+        </Typography>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => navigate(-1)}
+          sx={{ mt: 2 }}
+        >
+          戻る
+        </Button>
       </Box>
     );
   }
@@ -480,6 +564,19 @@ const Profile = () => {
         }}
       >
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          {/* 他ユーザープロフィール表示時の戻るボタン */}
+          {!isOwnProfile && (
+            <Box sx={{ mb: 2 }}>
+              <IconButton 
+                onClick={() => navigate(-1)} 
+                aria-label="戻る"
+                sx={{ color: 'text.secondary' }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+            </Box>
+          )}
+
           {/* ユーザープロフィールヘッダー */}
           <Box sx={{ 
             display: 'flex', 
@@ -508,97 +605,106 @@ const Profile = () => {
               </Avatar>
               <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                  {formData.displayName || userProfile?.displayName || '名前未設定'}
+                  {isOwnProfile 
+                    ? (formData.displayName || userProfile?.displayName || '名前未設定')
+                    : (otherUserProfile?.displayName || '名前未設定')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formData.email || userProfile?.email}
-                </Typography>
+                {isOwnProfile && (
+                  <Typography variant="body2" color="text.secondary">
+                    {formData.email || userProfile?.email}
+                  </Typography>
+                )}
                 <Typography variant="body2" sx={{ mt: 0.5 }}>
-                  {(userProfile?.elementAttribute || (userProfile?.fourPillars && Object.keys(userProfile.fourPillars).length > 0)) ? (
-                    <Box component="span" sx={{ 
-                      px: 1.5, 
-                      py: 0.5, 
-                      borderRadius: 10,
-                      bgcolor: () => sajuProfileService.getElementBackground(userProfile?.elementAttribute || 'earth'),
-                      color: () => sajuProfileService.getElementColor(userProfile?.elementAttribute || 'earth'),
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      mr: 1
-                    }}>
-                      {(() => {
-                        const element = userProfile?.elementAttribute || 'earth';
-                        const elementJp = sajuProfileService.translateElementToJapanese(element);
-                        
-                        // elementに応じたアイコンを表示
-                        return (
-                          <>
-                            {element === 'wood' && <ParkIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
-                            {element === 'fire' && <LocalFireDepartmentIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
-                            {element === 'earth' && <LandscapeIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
-                            {element === 'metal' && <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
-                            {element === 'water' && <WaterDropIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
-                            {elementJp}
-                          </>
-                        );
-                      })()}
-                    </Box>
-                  ) : (
-                    <Box component="span" sx={{ 
-                      px: 1.5, 
-                      py: 0.5, 
-                      borderRadius: 10,
-                      bgcolor: 'primary.light',
-                      color: 'primary.dark',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      mr: 1
-                    }}>
-                      属性未設定
-                    </Box>
-                  )}
+                  {(() => {
+                    const profileData = isOwnProfile ? userProfile : otherUserProfile;
+                    const element = profileData?.elementAttribute || 'earth';
+                    
+                    if (profileData?.elementAttribute || (profileData?.fourPillars && Object.keys(profileData.fourPillars).length > 0)) {
+                      const elementJp = sajuProfileService.translateElementToJapanese(element);
+                      
+                      return (
+                        <Box component="span" sx={{ 
+                          px: 1.5, 
+                          py: 0.5, 
+                          borderRadius: 10,
+                          bgcolor: () => sajuProfileService.getElementBackground(element),
+                          color: () => sajuProfileService.getElementColor(element),
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          mr: 1
+                        }}>
+                          {element === 'wood' && <ParkIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                          {element === 'fire' && <LocalFireDepartmentIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                          {element === 'earth' && <LandscapeIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                          {element === 'metal' && <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                          {element === 'water' && <WaterDropIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                          {elementJp}
+                        </Box>
+                      );
+                    } else {
+                      return (
+                        <Box component="span" sx={{ 
+                          px: 1.5, 
+                          py: 0.5, 
+                          borderRadius: 10,
+                          bgcolor: 'primary.light',
+                          color: 'primary.dark',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          mr: 1
+                        }}>
+                          属性未設定
+                        </Box>
+                      );
+                    }
+                  })()}
                 </Typography>
               </Box>
             </Box>
           </Box>
 
-          {/* タブセクション - モバイルではアイコンのみ表示 */}
-          <Tabs 
-            value={tabValue} 
-            onChange={handleTabChange} 
-            aria-label="プロフィールタブ"
-            sx={{ 
-              borderBottom: 1, 
-              borderColor: 'divider',
-              '& .MuiTabs-flexContainer': { justifyContent: { xs: 'space-around', sm: 'flex-start' } },
-              '& .Mui-selected': { color: 'primary.main', fontWeight: 'bold' },
-              mb: 2
-            }}
-            variant={isMobile ? "fullWidth" : "scrollable"}
-            scrollButtons="auto"
-          >
-            <Tab 
-              icon={<AutoAwesomeIcon />} 
-              label={isMobile ? null : "四柱推命"} 
-              id="profile-tab-0" 
-              aria-controls="profile-tabpanel-0"
-              iconPosition="start"
-            />
-            <Tab 
-              icon={<PersonIcon />} 
-              label={isMobile ? null : "個人情報"} 
-              id="profile-tab-1" 
-              aria-controls="profile-tabpanel-1"
-              iconPosition="start"
-            />
-          </Tabs>
+          {/* タブセクション - 自分のプロフィールの場合のみ表示 */}
+          {isOwnProfile && (
+            <Tabs 
+              value={tabValue} 
+              onChange={handleTabChange} 
+              aria-label="プロフィールタブ"
+              sx={{ 
+                borderBottom: 1, 
+                borderColor: 'divider',
+                '& .MuiTabs-flexContainer': { justifyContent: { xs: 'space-around', sm: 'flex-start' } },
+                '& .Mui-selected': { color: 'primary.main', fontWeight: 'bold' },
+                mb: 2
+              }}
+              variant={isMobile ? "fullWidth" : "scrollable"}
+              scrollButtons="auto"
+            >
+              <Tab 
+                icon={<AutoAwesomeIcon />} 
+                label={isMobile ? null : "四柱推命"} 
+                id="profile-tab-0" 
+                aria-controls="profile-tabpanel-0"
+                iconPosition="start"
+              />
+              <Tab 
+                icon={<PersonIcon />} 
+                label={isMobile ? null : "個人情報"} 
+                id="profile-tab-1" 
+                aria-controls="profile-tabpanel-1"
+                iconPosition="start"
+              />
+            </Tabs>
+          )}
 
-          {/* 四柱推命タブ */}
-          <TabPanel value={tabValue} index={0}>
-            <SajuProfileSection />
-          </TabPanel>
+          {/* 四柱推命タブ (自分のプロフィール) または 四柱推命表示 (他ユーザー) */}
+          {(isOwnProfile && tabValue === 0) || !isOwnProfile ? (
+            <Box>
+              <SajuProfileSection userId={isOwnProfile ? undefined : userId} />
+            </Box>
+          ) : null}
 
-          {/* 個人情報タブ */}
-          <TabPanel value={tabValue} index={1}>
+          {/* 個人情報タブ (自分のプロフィールの場合のみ) */}
+          {isOwnProfile && tabValue === 1 && (
             <Box component="form" onSubmit={handlePersonalFormSubmit}>
               <Typography 
                 variant="h6" 
@@ -890,7 +996,7 @@ const Profile = () => {
                 </Collapse>
               </Box>
             </Box>
-          </TabPanel>
+          )}
         </CardContent>
       </Card>
     </Box>

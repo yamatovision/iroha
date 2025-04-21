@@ -168,3 +168,34 @@ export const removeMember = async (req: AuthRequest, res: Response, next: NextFu
     next(error);
   }
 };
+
+/**
+ * 友達をチームメンバーとして追加
+ */
+export const addFriendAsMember = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { teamId } = req.params;
+    const { friendId, role } = req.body;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const adminId = req.user.id || req.user._id;
+    
+    // 必須パラメータのチェック
+    if (!friendId) {
+      throw new BadRequestError('友達IDは必須です');
+    }
+    
+    const membership = await teamMemberService.addFriendAsMember(teamId, adminId, friendId, role);
+    
+    res.status(200).json({
+      success: true,
+      message: '友達がチームメンバーとして追加されました',
+      data: membership
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+};

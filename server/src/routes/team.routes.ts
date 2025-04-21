@@ -25,6 +25,8 @@ router.get('/:teamId/members', hybridAuthenticate, teamMemberController.getTeamM
 router.post('/:teamId/members', hybridAuthenticate, teamMemberController.addMember);
 router.put('/:teamId/members/:userId/role', hybridAuthenticate, teamMemberController.updateMemberRole);
 router.delete('/:teamId/members/:userId', hybridAuthenticate, teamMemberController.removeMember);
+// 友達をチームメンバーとして追加するルート
+router.post('/:teamId/members/friend', hybridAuthenticate, teamMemberController.addFriendAsMember);
 
 // メンバーカルテ関連のルート
 router.get('/:teamId/members/:userId/card', hybridAuthenticate, teamMemberCardController.getMemberCard);

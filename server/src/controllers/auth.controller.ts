@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/hybrid-auth.middleware';
 import { LoginRequest, RegisterRequest, IUser } from '../types/index';
 import { AuthService } from '../services';
-import { handleError, AuthenticationError, ValidationError } from '../utils';
+import { handleError, AuthenticationError, ValidationError, ensureString } from '../utils';
 
 /**
  * プロフィール情報を取得するコントローラー
@@ -14,7 +14,7 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
     }
     
     const authService = new AuthService();
-    const userData = await authService.getProfile(req.user.id);
+    const userData = await authService.getProfile(ensureString(req.user.id));
     
     return res.status(200).json(userData);
   } catch (error) {
@@ -38,7 +38,7 @@ export const register = async (req: AuthRequest, res: Response) => {
     
     const authService = new AuthService();
     const newUser = await authService.register({
-      id: req.user.id, // MongoDB ObjectID
+      id: ensureString(req.user.id), // MongoDB ObjectID
       email: req.user.email || '',
       displayName
     });

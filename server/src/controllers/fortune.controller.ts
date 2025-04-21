@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { Team } from '../models/Team';
 import { User } from '../models/User';
 import { DailyFortune } from '../models/DailyFortune';
+import { TeamMembership } from '../models/TeamMembership';
 
 /**
  * 運勢コントローラー
@@ -166,13 +167,21 @@ export class FortuneController {
         return;
       }
       
-      // リクエストユーザーがチームメンバーかを確認（リファクタリング後の標準化された方法）
-      const requestUser = await User.findById(userId);
-      const isMember = requestUser?.teamId && requestUser.teamId.toString() === teamId;
+      // TeamMembershipモデルを使用してチームメンバーかどうかを確認
+      const membership = await TeamMembership.findOne({ 
+        teamId, 
+        userId 
+      });
       
-      if (!isMember) {
-        res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
-        return;
+      if (!membership) {
+        // 後方互換性のためにレガシーのメンバーシップチェック
+        // この箇所は旧モデルに依存していたため、その機能を削除（新モデルだけをチェック）
+        const isLegacyMember = false;
+        
+        if (!isLegacyMember) {
+          res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
+          return;
+        }
       }
       
       // 今日の日付 (日本時間)
@@ -224,7 +233,7 @@ export class FortuneController {
           displayName: member?.displayName || '不明なユーザー',
           score: fortune.fortuneScore, // スコア
           elementAttribute: member?.elementAttribute || 'unknown',
-          jobTitle: member?.teamRole || member?.jobTitle || '',
+          jobTitle: member?.role || member?.jobTitle || '',
           isCurrentUser: fortune.userId.toString() === userId
         };
       });

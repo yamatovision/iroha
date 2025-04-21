@@ -3,13 +3,42 @@ import mongoose from 'mongoose';
 import { AuthRequest } from '../../middleware/auth.middleware';
 import { teamService } from '../../services/team';
 import { BadRequestError } from '../../utils/error-handler';
+// ユーティリティ関数を直接定義（インポートの問題を回避）
+const ensureString = (value: string | undefined | null, defaultValue: string = ''): string => {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+  return value;
+};
+
+const ensureObjectIdOrString = (value: any): string | mongoose.Types.ObjectId => {
+  if (!value) {
+    throw new Error('ID値が指定されていません');
+  }
+  
+  if (typeof value === 'string') {
+    return value;
+  }
+  
+  if (value instanceof mongoose.Types.ObjectId) {
+    return value;
+  }
+  
+  // toString()が使用可能な場合は文字列化
+  if (value && typeof value.toString === 'function') {
+    return value.toString();
+  }
+  
+  throw new Error('有効なIDではありません');
+};
 
 /**
  * チーム一覧を取得
  */
 export const getTeams = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user!.id;
+    // 型安全な変換を適用
+    const userId = ensureString(req.user?.id);
     const teams = await teamService.getTeams(userId);
     
     res.status(200).json({ 
@@ -35,8 +64,8 @@ export const getTeams = async (req: AuthRequest, res: Response, next: NextFuncti
  */
 export const getTeamById = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { teamId } = req.params;
-    const userId = req.user!.id;
+    const teamId = ensureString(req.params.teamId);
+    const userId = ensureString(req.user?.id);
     
     const team = await teamService.getTeamById(teamId, userId);
     
@@ -79,7 +108,7 @@ export const createTeam = async (req: AuthRequest, res: Response, next: NextFunc
     
     const team = await teamService.createTeam(
       name,
-      userId,
+      ensureString(userId),
       orgId,
       description,
       iconColor
@@ -123,7 +152,7 @@ export const updateTeam = async (req: AuthRequest, res: Response, next: NextFunc
     if (description !== undefined) updateData.description = description;
     if (iconColor) updateData.iconColor = iconColor;
     
-    const updatedTeam = await teamService.updateTeam(teamId, userId, updateData);
+    const updatedTeam = await teamService.updateTeam(teamId, ensureString(userId), updateData);
     
     res.status(200).json({
       success: true,
@@ -150,7 +179,7 @@ export const updateTeam = async (req: AuthRequest, res: Response, next: NextFunc
 export const deleteTeam = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { teamId } = req.params;
-    const userId = req.user!.id;
+    const userId = ensureString(req.user?.id);
     
     await teamService.deleteTeam(teamId, userId);
     

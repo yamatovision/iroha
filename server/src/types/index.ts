@@ -1,6 +1,23 @@
 /**
  * バックエンド用型定義ファイル
  */
+import { Request } from 'express';
+
+// TypeScriptのimport文の整合性のために必要
+// auth.d.tsは直接インポートできないため、ここで型を再定義
+// export * from './auth';
+
+// 認証リクエスト拡張型の定義
+export interface AuthRequest extends Request {
+  user?: {
+    _id: string;
+    id?: string; // MongoDB ObjectIDを文字列化した値（後方互換性のため）
+    email: string;
+    role: string | UserRole;
+    organizationId?: string;
+    [key: string]: any; // その他の拡張プロパティ
+  };
+}
 
 // API基本パス
 export const API_BASE_PATH = '/api/v1';
@@ -99,14 +116,7 @@ export enum UserRole {
   SUPER_ADMIN = 'super_admin',
 }
 
-// リクエスト拡張型（認証情報付き）
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: UserRole;
-  };
-}
+// リクエスト拡張型（認証情報付き）は上部で定義済み
 
 // チャット関連の型と列挙型
 export enum ChatMode {

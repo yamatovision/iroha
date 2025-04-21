@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>友達リスト - DailyFortune</title>
+    <!-- Material UI CDN -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.3/dist/cdn/material-components-web.min.css" />
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- カスタムスタイル -->
+    <style>
+        :root {
+            /* 五行属性カラー */
+            --element-wood-bg: #e8f5e9;
+            --element-wood-dark: #43a047;
+            --element-fire-bg: #ffebee;
+            --element-fire-dark: #e53935;
+            --element-earth-bg: #fff8e1;
+            --element-earth-dark: #ff8f00;
+            --element-metal-bg: #fffde7;
+            --element-metal-dark: #fdd835;
+            --element-water-bg: #e3f2fd;
+            --element-water-dark: #1e88e5;
+            --primary-color: #673ab7;
+            --primary-light: #9575cd;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .search-input {
+            flex-grow: 1;
+            border: none;
+            padding: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .action-card {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            transition: background-color 0.2s;
+        }
+        
+        .action-card:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: white;
+            background-color: var(--primary-light);
+        }
+        
+        .action-text {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #757575;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .badge {
+            margin-left: 4px;
+            background-color: var(--error-color);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .friend-card {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .friend-info {
+            display: flex;
+            padding: 16px;
+        }
+        
+        .friend-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #333;
+        }
+        
+        .friend-details {
+            flex: 1;
+        }
+        
+        .friend-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+        
+        .friend-meta {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .element-tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        
+        .element-wood {
+            background-color: var(--element-wood-dark);
+        }
+        
+        .element-fire {
+            background-color: var(--element-fire-dark);
+        }
+        
+        .element-earth {
+            background-color: var(--element-earth-dark);
+        }
+        
+        .element-metal {
+            background-color: var(--element-metal-dark);
+        }
+        
+        .element-water {
+            background-color: var(--element-water-dark);
+        }
+        
+        .friend-actions {
+            display: flex;
+            border-top: 1px solid #eee;
+        }
+        
+        .action-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            cursor: pointer;
+            color: #666;
+            transition: background-color 0.2s;
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        .action-btn .material-icons {
+            margin-bottom: 4px;
+            font-size: 20px;
+        }
+        
+        .action-label {
+            font-size: 12px;
+        }
+        
+        .profile-action {
+            color: var(--element-water-dark);
+        }
+        
+        .compatibility-action {
+            color: var(--primary-color);
+        }
+        
+        .delete-action {
+            color: var(--error-color);
+        }
+        
+        .divider {
+            width: 1px;
+            background-color: #eee;
+        }
+        
+        .empty-state {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 40px 16px;
+            color: #666;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .empty-title {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .empty-desc {
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .add-btn .material-icons {
+            margin-right: 4px;
+        }
+        
+        /* リクエストタブ内のサブタブ */
+        .request-tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 16px;
+        }
+        
+        .request-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #757575;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .request-tab.active {
+            color: var(--primary-color);
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .request-card {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        .request-actions {
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+        }
+        
+        .accept-btn {
+            flex: 1;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .accept-btn .material-icons {
+            margin-right: 4px;
+        }
+        
+        .reject-btn {
+            flex: 1;
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .reject-btn .material-icons {
+            margin-right: 4px;
+        }
+        
+        .sent-request-card {
+            background-color: var(--primary-light);
+            color: white;
+            opacity: 0.9;
+        }
+        
+        .sent-request-avatar {
+            background-color: white;
+            color: var(--primary-color);
+        }
+        
+        .sent-request-name {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .sent-request-status {
+            color: white;
+            opacity: 0.9;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sent-request-status::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            margin-right: 8px;
+        }
+        
+        /* モーダル */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            border-radius: 16px;
+            max-width: 90%;
+            width: 500px;
+            max-height: 90vh;
+            overflow: auto;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        
+        .modal-search-container {
+            display: flex;
+            margin-bottom: 16px;
+        }
+        
+        .modal-search-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .modal-search-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            cursor: pointer;
+        }
+        
+        .search-results {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow: auto;
+            margin-bottom: 16px;
+        }
+        
+        .search-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background-color: #eee;
+        }
+        
+        .search-item-info {
+            flex: 1;
+        }
+        
+        .search-item-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .search-item-email {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .friend-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .friend-btn-disabled {
+            background-color: #ddd;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .close-btn {
+            border: 1px solid #ddd;
+            background-color: white;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 32px;
+            color: #666;
+        }
+        
+        .no-results-title {
+            margin-bottom: 8px;
+        }
+        
+        .no-results-subtitle {
+            font-size: 14px;
+        }
+        
+        /* 招待モーダル */
+        .invite-desc {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        
+        .invite-link-container {
+            display: flex;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 24px;
+        }
+        
+        .invite-link {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .copy-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+        
+        /* 通知メッセージ */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background-color: var(--success-color);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .success-message .material-icons {
+            margin-right: 8px;
+        }
+        
+        .success-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 成功メッセージ通知 (必要に応じて表示) -->
+        <!-- <div class="success-message">
+            <span class="material-icons">check</span>
+            <span class="success-text">友達申請を送信しました！</span>
+        </div> -->
+        
+        <!-- 検索バー -->
+        <div class="search-bar">
+            <span class="material-icons" style="color: #757575; margin-right: 8px;">search</span>
+            <input type="text" class="search-input" placeholder="友達を検索">
+            <button class="search-button">
+                <span class="material-icons">search</span>
+            </button>
+        </div>
+        
+        <!-- アクションバー -->
+        <div class="action-bar">
+            <div class="action-card" id="search-friends">
+                <div class="avatar">
+                    <span class="material-icons">person_add</span>
+                </div>
+                <div class="action-text">友達を探す</div>
+            </div>
+            <div class="action-card" id="invite-app">
+                <div class="avatar">
+                    <span class="material-icons">content_copy</span>
+                </div>
+                <div class="action-text">アプリに招待</div>
+            </div>
+        </div>
+        
+        <!-- タブナビゲーション -->
+        <div class="tabs">
+            <div class="tab active" id="friends-tab">友達</div>
+            <div class="tab" id="requests-tab">
+                リクエスト
+                <div class="badge">2</div>
+            </div>
+        </div>
+        
+        <!-- 友達リスト (タブ1) -->
+        <div id="friends-content">
+            <!-- 友達カード -->
+            <div class="friend-card">
+                <div class="friend-info">
+                    <div class="friend-avatar" style="background-color: var(--element-fire-bg); color: var(--element-fire-dark);">
+                        S
+                    </div>
+                    <div class="friend-details">
+                        <div class="friend-name">鈴木太郎</div>
+                        <div class="friend-meta">
+                            <span class="element-tag element-fire">火</span>
+                            <span style="font-size: 12px;">2025/04/10に追加</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="friend-actions">
+                    <div class="action-btn profile-action">
+                        <span class="material-icons">person</span>
+                        <span class="action-label">プロフィール</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn compatibility-action">
+                        <span class="material-icons">favorite</span>
+                        <span class="action-label">相性を見る</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn delete-action">
+                        <span class="material-icons">delete</span>
+                        <span class="action-label">削除</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="friend-card">
+                <div class="friend-info">
+                    <div class="friend-avatar" style="background-color: var(--element-wood-bg); color: var(--element-wood-dark);">
+                        K
+                    </div>
+                    <div class="friend-details">
+                        <div class="friend-name">木村花子</div>
+                        <div class="friend-meta">
+                            <span class="element-tag element-wood">木</span>
+                            <span style="font-size: 12px;">2025/04/08に追加</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="friend-actions">
+                    <div class="action-btn profile-action">
+                        <span class="material-icons">person</span>
+                        <span class="action-label">プロフィール</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn compatibility-action">
+                        <span class="material-icons">favorite</span>
+                        <span class="action-label">相性を見る</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn delete-action">
+                        <span class="material-icons">delete</span>
+                        <span class="action-label">削除</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="friend-card">
+                <div class="friend-info">
+                    <div class="friend-avatar" style="background-color: var(--element-water-bg); color: var(--element-water-dark);">
+                        T
+                    </div>
+                    <div class="friend-details">
+                        <div class="friend-name">田中雄介</div>
+                        <div class="friend-meta">
+                            <span class="element-tag element-water">水</span>
+                            <span style="font-size: 12px;">2025/04/05に追加</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="friend-actions">
+                    <div class="action-btn profile-action">
+                        <span class="material-icons">person</span>
+                        <span class="action-label">プロフィール</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn compatibility-action">
+                        <span class="material-icons">favorite</span>
+                        <span class="action-label">相性を見る</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="action-btn delete-action">
+                        <span class="material-icons">delete</span>
+                        <span class="action-label">削除</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空の状態 (友達がいない場合) -->
+            <!-- <div class="empty-state">
+                <div class="empty-title">まだ友達がいません</div>
+                <div class="empty-desc">友達を追加して、相性診断を楽しみましょう</div>
+                <button class="add-btn">
+                    <span class="material-icons">person_add</span>
+                    友達を探す
+                </button>
+            </div> -->
+        </div>
+        
+        <!-- リクエスト (タブ2) -->
+        <div id="requests-content" style="display: none;">
+            <!-- リクエストタブのサブタブ -->
+            <div class="request-tabs">
+                <div class="request-tab active" id="received-tab">
+                    <span>受信</span>
+                    <div class="badge">2</div>
+                </div>
+                <div class="request-tab" id="sent-tab">
+                    <span>申請中</span>
+                </div>
+            </div>
+            
+            <!-- 受信したリクエスト -->
+            <div id="received-content">
+                <div class="request-card">
+                    <div class="friend-info">
+                        <div class="friend-avatar" style="background-color: var(--element-earth-bg); color: var(--element-earth-dark);">
+                            Y
+                        </div>
+                        <div class="friend-details">
+                            <div class="friend-name">山田健太</div>
+                            <div class="friend-meta">
+                                <span style="font-size: 12px;">2025/04/21にリクエスト</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="accept-btn">
+                            <span class="material-icons">check</span>
+                            承認
+                        </button>
+                        <button class="reject-btn">
+                            <span class="material-icons">close</span>
+                            拒否
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="request-card">
+                    <div class="friend-info">
+                        <div class="friend-avatar" style="background-color: var(--element-metal-bg); color: var(--element-metal-dark);">
+                            I
+                        </div>
+                        <div class="friend-details">
+                            <div class="friend-name">伊藤真理</div>
+                            <div class="friend-meta">
+                                <span style="font-size: 12px;">2025/04/20にリクエスト</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="request-actions">
+                        <button class="accept-btn">
+                            <span class="material-icons">check</span>
+                            承認
+                        </button>
+                        <button class="reject-btn">
+                            <span class="material-icons">close</span>
+                            拒否
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 受信リクエストがない場合の空の状態 -->
+                <!-- <div class="empty-state">
+                    <div class="empty-title">受信したリクエストはありません</div>
+                    <div class="empty-desc">他のユーザーからの友達リクエストが届くとここに表示されます</div>
+                </div> -->
+            </div>
+            
+            <!-- 送信したリクエスト (非表示) -->
+            <div id="sent-content" style="display: none;">
+                <div class="request-card sent-request-card">
+                    <div class="friend-info">
+                        <div class="friend-avatar sent-request-avatar">
+                            A
+                        </div>
+                        <div class="friend-details">
+                            <div class="friend-name sent-request-name">安藤聡</div>
+                            <div class="sent-request-status">承認待ち</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 送信リクエストがない場合の空の状態 -->
+                <!-- <div class="empty-state">
+                    <div class="empty-title">申請中のリクエストはありません</div>
+                    <div class="empty-desc">友達申請を送信するとここに表示されます</div>
+                    <button class="add-btn">
+                        <span class="material-icons">person_add</span>
+                        友達を探す
+                    </button>
+                </div> -->
+            </div>
+        </div>
+        
+        <!-- 友達を探すモーダル -->
+        <div class="modal-backdrop" id="search-modal" style="display: none;">
+            <div class="modal-content">
+                <h3 class="modal-title">友達を探す</h3>
+                
+                <div class="modal-search-container">
+                    <input type="text" class="modal-search-input" placeholder="ユーザー名またはメールアドレス">
+                    <button class="modal-search-btn">
+                        <span class="material-icons">search</span>
+                    </button>
+                </div>
+                
+                <div class="search-results">
+                    <div class="search-item">
+                        <div class="search-item-avatar" style="background-color: var(--element-water-bg); color: var(--element-water-dark);">N</div>
+                        <div class="search-item-info">
+                            <div class="search-item-name">中村洋子</div>
+                            <div class="search-item-email">y.nakamura@example.com</div>
+                        </div>
+                        <button class="friend-btn">
+                            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person_add</span>
+                            友達申請
+                        </button>
+                    </div>
+                    
+                    <div class="search-item">
+                        <div class="search-item-avatar" style="background-color: var(--element-earth-bg); color: var(--element-earth-dark);">S</div>
+                        <div class="search-item-info">
+                            <div class="search-item-name">佐藤健太</div>
+                            <div class="search-item-email">k.sato@example.com</div>
+                        </div>
+                        <button class="friend-btn friend-btn-disabled" disabled>
+                            申請済み
+                        </button>
+                    </div>
+                    
+                    <div class="search-item">
+                        <div class="search-item-avatar" style="background-color: var(--element-fire-bg); color: var(--element-fire-dark);">H</div>
+                        <div class="search-item-info">
+                            <div class="search-item-name">林大輔</div>
+                            <div class="search-item-email">d.hayashi@example.com</div>
+                        </div>
+                        <button class="friend-btn">
+                            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person_add</span>
+                            友達申請
+                        </button>
+                    </div>
+                    
+                    <!-- 検索結果がない場合 -->
+                    <!-- <div class="no-results">
+                        <div class="no-results-title">検索結果がありません</div>
+                        <div class="no-results-subtitle">別のユーザー名やメールアドレスで試してみてください</div>
+                    </div> -->
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="close-btn" id="close-search-modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- アプリ招待モーダル -->
+        <div class="modal-backdrop" id="invite-modal" style="display: none;">
+            <div class="modal-content">
+                <h3 class="modal-title">友達をDailyFortuneに招待</h3>
+                
+                <p class="invite-desc">
+                    以下のリンクを共有して、友達をアプリに招待できます。招待された友達はあなたとの相性を確認できます。
+                </p>
+                
+                <div class="invite-link-container">
+                    <div class="invite-link">https://dailyfortune.example.com/invitation/xyz123abc</div>
+                    <button class="copy-btn">
+                        <span class="material-icons">content_copy</span>
+                    </button>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="close-btn" id="close-invite-modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // タブ切り替え
+        document.getElementById('friends-tab').addEventListener('click', function() {
+            document.getElementById('friends-tab').classList.add('active');
+            document.getElementById('requests-tab').classList.remove('active');
+            document.getElementById('friends-content').style.display = 'block';
+            document.getElementById('requests-content').style.display = 'none';
+        });
+        
+        document.getElementById('requests-tab').addEventListener('click', function() {
+            document.getElementById('requests-tab').classList.add('active');
+            document.getElementById('friends-tab').classList.remove('active');
+            document.getElementById('requests-content').style.display = 'block';
+            document.getElementById('friends-content').style.display = 'none';
+        });
+        
+        // リクエストタブ内のサブタブ切り替え
+        document.getElementById('received-tab').addEventListener('click', function() {
+            document.getElementById('received-tab').classList.add('active');
+            document.getElementById('sent-tab').classList.remove('active');
+            document.getElementById('received-content').style.display = 'block';
+            document.getElementById('sent-content').style.display = 'none';
+        });
+        
+        document.getElementById('sent-tab').addEventListener('click', function() {
+            document.getElementById('sent-tab').classList.add('active');
+            document.getElementById('received-tab').classList.remove('active');
+            document.getElementById('sent-content').style.display = 'block';
+            document.getElementById('received-content').style.display = 'none';
+        });
+        
+        // モーダル表示・非表示
+        document.getElementById('search-friends').addEventListener('click', function() {
+            document.getElementById('search-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('close-search-modal').addEventListener('click', function() {
+            document.getElementById('search-modal').style.display = 'none';
+        });
+        
+        document.getElementById('invite-app').addEventListener('click', function() {
+            document.getElementById('invite-modal').style.display = 'flex';
+        });
+        
+        document.getElementById('close-invite-modal').addEventListener('click', function() {
+            document.getElementById('invite-modal').style.display = 'none';
+        });
+        
+        // 招待リンクをコピー
+        document.querySelector('.copy-btn').addEventListener('click', function() {
+            const link = document.querySelector('.invite-link').textContent;
+            navigator.clipboard.writeText(link);
+            alert('招待リンクをクリップボードにコピーしました');
+        });
+    </script>
+</body>
+</html>

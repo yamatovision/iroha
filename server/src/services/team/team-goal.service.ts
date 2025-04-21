@@ -3,8 +3,9 @@ import { TeamGoal, ITeamGoalDocument } from '../../models/TeamGoal';
 import { Team } from '../../models/Team';
 import { User } from '../../models/User';
 import { NotFoundError, UnauthorizedError, BadRequestError } from '../../utils/error-handler';
-import { isTeamAdmin } from './team.service';
+import { isTeamAdmin, isTeamMember } from './team.service';
 
+// チーム目標を取得する関数
 export const getTeamGoal = async (teamId: string | mongoose.Types.ObjectId, userId: string | mongoose.Types.ObjectId): Promise<ITeamGoalDocument | null> => {
   // チームの存在確認
   const team = await Team.findById(teamId);
@@ -22,7 +23,7 @@ export const getTeamGoal = async (teamId: string | mongoose.Types.ObjectId, user
   }
   
   const isAdmin = await isTeamAdmin(teamId, userId);
-  const isMember = requestUser.teamId && requestUser.teamId.toString() === teamIdStr;
+  const isMember = await isTeamMember(teamId, userId);
   
   if (!isAdmin && !isMember) {
     throw new UnauthorizedError('このチームの目標情報にアクセスする権限がありません');
@@ -164,4 +165,26 @@ export const updateTeamGoalProgress = async (
   }
 
   return updatedGoal;
+};
+
+// エクスポート関数を追加
+export const createTeamGoal = createOrUpdateTeamGoal;
+export const getTeamGoals = async (teamId: string): Promise<ITeamGoalDocument[]> => {
+  return TeamGoal.find({ teamId }).sort({ createdAt: -1 });
+};
+export const getLatestTeamGoal = async (teamId: string): Promise<ITeamGoalDocument | null> => {
+  return TeamGoal.findOne({ teamId }).sort({ createdAt: -1 });
+};
+export const updateTeamGoal = createOrUpdateTeamGoal;
+export const deleteTeamGoal = async (teamId: string, goalId: string): Promise<boolean> => {
+  const result = await TeamGoal.deleteOne({ _id: goalId, teamId });
+  return result.deletedCount > 0;
+};
+export const getTeamGoalAdvice = async (teamId: string, goalId: string): Promise<string> => {
+  // 目標に対するアドバイスを生成するロジック
+  const goal = await TeamGoal.findOne({ _id: goalId, teamId });
+  if (!goal) {
+    throw new NotFoundError('チーム目標が見つかりません');
+  }
+  return `チーム目標「${goal.content}」に向けて一歩ずつ進みましょう。`;
 };

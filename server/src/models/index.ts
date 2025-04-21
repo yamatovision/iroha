@@ -30,6 +30,11 @@ export {
 } from './Invoice';
 export { Alert, type IAlert, type IAlertDocument } from './Alert';
 
+// 友達関係・チームメンバーシップモデル
+export { Friendship, type IFriendship, type IFriendshipDocument } from './Friendship';
+export { TeamMembership, type ITeamMembership, type ITeamMembershipDocument } from './TeamMembership';
+export { InvitationLink, type IInvitationLink, type IInvitationLinkDocument } from './InvitationLink';
+
 // ログ・監査モデル
 export { AuditLog, type IAuditLog, type IAuditLogDocument } from './AuditLog';
 export { 

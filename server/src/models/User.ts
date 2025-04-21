@@ -11,9 +11,8 @@ export interface IUser {
   displayName: string;
   role: 'SuperAdmin' | 'Admin' | 'User';
   organizationId: mongoose.Types.ObjectId;
-  teamId: mongoose.Types.ObjectId;
+  // teamIdフィールドは削除しました - TeamMembershipモデルで管理します
   jobTitle?: string;
-  teamRole?: string;                // チーム内での役割（デザイナー、エンジニアなど）
   motivation?: number;              // モチベーションスコア（0-100）
   leaveRisk?: 'none' | 'low' | 'medium' | 'high';  // 離職リスク
   
@@ -129,9 +128,14 @@ export interface IUser {
 
 /**
  * Mongoose用のドキュメントインターフェース
+ * チームメンバーシップと友達関係を取得するメソッドを追加
  */
 export interface IUserDocument extends Omit<IUser, '_id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
+  getTeams(): Promise<any[]>;
+  getFriends(): Promise<any[]>;
+  getFriendRequests(): Promise<any[]>;
+  getSentRequests(): Promise<any[]>;
 }
 
 /**
@@ -186,21 +190,12 @@ const userSchema = new Schema<IUserDocument>(
       // 必須ではなくする
       index: true
     },
-    teamId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Team',
-      // 必須ではなくする
-      index: true
-    },
+    // teamId フィールドは削除しました - TeamMembershipモデルで管理します
     jobTitle: {
       type: String,
       trim: true
     },
-    teamRole: {
-      type: String,
-      trim: true,
-      maxlength: [50, 'チーム内の役割は50文字以下である必要があります']
-    },
+    // teamRoleは削除 - TeamMembershipモデルで管理します
     motivation: {
       type: Number,
       min: [0, 'モチベーションは0%以上である必要があります'],
@@ -521,10 +516,68 @@ userSchema.methods.comparePassword = async function(candidatePassword: string): 
   }
 };
 
+// チーム取得メソッド
+userSchema.methods.getTeams = async function() {
+  // TeamMembershipモデルのインポート(循環参照を避けるため、ここでrequireを使用)
+  const TeamMembership = mongoose.model('TeamMembership');
+  
+  const memberships = await TeamMembership.find({ 
+    userId: this._id 
+  }).populate('teamId');
+  
+  return memberships;
+};
+
+// 友達関係取得メソッド
+userSchema.methods.getFriends = async function() {
+  // Friendshipモデルのインポート(循環参照を避けるため、ここでrequireを使用)
+  const Friendship = mongoose.model('Friendship');
+  
+  const friendships = await Friendship.find({
+    $or: [
+      { userId1: this._id, status: 'accepted' },
+      { userId2: this._id, status: 'accepted' }
+    ]
+  });
+  
+  return friendships.map(friendship => {
+    const friendId = friendship.userId1.equals(this._id) ? 
+      friendship.userId2 : friendship.userId1;
+    return {
+      friendshipId: friendship._id,
+      friendId,
+      createdAt: friendship.createdAt,
+      acceptedAt: friendship.acceptedAt
+    };
+  });
+};
+
+// 友達リクエスト取得メソッド
+userSchema.methods.getFriendRequests = async function() {
+  // Friendshipモデルのインポート(循環参照を避けるため、ここでrequireを使用)
+  const Friendship = mongoose.model('Friendship');
+  
+  return await Friendship.find({
+    userId2: this._id,
+    status: 'pending'
+  }).populate('userId1', 'displayName email elementAttribute');
+};
+
+// 送信済みリクエスト取得メソッド
+userSchema.methods.getSentRequests = async function() {
+  // Friendshipモデルのインポート(循環参照を避けるため、ここでrequireを使用)
+  const Friendship = mongoose.model('Friendship');
+  
+  return await Friendship.find({
+    userId1: this._id,
+    requesterId: this._id,
+    status: 'pending'
+  }).populate('userId2', 'displayName email elementAttribute');
+};
+
 // インデックスの設定
 userSchema.index({ organizationId: 1, role: 1 });
 userSchema.index({ organizationId: 1, plan: 1 });
-userSchema.index({ teamRole: 1 });
 userSchema.index({ motivation: 1 });
 userSchema.index({ leaveRisk: 1 });
 
