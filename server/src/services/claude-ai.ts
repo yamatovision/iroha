@@ -201,7 +201,6 @@ const CLAUDE_CONTEXT_TEMPLATES = {
   TEAM_MEMBER: `チームメンバーモード(claude-ai.ts)`,
   TEAM_GOAL: `チーム目標モード(claude-ai.ts)`
 }
-};
 
 /**
  * チャットメッセージ形式のインターフェース
