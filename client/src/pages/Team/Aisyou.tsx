@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import teamService from '../../services/team.service';
+import friendService from '../../services/friend.service';
 import fortuneService from '../../services/fortune.service';
 import styled from '@emotion/styled';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -128,9 +129,10 @@ const RelationshipChip = styled(Chip)(
 );
 
 /**
- * チーム相性ページ
+ * 相性ページ（チーム相性と友達相性の両方に対応）
  */
 const AisyouPage: React.FC = () => {
+  // チームIDを取得（友達IDは不要になりました）
   const { teamId } = useParams<{ teamId: string }>();
   const { userProfile, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
@@ -143,6 +145,8 @@ const AisyouPage: React.FC = () => {
   const [compatibility, setCompatibility] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogLoading, setDialogLoading] = useState(false);
+  const [isFriendMode, setIsFriendMode] = useState<boolean>(false);
+  const [friend, setFriend] = useState<any>(null);
 
   // コンテキストからアクティブチーム設定関数を取得
   const { setActiveTeamId } = useAuth();
@@ -150,69 +154,71 @@ const AisyouPage: React.FC = () => {
   // 初期データの読み込み
   useEffect(() => {
     const fetchData = async () => {
-      if (!teamId) {
-        // チームIDがない場合は即座にチーム一覧ページにリダイレクト
-        navigate('/team');
-        return;
-      }
-      
-      // 現在表示しているチームをアクティブチームとして設定 (管理者用)
-      if (isAdmin || isSuperAdmin) {
-        setActiveTeamId(teamId);
-      }
-
-      try {
-        setLoading(true);
-        // 並列でデータを取得
-        const [teamData, rankingData, membersData] = await Promise.all([
-          teamService.getTeamById(teamId),
-          fortuneService.getTeamFortuneRanking(teamId),
-          teamService.getTeamMembers(teamId)
-        ]);
-
-        console.log('チームデータ:', teamData);
-        console.log('ランキングデータ:', rankingData);
-        console.log('メンバーデータ:', membersData);
-
-        // チームデータが存在しない場合（APIからnullまたは空のオブジェクトが返された場合）
-        if (!teamData || !teamData.id) {
-          // チーム一覧ページに即座にリダイレクト
-          navigate('/team');
-          return;
+      // チーム相性モードのみ対応
+      if (teamId) {
+        setIsFriendMode(false);
+        
+        // 現在表示しているチームをアクティブチームとして設定 (管理者用)
+        if (isAdmin || isSuperAdmin) {
+          setActiveTeamId(teamId);
         }
 
-        // メンバーデータのyojinオブジェクト構造を適切に処理
-        const processedMembers = Array.isArray(membersData) ? membersData.map(member => {
-          if (member && member.yojin && typeof member.yojin === 'object') {
-            // yojinオブジェクトが正しい構造を持っているか確認し、修正
-            return {
-              ...member,
-              yojin: {
-                tenGod: member.yojin.tenGod || '',
-                element: member.yojin.element || '',
-                description: member.yojin.description || '',
-                supportElements: Array.isArray(member.yojin.supportElements) ? 
-                  member.yojin.supportElements : [],
-                kijin: member.yojin.kijin || {},
-                kijin2: member.yojin.kijin2 || {},
-                kyujin: member.yojin.kyujin || {}
-              }
-            };
-          }
-          return member;
-        }) : [];
+        try {
+          setLoading(true);
+          // 並列でデータを取得
+          const [teamData, rankingData, membersData] = await Promise.all([
+            teamService.getTeamById(teamId),
+            fortuneService.getTeamFortuneRanking(teamId),
+            teamService.getTeamMembers(teamId)
+          ]);
 
-        setTeam(teamData);
-        // APIレスポンス構造に合わせて修正
-        setRanking(rankingData.data?.ranking || []);
-        setMembers(processedMembers || []);
-        setError(null);
-      } catch (error) {
-        console.error('データ取得エラー:', error);
-        // API取得エラーが発生した場合も即座にリダイレクト
+          console.log('チームデータ:', teamData);
+          console.log('ランキングデータ:', rankingData);
+          console.log('メンバーデータ:', membersData);
+
+          // チームデータが存在しない場合（APIからnullまたは空のオブジェクトが返された場合）
+          if (!teamData || !teamData.id) {
+            // チーム一覧ページに即座にリダイレクト
+            navigate('/team');
+            return;
+          }
+
+          // メンバーデータのyojinオブジェクト構造を適切に処理
+          const processedMembers = Array.isArray(membersData) ? membersData.map(member => {
+            if (member && member.yojin && typeof member.yojin === 'object') {
+              // yojinオブジェクトが正しい構造を持っているか確認し、修正
+              return {
+                ...member,
+                yojin: {
+                  tenGod: member.yojin.tenGod || '',
+                  element: member.yojin.element || '',
+                  description: member.yojin.description || '',
+                  supportElements: Array.isArray(member.yojin.supportElements) ? 
+                    member.yojin.supportElements : [],
+                  kijin: member.yojin.kijin || {},
+                  kijin2: member.yojin.kijin2 || {},
+                  kyujin: member.yojin.kyujin || {}
+                }
+              };
+            }
+            return member;
+          }) : [];
+
+          setTeam(teamData);
+          // APIレスポンス構造に合わせて修正
+          setRanking(rankingData.data?.ranking || []);
+          setMembers(processedMembers || []);
+          setError(null);
+        } catch (error) {
+          console.error('データ取得エラー:', error);
+          // API取得エラーが発生した場合も即座にリダイレクト
+          navigate('/team');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // チームIDがない場合はチーム一覧ページにリダイレクト
         navigate('/team');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -220,31 +226,28 @@ const AisyouPage: React.FC = () => {
   }, [teamId, navigate, isAdmin, isSuperAdmin, setActiveTeamId]);
 
   // 相性詳細ダイアログを開く
-  const handleOpenCompatibility = async (member: any) => {
-    if (!userProfile || !teamId || !userProfile.id || !member.userId) {
-      console.error('相性取得エラー:', { userProfile, teamId, memberId: member.userId });
+  const handleOpenCompatibility = async (member: any, autoOpen: boolean = false) => {
+    if (!userProfile || !userProfile.id || !member.userId) {
+      console.error('相性取得エラー:', { userProfile, memberId: member.userId });
       setError('ユーザー情報が不足しているため、相性を取得できません');
       return;
     }
     
     setSelectedMember(member);
-    setDialogOpen(true);
+    if (autoOpen) {
+      setDialogOpen(true);
+    }
     setDialogLoading(true);
     
     try {
-      console.log('相性取得開始:', { 
-        teamId, 
-        userId: userProfile.id, 
-        memberId: member.userId 
+      console.log('友達相性取得開始:', { 
+        friendId: member.userId, 
+        userId: userProfile.id
       });
       
-      // 選択されたメンバーと現在のユーザーの相性を取得
-      const compatibilityData = await teamService.getMemberCompatibility(
-        teamId, 
-        userProfile.id, // MongoDBのObjectID
-        member.userId
-      );
-      console.log('相性データ:', compatibilityData);
+      // 友達相性APIのみを呼び出す
+      const compatibilityData = await friendService.getCompatibilityScore(member.userId);
+      console.log('友達相性データ:', compatibilityData);
       
       // 相性データ内のyojinオブジェクト構造を修正
       const processedCompatibility = compatibilityData ? {
@@ -272,7 +275,7 @@ const AisyouPage: React.FC = () => {
       setCompatibility(processedCompatibility);
     } catch (error) {
       console.error('相性詳細取得エラー:', error);
-      setError('メンバー間の相性詳細の取得に失敗しました');
+      setError('相性詳細の取得に失敗しました');
     } finally {
       setDialogLoading(false);
     }
@@ -303,114 +306,116 @@ const AisyouPage: React.FC = () => {
             {error}
             <Button 
               component={Link} 
-              to={`/team/${teamId}`} 
+              to={isFriendMode ? `/friend` : teamId ? `/team/${teamId}` : '/team'} 
               startIcon={<ArrowBackIcon />}
               sx={{ ml: 2 }}
             >
-              チームページに戻る
+              {isFriendMode ? '友達一覧に戻る' : 'チームページに戻る'}
             </Button>
           </Alert>
         )}
         
         <Box display="flex" alignItems="center" mb={3}>
-          {isAdmin && (
-            <Button 
-              component={Link} 
-              to={`/team/${teamId}`} 
-              startIcon={<ArrowBackIcon />}
-              sx={{ mr: 2 }}
-            >
-              チーム管理
-            </Button>
-          )}
+          <Button 
+            component={Link} 
+            to={isFriendMode ? `/friend` : teamId ? `/team/${teamId}` : '/team'} 
+            startIcon={<ArrowBackIcon />}
+            sx={{ mr: 2 }}
+          >
+            {isFriendMode ? '友達一覧に戻る' : isAdmin ? 'チーム管理' : 'チームページに戻る'}
+          </Button>
           <Typography variant="h4" component="h1">
-            チーム相性分析
+            {isFriendMode ? '友達相性分析' : 'チーム相性分析'}
           </Typography>
         </Box>
         
         <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-          {team?.name || 'チーム名'}のメンバー運勢・相性
+          {isFriendMode 
+            ? `${friend?.displayName || '友達'}との相性`
+            : `${team?.name || 'チーム名'}のメンバー運勢・相性`}
         </Typography>
       </Box>
 
-      {/* 運勢ランキングセクション */}
-      <StyledRankingCard>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-          今日の運勢ランキング
-        </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
-          毎日3:00に更新されます
-        </Typography>
-        <Divider sx={{ my: 2 }} />
-        
-        {ranking && ranking.length > 0 ? (
-          <Box>
-            {ranking.map((item, index) => (
-              <Box 
-                key={item.userId || index} 
-                display="flex" 
-                alignItems="center" 
-                p={1}
-                mb={1}
-                sx={{ 
-                  backgroundColor: (userProfile && item.userId === userProfile.id) ? 'rgba(33, 150, 243, 0.08)' : 'transparent',
-                  borderRadius: '8px'
-                }}
-              >
-                <RankBadge rank={index + 1}>{index + 1}</RankBadge>
-                <ElementAvatar element={item.elementAttribute || 'unknown'}>
-                  {item.displayName?.charAt(0) || '?'}
-                </ElementAvatar>
-                <Box flexGrow={1}>
-                  <Typography variant="body1">
-                    {item.displayName}
-                    {userProfile && item.userId === userProfile.id && (
-                      <Chip 
-                        label="あなた" 
-                        size="small" 
-                        color="primary" 
-                        sx={{ ml: 1 }}
-                      />
-                    )}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {item.jobTitle || '役職未設定'}
-                  </Typography>
-                </Box>
-                <Typography 
-                  variant="h6" 
+      {/* 運勢ランキングセクション - チームモードの場合のみ表示 */}
+      {!isFriendMode && (
+        <StyledRankingCard>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+            今日の運勢ランキング
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            毎日3:00に更新されます
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+          
+          {ranking && ranking.length > 0 ? (
+            <Box>
+              {ranking.map((item, index) => (
+                <Box 
+                  key={item.userId || index} 
+                  display="flex" 
+                  alignItems="center" 
+                  p={1}
+                  mb={1}
                   sx={{ 
-                    fontWeight: 'bold',
-                    color: item.score >= 80 ? '#4CAF50' : 
-                           item.score >= 60 ? '#8BC34A' :
-                           item.score >= 40 ? '#FFC107' :
-                           item.score >= 20 ? '#FF9800' : '#F44336'
+                    backgroundColor: (userProfile && item.userId === userProfile.id) ? 'rgba(33, 150, 243, 0.08)' : 'transparent',
+                    borderRadius: '8px'
                   }}
                 >
-                  {item.score || 0}点
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography variant="body1" align="center" sx={{ my: 2 }}>
-            ランキングデータがありません
-          </Typography>
-        )}
-      </StyledRankingCard>
+                  <RankBadge rank={index + 1}>{index + 1}</RankBadge>
+                  <ElementAvatar element={item.elementAttribute || 'unknown'}>
+                    {item.displayName?.charAt(0) || '?'}
+                  </ElementAvatar>
+                  <Box flexGrow={1}>
+                    <Typography variant="body1">
+                      {item.displayName}
+                      {userProfile && item.userId === userProfile.id && (
+                        <Chip 
+                          label="あなた" 
+                          size="small" 
+                          color="primary" 
+                          sx={{ ml: 1 }}
+                        />
+                      )}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {item.jobTitle || '役職未設定'}
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 'bold',
+                      color: item.score >= 80 ? '#4CAF50' : 
+                             item.score >= 60 ? '#8BC34A' :
+                             item.score >= 40 ? '#FFC107' :
+                             item.score >= 20 ? '#FF9800' : '#F44336'
+                    }}
+                  >
+                    {item.score || 0}点
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body1" align="center" sx={{ my: 2 }}>
+              ランキングデータがありません
+            </Typography>
+          )}
+        </StyledRankingCard>
+      )}
 
-      {/* チームメンバーリストセクション */}
+      {/* メンバー/友達リストセクション */}
       <Box my={4}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-          チームメンバーリスト
+          {isFriendMode ? '友達情報' : 'チームメンバーリスト'}
         </Typography>
         <Typography variant="body2" color="textSecondary" gutterBottom>
-          メンバーカードをクリックして相性を確認できます
+          {isFriendMode ? '友達との相性を確認できます' : 'メンバーカードをクリックして相性を確認できます'}
         </Typography>
         
         <Grid container spacing={2} sx={{ mt: 2 }}>
           {members && members.length > 0 ? members.map((member) => (
-            <Grid item xs={12} sm={6} md={4} key={member.userId}>
+            <Grid item xs={12} sm={isFriendMode ? 12 : 6} md={isFriendMode ? 6 : 4} key={member.userId}>
               <StyledMemberCard>
                 <CardContent>
                   <Box display="flex" alignItems="center" mb={1}>
@@ -454,15 +459,29 @@ const AisyouPage: React.FC = () => {
                     ) : '未設定'}
                   </Typography>
                   
-                  {userProfile && member.userId !== userProfile.id && (
+                  {isFriendMode ? (
+                    // 友達モードの場合の相性表示ボタン
                     <Button 
-                      variant="outlined" 
+                      variant="contained" 
+                      color="primary"
                       fullWidth
-                      onClick={() => handleOpenCompatibility(member)}
+                      onClick={() => setDialogOpen(true)}
                       sx={{ mt: 1 }}
                     >
-                      相性を見る
+                      相性を詳しく見る
                     </Button>
+                  ) : (
+                    // チームモードの場合の相性表示ボタン（自分以外のメンバーに表示）
+                    userProfile && member.userId !== userProfile.id && (
+                      <Button 
+                        variant="outlined" 
+                        fullWidth
+                        onClick={() => handleOpenCompatibility(member)}
+                        sx={{ mt: 1 }}
+                      >
+                        相性を見る
+                      </Button>
+                    )
                   )}
                 </CardContent>
               </StyledMemberCard>
@@ -470,7 +489,7 @@ const AisyouPage: React.FC = () => {
           )) : (
             <Grid item xs={12}>
               <Typography variant="body1" align="center">
-                メンバーデータがありません
+                {isFriendMode ? '友達情報がありません' : 'メンバーデータがありません'}
               </Typography>
             </Grid>
           )}

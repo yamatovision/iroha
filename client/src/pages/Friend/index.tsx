@@ -1,0 +1,1291 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Box, Typography, TextField, Button, 
+  List, ListItem, ListItemAvatar, ListItemText, 
+  Avatar, IconButton, Paper, Divider, Chip,
+  CircularProgress, Modal
+} from '@mui/material';
+import ProfileModal from '../../components/profile/ProfileModal';
+import CompatibilityModal from '../../components/friend/CompatibilityModal';
+import { 
+  Search as SearchIcon,
+  Add as AddIcon, 
+  MoreVert as MoreVertIcon, 
+  Check as CheckIcon, 
+  Close as CloseIcon,
+  ContentCopy as ContentCopyIcon,
+  Person as PersonIcon,
+  Favorite as FavoriteIcon,
+  Delete as DeleteIcon
+} from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import friendService from '../../services/friend.service';
+import apiService from '../../services/api.service';
+import Layout from '../../components/layout/Layout';
+
+/**
+ * 友達リスト画面
+ */
+const FriendList: React.FC = () => {
+  console.log('FriendList コンポーネントがレンダリングされました');
+  
+  // ステート管理
+  const { userProfile } = useAuth();
+  console.log('認証状態:', { 
+    userProfile: userProfile ? '認証済み' : '未認証',
+    userProfileData: userProfile
+  });
+  
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(0);
+  const [activeRequestTab, setActiveRequestTab] = useState(0); // 0: 受信, 1: 送信
+  const [friends, setFriends] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [sentRequests, setSentRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 検索関連の状態
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  
+  // モーダル管理の状態
+  const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
+  const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
+  const [showCompatibilityModal, setShowCompatibilityModal] = useState<boolean>(false);
+  const [selectedFriend, setSelectedFriend] = useState<any>(null);
+  
+  // 招待リンク状態
+  const [inviteLink] = useState<string>(
+    `${window.location.origin}/invitation/${Math.random().toString(36).substring(2, 10)}`
+  );
+
+  // 五行属性の色とラベルマッピング
+  const elementLabels: Record<string, { name: string, bg: string, color: string }> = {
+    water: { name: '水', bg: 'var(--element-water-bg)', color: 'var(--element-water-dark)' },
+    wood: { name: '木', bg: 'var(--element-wood-bg)', color: 'var(--element-wood-dark)' },
+    fire: { name: '火', bg: 'var(--element-fire-bg)', color: 'var(--element-fire-dark)' },
+    earth: { name: '土', bg: 'var(--element-earth-bg)', color: 'var(--element-earth-dark)' },
+    metal: { name: '金', bg: 'var(--element-metal-bg)', color: 'var(--element-metal-dark)' }
+  };
+
+  // 初期データ読み込み
+  useEffect(() => {
+    if (!userProfile) {
+      console.log('認証されていないため、データ取得をスキップします');
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        console.log('友達データの取得を開始します - ユーザーID:', userProfile.id);
+        
+        // 試験的にAPIリクエストをひとつずつ実行
+        console.log('友達一覧を取得中...');
+        const friendsData = await friendService.getFriends();
+        console.log('友達リクエストを取得中...');
+        const requestsData = await friendService.getFriendRequests();
+        console.log('送信済みリクエストを取得中...');
+        const sentRequestsData = await friendService.getSentRequests();
+        
+        console.log('取得完了 - データ構造:', { 
+          friends: friendsData, 
+          friendsType: typeof friendsData,
+          friendsIsArray: Array.isArray(friendsData),
+          requestsType: typeof requestsData,
+          sentRequestsType: typeof sentRequestsData
+        });
+        
+        setFriends(Array.isArray(friendsData) ? friendsData : []);
+        setRequests(Array.isArray(requestsData) ? requestsData : []);
+        setSentRequests(Array.isArray(sentRequestsData) ? sentRequestsData : []);
+        setError(null);
+      } catch (err) {
+        console.error('友達データの取得に失敗しました:', err);
+        setError('データの読み込み中にエラーが発生しました。後でもう一度お試しください。');
+        // エラー発生時は空の配列を設定
+        setFriends([]);
+        setRequests([]);
+        setSentRequests([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userProfile]);
+
+  // タブの切り替え処理
+  const handleTabChange = async (_: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+    
+    // リクエストタブに切り替えた場合、最新データを取得
+    if (newValue === 1) {
+      try {
+        // 友達関連データを更新
+        const updatedRequests = await friendService.getFriendRequests();
+        const updatedSentRequests = await friendService.getSentRequests();
+        
+        setRequests(updatedRequests);
+        setSentRequests(updatedSentRequests);
+      } catch (err) {
+        console.error('リクエストデータの更新に失敗しました:', err);
+      }
+    }
+  };
+
+  // 友達検索処理
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    try {
+      setSearchLoading(true);
+      const results = await friendService.searchUsers(searchQuery);
+      setSearchResults(results);
+      setShowSearchResults(true);
+      setShowSearchModal(true);
+    } catch (err) {
+      console.error('ユーザー検索に失敗しました:', err);
+      setError('ユーザー検索中にエラーが発生しました。後でもう一度お試しください。');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // 成功通知用の状態
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // 友達申請送信処理
+  const handleSendRequest = async (userId: string) => {
+    try {
+      if (!userId) {
+        throw new Error('送信先ユーザーIDが指定されていません');
+      }
+      
+      setLoading(true);
+      // userId引数を確実に渡す
+      await friendService.sendFriendRequest(userId);
+      
+      // 送信済みリクエスト更新
+      const updatedSentRequests = await friendService.getSentRequests();
+      setSentRequests(updatedSentRequests);
+      
+      // 検索結果からユーザーを削除（UX向上のため）
+      setSearchResults(searchResults.filter(user => user.id !== userId));
+      
+      // モーダルを閉じる
+      setShowSearchModal(false);
+      
+      // 成功メッセージを表示
+      setSuccessMessage('友達申請を送信しました！');
+      // 3秒後にメッセージを消去
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      // リクエストタブの申請中タブに切り替える
+      if (activeTab !== 1) {
+        setActiveTab(1);
+      }
+      setActiveRequestTab(1); // 申請中タブに切り替え
+    } catch (err: any) {
+      console.error('友達申請の送信に失敗しました:', err);
+      
+      // 既に申請済みの場合は特別なメッセージとして処理
+      if (err.name === 'AlreadySentRequest' || (err.response?.data?.error && err.response.data.error.includes('既に友達申請を送信済み'))) {
+        // エラーではなく情報通知として表示
+        setSuccessMessage('この相手には既に友達申請を送信済みです');
+        setTimeout(() => setSuccessMessage(null), 3000);
+        
+        // 送信済みリクエスト一覧を強制的に更新
+        const updatedSentRequests = await friendService.getSentRequests();
+        setSentRequests(updatedSentRequests);
+        
+        // モーダルを閉じる
+        setShowSearchModal(false);
+        
+        // リクエストタブの申請中タブに自動的に切り替え
+        if (activeTab !== 1) {
+          setActiveTab(1);
+        }
+        setActiveRequestTab(1); // 申請中タブに切り替え
+      } else {
+        setError('友達申請の送信に失敗しました。');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 友達申請承認処理
+  const handleAcceptRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      const response = await friendService.acceptFriendRequest(requestId);
+      console.log('友達申請承認レスポンス:', response);
+      
+      // API キャッシュをクリア
+      await apiService.clearCache('/api/v1/friends/requests');
+      await apiService.clearCache('/api/v1/friends');
+      
+      // リスト更新 (キャッシュをバイパスするオプションを指定)
+      console.log('友達リクエスト更新前の件数:', requests.length);
+      const [updatedRequests, updatedFriends] = await Promise.all([
+        friendService.getFriendRequests(true), // キャッシュバイパスフラグを追加
+        friendService.getFriends(true)        // キャッシュバイパスフラグを追加
+      ]);
+      
+      console.log('友達リクエスト更新後のデータ:', updatedRequests);
+      console.log('友達リクエスト更新後の件数:', updatedRequests.length);
+      console.log('友達リスト更新後の件数:', updatedFriends.length);
+      
+      // 受信リクエストからこの承認したリクエストを除外する追加処理
+      const filteredRequests = updatedRequests.filter((req: any) => req._id !== requestId);
+      console.log('フィルター後のリクエスト件数:', filteredRequests.length);
+      
+      setRequests(filteredRequests);
+      setFriends(updatedFriends);
+      
+      // 成功メッセージを表示
+      setSuccessMessage('友達申請を承認しました！');
+      // 3秒後にメッセージを消去
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('友達申請の承認に失敗しました:', err);
+      setError('友達申請の承認に失敗しました。もう一度お試しください。');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 友達申請拒否処理
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      setLoading(true);
+      await friendService.rejectFriendRequest(requestId);
+      
+      // リクエストリスト更新
+      const updatedRequests = await friendService.getFriendRequests();
+      setRequests(updatedRequests);
+      
+      // 成功メッセージを表示
+      setSuccessMessage('友達申請を拒否しました');
+      // 3秒後にメッセージを消去
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('友達申請の拒否に失敗しました:', err);
+      setError('友達申請の拒否に失敗しました。もう一度お試しください。');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 友達削除処理
+  const handleRemoveFriend = async (friendshipId: string) => {
+    if (!window.confirm('この友達を削除してもよろしいですか？')) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await friendService.removeFriend(friendshipId);
+      
+      // 友達リスト更新
+      const updatedFriends = await friendService.getFriends();
+      setFriends(updatedFriends);
+      
+      // 成功メッセージを表示
+      setSuccessMessage('友達を削除しました');
+      // 3秒後にメッセージを消去
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('友達の削除に失敗しました:', err);
+      setError('友達の削除に失敗しました。もう一度お試しください。');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 相性診断モーダルを開く
+  const handleOpenCompatibilityModal = (friend: any) => {
+    setSelectedFriend(friend);
+    setShowCompatibilityModal(true);
+  };
+
+  // 相性診断をモーダルで表示
+  const handleViewCompatibility = () => {
+    if (!selectedFriend) return;
+    setShowCompatibilityModal(true);
+  };
+
+  // プロフィール表示（モーダル）
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+
+  // プロフィール表示
+  const handleViewProfile = (userId: string) => {
+    setSelectedProfileUserId(userId);
+    setShowProfileModal(true);
+  };
+
+  // 招待リンクをクリップボードにコピー
+  const handleCopyInviteLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    alert('招待リンクをクリップボードにコピーしました');
+  };
+
+  // 友達を探すモーダル表示
+  const handleOpenSearchModal = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setShowSearchModal(true);
+  };
+
+  // アプリ招待モーダル表示
+  const handleOpenInviteModal = () => {
+    setShowInviteModal(true);
+  };
+
+  // 常に何かしら表示するようにする
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
+        <CircularProgress sx={{ mb: 2 }}/>
+        <Typography>データを読み込み中...</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          ユーザー認証状態: {userProfile ? '認証済み' : '未認証'}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      {/* 成功メッセージ通知 */}
+      {successMessage && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2000,
+            width: { xs: '90%', sm: '400px' },
+            maxWidth: '600px',
+            borderRadius: 2,
+            bgcolor: 'success.main',
+            color: 'white',
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
+        >
+          <CheckIcon sx={{ mr: 1 }} />
+          <Typography fontWeight="bold">{successMessage}</Typography>
+        </Box>
+      )}
+      
+      <Box sx={{ 
+        p: 2,
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh'
+      }}>
+        {/* エラーメッセージ表示 */}
+        {error && (
+          <Paper 
+            sx={{ 
+              p: 2, 
+              mb: 2, 
+              bgcolor: 'error.light', 
+              color: 'error.dark',
+              borderRadius: 2,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}
+          >
+            <Typography>{error}</Typography>
+          </Paper>
+        )}
+        
+        {/* 検索バー */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: 2, 
+          p: 1.5, 
+          border: 'none',
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
+          <TextField
+            variant="standard"
+            placeholder="友達を検索"
+            fullWidth
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            InputProps={{
+              disableUnderline: true
+            }}
+            sx={{ flexGrow: 1 }}
+          />
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleSearch}
+            size="small"
+            sx={{ minWidth: 40, p: 1 }}
+          >
+            <SearchIcon />
+          </Button>
+        </Box>
+        
+        {/* アクションバー */}
+        <Box sx={{ 
+          display: 'flex', 
+          mb: 3, 
+          gap: 1.5
+        }}>
+          <Paper sx={{ 
+            flex: 1, 
+            p: 1.5, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            borderRadius: 2,
+            cursor: 'pointer',
+            '&:hover': { bgcolor: '#f9f9f9' },
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+          onClick={handleOpenSearchModal}
+          >
+            <Avatar 
+              sx={{ 
+                bgcolor: 'primary.light', 
+                mb: 1, 
+                width: 40, 
+                height: 40 
+              }}
+            >
+              <AddIcon />
+            </Avatar>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              友達を探す
+            </Typography>
+          </Paper>
+          
+          <Paper sx={{ 
+            flex: 1, 
+            p: 1.5, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            borderRadius: 2,
+            cursor: 'pointer',
+            '&:hover': { bgcolor: '#f9f9f9' },
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+          onClick={handleOpenInviteModal}
+          >
+            <Avatar 
+              sx={{ 
+                bgcolor: 'primary.light', 
+                mb: 1, 
+                width: 40, 
+                height: 40 
+              }}
+            >
+              <ContentCopyIcon />
+            </Avatar>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              アプリに招待
+            </Typography>
+          </Paper>
+        </Box>
+        
+        {/* タブナビゲーション */}
+        <Box sx={{ 
+          borderBottom: '1px solid #ddd',
+          mb: 2,
+          display: 'flex'
+        }}>
+          <Box 
+            sx={{ 
+              flex: 1,
+              py: 1.5,
+              textAlign: 'center',
+              fontWeight: activeTab === 0 ? 'bold' : 'normal',
+              color: activeTab === 0 ? 'primary.main' : 'text.secondary',
+              borderBottom: activeTab === 0 ? '2px solid' : 'none',
+              borderColor: 'primary.main',
+              position: 'relative',
+              cursor: 'pointer'
+            }}
+            onClick={() => setActiveTab(0)}
+          >
+            <Typography sx={{ fontWeight: 'inherit' }}>友達</Typography>
+          </Box>
+          <Box 
+            sx={{ 
+              flex: 1,
+              py: 1.5,
+              textAlign: 'center',
+              fontWeight: activeTab === 1 ? 'bold' : 'normal',
+              color: activeTab === 1 ? 'primary.main' : 'text.secondary',
+              borderBottom: activeTab === 1 ? '2px solid' : 'none',
+              borderColor: 'primary.main',
+              position: 'relative',
+              cursor: 'pointer'
+            }}
+            onClick={() => setActiveTab(1)}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Typography sx={{ fontWeight: 'inherit' }}>リクエスト</Typography>
+              {requests.length > 0 && (
+                <Box sx={{ 
+                  ml: 1, 
+                  bgcolor: 'error.main', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: 18, 
+                  height: 18, 
+                  fontSize: '0.7rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {requests.length}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
+        
+        {/* 友達リスト */}
+        {activeTab === 0 && (
+          <Box>
+            {friends.length > 0 ? (
+              <List sx={{ p: 0 }}>
+                {friends.map((friend) => (
+                  <Paper 
+                    key={friend.userId} 
+                    elevation={0}
+                    sx={{ 
+                      mb: 2, 
+                      overflow: 'hidden',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <ListItem sx={{ p: 2 }}>
+                      <ListItemAvatar>
+                        <Avatar 
+                          sx={{ 
+                            width: 50,
+                            height: 50,
+                            fontSize: '1.5rem',
+                            bgcolor: friend.elementAttribute ? 
+                              elementLabels[friend.elementAttribute]?.bg : 'grey.300',
+                            color: friend.elementAttribute ? 
+                              elementLabels[friend.elementAttribute]?.color : 'text.primary'
+                          }}
+                        >
+                          {friend.displayName ? friend.displayName.charAt(0) : '?'}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={friend.displayName}
+                        primaryTypographyProps={{ 
+                          sx: { fontWeight: 'bold', mb: 0.5 } 
+                        }}
+                        secondaryTypographyProps={{
+                          component: 'div' // Change the default <p> to <div>
+                        }}
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {friend.elementAttribute && (
+                              <Chip 
+                                label={elementLabels[friend.elementAttribute]?.name || ''}
+                                size="small"
+                                sx={{ 
+                                  bgcolor: friend.elementAttribute ? 
+                                    elementLabels[friend.elementAttribute]?.color : 'grey.500',
+                                  color: 'white',
+                                  fontSize: '0.7rem',
+                                  height: 22,
+                                  fontWeight: 'bold',
+                                  px: 0.5,
+                                  mr: 1
+                                }}
+                              />
+                            )}
+                            <Typography 
+                              component="span" 
+                              variant="body2" 
+                              color="text.secondary" 
+                              sx={{ fontSize: '0.8rem' }}
+                            >
+                              {friend.acceptedAt ? new Date(friend.acceptedAt).toLocaleDateString() : ''}に追加
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ ml: 1 }}
+                      />
+                    </ListItem>
+                    <Divider />
+                    <Box sx={{ display: 'flex', p: 0 }}>
+                      <Box
+                        sx={{ 
+                          flex: 1, 
+                          py: 1.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          color: 'text.secondary',
+                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                        }}
+                        onClick={() => handleViewProfile(friend.userId)}
+                      >
+                        <PersonIcon sx={{ mb: 0.5, color: 'info.main' }} />
+                        <Typography variant="caption">プロフィール</Typography>
+                      </Box>
+                      <Divider orientation="vertical" flexItem />
+                      <Box
+                        sx={{ 
+                          flex: 1, 
+                          py: 1.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          color: 'primary.main',
+                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                        }}
+                        onClick={() => handleOpenCompatibilityModal(friend)}
+                      >
+                        <FavoriteIcon sx={{ mb: 0.5 }} />
+                        <Typography variant="caption">相性を見る</Typography>
+                      </Box>
+                      <Divider orientation="vertical" flexItem />
+                      <Box
+                        sx={{ 
+                          flex: 1, 
+                          py: 1.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          color: 'error.main',
+                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                        }}
+                        onClick={() => handleRemoveFriend(friend.friendship)}
+                      >
+                        <DeleteIcon sx={{ mb: 0.5 }} />
+                        <Typography variant="caption">削除</Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                ))}
+              </List>
+            ) : (
+              <Box sx={{ 
+                textAlign: 'center', 
+                py: 10, 
+                px: 2,
+                color: 'text.secondary',
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+              }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>まだ友達がいません</Typography>
+                <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
+                  友達を追加して、相性診断を楽しみましょう
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleOpenSearchModal}
+                  startIcon={<AddIcon />}
+                  sx={{ borderRadius: 5, px: 3 }}
+                >
+                  友達を探す
+                </Button>
+              </Box>
+            )}
+          </Box>
+        )}
+        
+        {/* リクエストタブ */}
+        {activeTab === 1 && (
+          <Box>
+            {/* リクエストタブのサブタブ */}
+            <Box sx={{ 
+              borderBottom: '1px solid #eee',
+              mb: 2,
+              display: 'flex'
+            }}>
+              <Box 
+                sx={{ 
+                  flex: 1,
+                  py: 1.5,
+                  textAlign: 'center',
+                  fontWeight: activeRequestTab === 0 ? 'bold' : 'normal',
+                  color: activeRequestTab === 0 ? 'primary.main' : 'text.secondary',
+                  borderBottom: activeRequestTab === 0 ? '2px solid' : 'none',
+                  borderColor: 'primary.main',
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setActiveRequestTab(0)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography sx={{ fontWeight: 'inherit' }}>受信</Typography>
+                  {requests.length > 0 && (
+                    <Box sx={{ 
+                      ml: 1, 
+                      bgcolor: 'error.main', 
+                      color: 'white', 
+                      borderRadius: '50%', 
+                      width: 18, 
+                      height: 18, 
+                      fontSize: '0.7rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {requests.length}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+              <Box 
+                sx={{ 
+                  flex: 1,
+                  py: 1.5,
+                  textAlign: 'center',
+                  fontWeight: activeRequestTab === 1 ? 'bold' : 'normal',
+                  color: activeRequestTab === 1 ? 'primary.main' : 'text.secondary',
+                  borderBottom: activeRequestTab === 1 ? '2px solid' : 'none',
+                  borderColor: 'primary.main',
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setActiveRequestTab(1)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography sx={{ fontWeight: 'inherit' }}>申請中</Typography>
+                  {sentRequests.length > 0 && (
+                    <Box sx={{ 
+                      ml: 1, 
+                      bgcolor: 'info.main', 
+                      color: 'white', 
+                      borderRadius: '50%', 
+                      width: 18, 
+                      height: 18, 
+                      fontSize: '0.7rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {sentRequests.length}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* 受信したリクエスト表示 */}
+            {activeRequestTab === 0 && (
+              <>
+                {requests.length > 0 ? (
+                  <List sx={{ p: 0, mb: 3 }}>
+                    {requests.map((request) => (
+                      <Paper 
+                        key={request._id} 
+                        elevation={0}
+                        sx={{ 
+                          mb: 2, 
+                          overflow: 'hidden',
+                          borderRadius: 2,
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        <ListItem sx={{ p: 2 }}>
+                          <ListItemAvatar>
+                            <Avatar 
+                              sx={{ 
+                                width: 50,
+                                height: 50,
+                                fontSize: '1.5rem',
+                                bgcolor: request.userId1.elementAttribute ? 
+                                  elementLabels[request.userId1.elementAttribute]?.bg : 'grey.300',
+                                color: request.userId1.elementAttribute ? 
+                                  elementLabels[request.userId1.elementAttribute]?.color : 'text.primary'
+                              }}
+                            >
+                              {request.userId1.displayName ? request.userId1.displayName.charAt(0) : '?'}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText 
+                            primary={request.userId1.displayName}
+                            primaryTypographyProps={{ 
+                              sx: { fontWeight: 'bold', mb: 0.5 } 
+                            }}
+                            secondary={`${new Date(request.createdAt).toLocaleDateString()}にリクエスト`}
+                            secondaryTypographyProps={{
+                              component: 'div',
+                              sx: { fontSize: '0.8rem' }
+                            }}
+                            sx={{ ml: 1 }}
+                          />
+                        </ListItem>
+                        <Divider />
+                        <Box sx={{ display: 'flex', p: 1, gap: 1 }}>
+                          <Button 
+                            fullWidth
+                            color="primary" 
+                            variant="contained"
+                            startIcon={<CheckIcon />}
+                            sx={{ 
+                              py: 1,
+                              borderRadius: 2,
+                            }}
+                            onClick={() => handleAcceptRequest(request._id)}
+                          >
+                            承認
+                          </Button>
+                          <Button 
+                            fullWidth
+                            variant="outlined"
+                            startIcon={<CloseIcon />}
+                            sx={{ 
+                              py: 1,
+                              borderRadius: 2,
+                              color: 'text.secondary',
+                              borderColor: 'divider'
+                            }}
+                            onClick={() => handleRejectRequest(request._id)}
+                          >
+                            拒否
+                          </Button>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 10, 
+                    px: 2,
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      受信したリクエストはありません
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
+                      他のユーザーからの友達リクエストが届くとここに表示されます
+                    </Typography>
+                  </Box>
+                )}
+              </>
+            )}
+            
+            {/* 送信したリクエスト表示 */}
+            {activeRequestTab === 1 && (
+              <>
+                {sentRequests.length > 0 ? (
+                  <List sx={{ p: 0 }}>
+                    {sentRequests.map((request) => (
+                      <Paper 
+                        key={request._id} 
+                        elevation={0}
+                        sx={{ 
+                          mb: 2, 
+                          overflow: 'hidden',
+                          borderRadius: 2,
+                          bgcolor: 'primary.light',
+                          opacity: 0.9,
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        <ListItem sx={{ p: 2 }}>
+                          <ListItemAvatar>
+                            <Avatar 
+                              sx={{ 
+                                width: 50,
+                                height: 50,
+                                fontSize: '1.5rem',
+                                bgcolor: 'white',
+                                color: request.userId2.elementAttribute ? 
+                                  elementLabels[request.userId2.elementAttribute]?.color : 'primary.main'
+                              }}
+                            >
+                              {request.userId2.displayName ? request.userId2.displayName.charAt(0) : '?'}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText 
+                            primary={request.userId2.displayName}
+                            primaryTypographyProps={{ 
+                              sx: { fontWeight: 'bold', mb: 0.5, color: 'white' } 
+                            }}
+                            secondary="承認待ち"
+                            secondaryTypographyProps={{
+                              sx: { 
+                                color: 'white', 
+                                opacity: 0.9, 
+                                fontSize: '0.8rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                mt: 0.5,
+                                '&::before': {
+                                  content: '""',
+                                  display: 'inline-block',
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  bgcolor: 'white',
+                                  mr: 1
+                                }
+                              }
+                            }}
+                            sx={{ ml: 1 }}
+                          />
+                        </ListItem>
+                      </Paper>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 10, 
+                    px: 2,
+                    color: 'text.secondary',
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      申請中のリクエストはありません
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
+                      友達申請を送信するとここに表示されます
+                    </Typography>
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={handleOpenSearchModal}
+                      startIcon={<AddIcon />}
+                      sx={{ borderRadius: 5, px: 3 }}
+                    >
+                      友達を探す
+                    </Button>
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+        )}
+        
+        {/* 友達を探すモーダル */}
+        <Modal
+          open={showSearchModal}
+          onClose={() => setShowSearchModal(false)}
+          aria-labelledby="search-modal-title"
+        >
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '95%', sm: 500 },
+            bgcolor: 'background.paper',
+            borderRadius: 4,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            p: 3
+          }}>
+            <Typography 
+              id="search-modal-title" 
+              variant="h6" 
+              component="h2" 
+              sx={{ 
+                mb: 3, 
+                fontWeight: 'bold',
+                color: 'primary.dark'
+              }}
+            >
+              友達を探す
+            </Typography>
+            
+            <Box sx={{ display: 'flex', mb: 3 }}>
+              <TextField
+                autoFocus
+                placeholder="ユーザー名またはメールアドレス"
+                variant="outlined"
+                fullWidth
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                sx={{ 
+                  mr: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
+              />
+              <Button 
+                variant="contained" 
+                onClick={handleSearch}
+                disabled={searchLoading || !searchQuery.trim()}
+                sx={{ 
+                  minWidth: 50,
+                  borderRadius: 2
+                }}
+              >
+                {searchLoading ? <CircularProgress size={24} /> : <SearchIcon />}
+              </Button>
+            </Box>
+            
+            {showSearchResults && (
+              <Box 
+                sx={{ 
+                  maxHeight: 300, 
+                  overflow: 'auto', 
+                  mb: 3,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                {searchResults.length > 0 ? (
+                  <List>
+                    {searchResults.map((user) => (
+                      <ListItem
+                        key={user.id}
+                        sx={{
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          '&:last-child': {
+                            borderBottom: 'none'
+                          }
+                        }}
+                        secondaryAction={
+                          /* 友達状態に応じてボタンの表示を変更 */
+                          user.friendshipStatus === 'none' ? (
+                            // 未申請状態
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() => {
+                                console.log('送信先ユーザーID:', user.id, user._id);
+                                handleSendRequest(user.id || user._id);
+                              }}
+                              sx={{ 
+                                borderRadius: 4,
+                                px: 2
+                              }}
+                            >
+                              友達申請
+                            </Button>
+                          ) : user.friendshipStatus === 'pending' ? (
+                            // 申請済み状態
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              size="small"
+                              disabled
+                              sx={{ 
+                                borderRadius: 4,
+                                px: 2
+                              }}
+                            >
+                              申請済み
+                            </Button>
+                          ) : (
+                            // 既に友達状態
+                            <Button
+                              variant="outlined"
+                              color="success"
+                              size="small"
+                              disabled
+                              sx={{ 
+                                borderRadius: 4,
+                                px: 2
+                              }}
+                            >
+                              友達追加済み
+                            </Button>
+                          )
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: user.elementAttribute ? 
+                                elementLabels[user.elementAttribute]?.bg : 'grey.300',
+                              color: user.elementAttribute ? 
+                                elementLabels[user.elementAttribute]?.color : 'text.primary'
+                            }}
+                          >
+                            {user.displayName ? user.displayName.charAt(0) : '?'}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText 
+                          primary={<Typography sx={{ fontWeight: 'bold' }}>{user.displayName}</Typography>} 
+                          secondary={user.email}
+                          secondaryTypographyProps={{ component: 'div' }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 4, 
+                    color: 'text.secondary'
+                  }}>
+                    <Typography>検索結果がありません</Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      別のユーザー名やメールアドレスで試してみてください
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button 
+                variant="outlined"
+                onClick={() => setShowSearchModal(false)}
+                sx={{ 
+                  borderRadius: 4,
+                  px: 3
+                }}
+              >
+                閉じる
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+        
+        {/* アプリ招待モーダル */}
+        <Modal
+          open={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          aria-labelledby="invite-modal-title"
+        >
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '95%', sm: 500 },
+            bgcolor: 'background.paper',
+            borderRadius: 4,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            p: 3
+          }}>
+            <Typography 
+              id="invite-modal-title" 
+              variant="h6" 
+              component="h2" 
+              sx={{ 
+                mb: 2, 
+                fontWeight: 'bold',
+                color: 'primary.dark'
+              }}
+            >
+              友達をDailyFortuneに招待
+            </Typography>
+            
+            <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+              以下のリンクを共有して、友達をアプリに招待できます。招待された友達はあなたとの相性を確認できます。
+            </Typography>
+            
+            <Box sx={{ 
+              mb: 3, 
+              display: 'flex', 
+              alignItems: 'center', 
+              bgcolor: 'grey.100', 
+              p: 2, 
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+            }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  flex: 1, 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis',
+                  color: 'text.secondary'
+                }}
+              >
+                {inviteLink}
+              </Typography>
+              <IconButton 
+                onClick={handleCopyInviteLink} 
+                color="primary"
+                sx={{
+                  bgcolor: 'primary.light',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'primary.main'
+                  }
+                }}
+              >
+                <ContentCopyIcon />
+              </IconButton>
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button 
+                variant="contained" 
+                onClick={() => setShowInviteModal(false)}
+                sx={{ 
+                  borderRadius: 4,
+                  px: 3
+                }}
+              >
+                閉じる
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+        
+        {/* プロフィール表示モーダル */}
+        {showProfileModal && (
+          <ProfileModal
+            open={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            userId={selectedProfileUserId}
+          />
+        )}
+
+        {/* 相性診断モーダル */}
+        {selectedFriend && (
+          <CompatibilityModal
+            open={showCompatibilityModal}
+            onClose={() => setShowCompatibilityModal(false)}
+            friendId={selectedFriend.userId}
+            friendData={selectedFriend}
+          />
+        )}
+      </Box>
+    </>
+  );
+};
+
+export default FriendList;

@@ -24,6 +24,7 @@ import Fortune from './pages/Fortune'
 import Chat from './pages/Chat'
 import Team from './pages/Team'
 import AisyouPage from './pages/Team/Aisyou'
+import FriendList from './pages/Friend'
 import Unauthorized from './pages/Unauthorized'
 
 // テーマ設定
@@ -151,6 +152,24 @@ function App() {
           navigate('/profile');
         });
         
+        // 友達ルート - どちらの形式でもアクセスできるように両方対応
+        deepLinkHandler.registerRoute('friends', () => {
+          navigate('/friend');  // 単数形のルートに統一
+        });
+        
+        deepLinkHandler.registerRoute('friend', () => {
+          navigate('/friend');
+        });
+        
+        deepLinkHandler.registerRoute('compatibility', (params) => {
+          const friendId = params.get('id');
+          if (friendId) {
+            navigate(`/compatibility/${friendId}`);
+          } else {
+            navigate('/friend');  // /friendsから/friendに修正
+          }
+        });
+        
         console.log('App: ディープリンク処理の初期化完了');
       } catch (error) {
         console.error('App: ディープリンク初期化エラー:', error);
@@ -214,6 +233,18 @@ function App() {
                     <AisyouPage />
                   </RequireSajuProfile>
                 </ProtectedRoute>
+              } />
+              {/* 友達一覧ページ - /friend パスのみに統一 */}
+              <Route path="/friend" element={
+                <ProtectedRoute>
+                  <FriendList />
+                </ProtectedRoute>
+              } />
+              {/* /friends へのアクセスを /friend にリダイレクト */}
+              <Route path="/friends" element={<Navigate to="/friend" replace />} />
+              {/* 相性診断ページ - 友達リストページへリダイレクト */}
+              <Route path="/compatibility/:friendId" element={
+                <Navigate to="/friend" replace />
               } />
               {/* 自分のチームの相性ページへのリダイレクト用ルート */}
               <Route path="/myteam" element={
