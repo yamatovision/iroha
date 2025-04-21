@@ -9,7 +9,13 @@ import { BadRequestError } from '../../utils/error-handler';
 export const getTeamMembers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { teamId } = req.params;
-    const userId = req.user!.id;
+
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    
+    // idが存在する場合はidを、なければ_idを使用
+    const userId = req.user.id || req.user._id;
     
     const members = await teamMemberService.getTeamMembers(teamId, userId);
     
@@ -24,7 +30,7 @@ export const getTeamMembers = async (req: AuthRequest, res: Response, next: Next
         userId: doc._id,
         displayName: doc.displayName || '',
         email: doc.email || '',
-        role: doc.teamRole || '',
+        role: doc.role || '',
         elementAttribute: doc.elementAttribute || '',
         motivation: typeof doc.motivation === 'number' ? doc.motivation : 0,
         leaveRisk: doc.leaveRisk || 'none'
@@ -47,7 +53,11 @@ export const addMember = async (req: AuthRequest, res: Response, next: NextFunct
   try {
     const { teamId } = req.params;
     const { email, role, password, displayName } = req.body;
-    const adminId = req.user!.id;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const adminId = req.user.id || req.user._id;
     
     // 必須パラメータのチェック
     if (!email) {
@@ -57,6 +67,9 @@ export const addMember = async (req: AuthRequest, res: Response, next: NextFunct
     const updatedUser = await teamMemberService.addMember(teamId, adminId, email, role, password, displayName);
     
     if (updatedUser) {
+      // TeamMembershipのroleフィールドを使用
+      const memberRole = updatedUser.role || '';
+      
       res.status(200).json({
         success: true,
         message: 'メンバーが正常に追加されました',
@@ -64,7 +77,7 @@ export const addMember = async (req: AuthRequest, res: Response, next: NextFunct
           userId: updatedUser._id,
           displayName: updatedUser.displayName,
           email: updatedUser.email,
-          role: updatedUser.teamRole,
+          role: memberRole,
           elementAttribute: updatedUser.elementAttribute,
           isNewUser: (updatedUser as any).isNewUser
         }
@@ -87,24 +100,31 @@ export const updateMemberRole = async (req: AuthRequest, res: Response, next: Ne
   try {
     const { teamId, userId: targetUserId } = req.params;
     const { role } = req.body;
-    const adminId = req.user!.id;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const adminId = req.user.id || req.user._id;
     
     // 必須パラメータのチェック
     if (!role) {
       throw new BadRequestError('役割は必須です');
     }
     
-    const updatedUser = await teamMemberService.updateMemberRole(teamId, adminId, targetUserId, role);
+    const result = await teamMemberService.updateMemberRole(teamId, adminId, targetUserId, role);
     
-    if (updatedUser) {
+    if (result && result.user) {
+      // TeamMembershipのroleフィールドを使用
+      const memberRole = result.membership.role || '';
+      
       res.status(200).json({
         success: true,
         message: 'メンバーの役割が正常に更新されました',
         member: {
-          userId: updatedUser._id,
-          displayName: updatedUser.displayName,
-          email: updatedUser.email,
-          role: updatedUser.teamRole
+          userId: result.user._id,
+          displayName: result.user.displayName,
+          email: result.user.email,
+          role: memberRole
         }
       });
     } else {
@@ -124,7 +144,11 @@ export const updateMemberRole = async (req: AuthRequest, res: Response, next: Ne
 export const removeMember = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { teamId, userId: targetUserId } = req.params;
-    const adminId = req.user!.id;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const adminId = req.user.id || req.user._id;
     
     const updatedUser = await teamMemberService.removeMember(teamId, adminId, targetUserId);
     

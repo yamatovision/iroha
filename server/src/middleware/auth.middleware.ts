@@ -3,24 +3,16 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../types/auth';
+
+// AuthRequestをエクスポート
+export { AuthRequest };
 
 // Userモデルに合わせた独自の権限列挙型
 export enum UserRole {
   USER = 'User',
   ADMIN = 'Admin',
   SUPER_ADMIN = 'SuperAdmin'
-}
-
-/**
- * リクエスト型拡張 - ユーザー情報を含める
- */
-export interface AuthRequest extends Request {
-  user?: {
-    id: string; // MongoDB ObjectIDを文字列化した値
-    email: string;
-    role: UserRole;
-    organizationId?: string;
-  };
 }
 
 /**

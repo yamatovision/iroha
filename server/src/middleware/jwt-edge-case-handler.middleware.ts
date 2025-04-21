@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '../services/jwt.service';
 import { User } from '../models/User';
-import { AuthRequest } from './hybrid-auth.middleware';
+import { AuthRequest } from '../types/auth';
 import mongoose from 'mongoose';
 
 /**

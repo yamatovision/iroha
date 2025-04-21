@@ -67,6 +67,8 @@ import usersRoutes from './routes/users.routes';
 import teamRoutes from './routes/team.routes';
 import fortuneRoutes from './routes/fortune.routes';
 import chatRoutes from './routes/chat.routes';
+import friendshipRoutes from './routes/friendship.routes';
+import invitationRoutes from './routes/invitation.routes';
 
 // セキュリティミドルウェアのインポート
 import {
@@ -130,8 +132,9 @@ app.use(`${API_BASE_PATH}/auth`, authLimiter, refreshTokenReuseDetector, authRou
 // JWT認証専用のルーターを設定
 app.use(`${API_BASE_PATH}/jwt-auth`, authLimiter, refreshTokenReuseDetector, jwtAuthRoutes);
 
-// JWT のエッジケースハンドラーを保護されたルートに適用
-app.use(`${API_BASE_PATH}`, jwtEdgeCaseHandler);
+// JWT のエッジケースハンドラーを保護されたルートに適用 
+// Express Routerではなくミドルウェア関数として適用
+app.use(`${API_BASE_PATH}`, (req, res, next) => jwtEdgeCaseHandler(req, res, next));
 
 // 管理者ルーターを設定
 app.use(`${API_BASE_PATH}/admin`, adminRoutes);
@@ -152,6 +155,12 @@ app.use(`${API_BASE_PATH}/fortune`, fortuneRoutes);
 
 // チャットルーターを設定
 app.use(`${API_BASE_PATH}/chat`, chatRoutes);
+
+// 友達関係ルーターを設定
+app.use(`${API_BASE_PATH}/friends`, friendshipRoutes);
+
+// 招待ルーターを設定
+app.use(`${API_BASE_PATH}/invitations`, invitationRoutes);
 
 // 公開エンドポイントルーターを設定
 app.use(`${API_BASE_PATH}/public`, publicEndpointsRoutes);

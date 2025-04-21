@@ -2,15 +2,7 @@ import { Request, Response } from 'express';
 // 最初にChatModeをインポート
 import { ChatMode, ChatMessageRequest, ChatModeRequest } from '../types';
 import { chatService } from '../services/chat/chat.service';
-
-// 拡張されたRequestの型定義
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    [key: string]: any;
-  };
-}
+import { AuthRequest } from '../types/auth';
 
 // ChatModeの実装が正しくインポートされていることを確認（実際の列挙値を出力）
 const CHAT_MODES = Object.values(ChatMode || {});

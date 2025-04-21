@@ -2,24 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { User, IUserDocument } from '../models/User';
 import { JwtService } from '../services/jwt.service';
 import mongoose from 'mongoose';
+import { AuthRequest } from '../types/auth';
+
+// AuthRequestをエクスポート
+export { AuthRequest };
 
 // Userモデルに合わせた独自の権限列挙型
 export enum UserRole {
   USER = 'User',
   ADMIN = 'Admin',
   SUPER_ADMIN = 'SuperAdmin'
-}
-
-/**
- * リクエスト型拡張 - ユーザー情報を含める
- */
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: UserRole;
-    organizationId?: string;
-  };
 }
 
 /**
@@ -112,7 +104,8 @@ export const hybridAuthenticate = async (
     
     // ユーザー情報をリクエストに添付
     req.user = {
-      id: user._id ? user._id.toString() : userId,
+      _id: user._id ? user._id.toString() : userId,
+      id: user._id ? user._id.toString() : userId, // 互換性のために両方設定
       email: user.email,
       role: user.role as UserRole,
       organizationId: user.organizationId ? user.organizationId.toString() : undefined
