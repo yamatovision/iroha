@@ -163,6 +163,38 @@ export const CHAT = {
   SET_CHAT_MODE: `${API_BASE_PATH}/chat/mode`,
 };
 
+// ========== 友達関連 ==========
+export const FRIENDS = {
+  SEARCH: `${API_BASE_PATH}/friends/search`, // 友達検索
+  GET_ALL: `${API_BASE_PATH}/friends`, // 友達一覧取得
+  GET_REQUESTS: `${API_BASE_PATH}/friends/requests`, // 受信した友達リクエスト
+  GET_SENT_REQUESTS: `${API_BASE_PATH}/friends/sent-requests`, // 送信した友達リクエスト
+  SEND_REQUEST: `${API_BASE_PATH}/friends/request`, // 友達リクエスト送信
+  ACCEPT_REQUEST: (id: string) => `${API_BASE_PATH}/friends/requests/${id}/accept`, // リクエスト承認
+  REJECT_REQUEST: (id: string) => `${API_BASE_PATH}/friends/requests/${id}/reject`, // リクエスト拒否
+  REMOVE: (id: string) => `${API_BASE_PATH}/friends/${id}`, // 友達関係削除
+  COMPATIBILITY: (id: string) => `${API_BASE_PATH}/friends/${id}/compatibility`, // 相性スコア
+  GET_PROFILE: (id: string) => `${API_BASE_PATH}/friends/${id}/profile`, // 友達プロフィール取得
+};
+
+// ========== 招待関連 ==========
+export const INVITATION = {
+  // 友達招待作成
+  CREATE_FRIEND: `${API_BASE_PATH}/invitations/friend`,
+  // チーム招待作成
+  CREATE_TEAM: `${API_BASE_PATH}/invitations/team`,
+  // 招待情報取得
+  GET_BY_CODE: (code: string) => `${API_BASE_PATH}/invitations/${code}`,
+  // 招待承認
+  ACCEPT: (code: string) => `${API_BASE_PATH}/invitations/${code}/accept`,
+  // 招待拒否
+  REJECT: (code: string) => `${API_BASE_PATH}/invitations/${code}/reject`,
+  // 招待取り消し
+  CANCEL: (id: string) => `${API_BASE_PATH}/invitations/${id}`,
+  // 保留中の招待一覧取得
+  GET_USER_INVITATIONS: `${API_BASE_PATH}/invitations`
+};
+
 // ========== 管理者専用 ==========
 export const ADMIN = {
   DASHBOARD: `${API_BASE_PATH}/admin/dashboard`,
@@ -620,6 +652,46 @@ export interface IChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+}
+
+// 友達関係
+export interface IFriendship {
+  id: string;
+  userId1: string;
+  userId2: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  requesterId: string;
+  compatibilityScore?: number;
+  acceptedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// チームメンバーシップ（改良版）
+export interface ITeamMembership {
+  id: string;
+  userId: string;
+  teamId: string;
+  role: string;
+  isAdmin: boolean;
+  joinedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 招待リンク
+export interface IInvitationLink {
+  id: string;
+  code: string;
+  teamId?: string;
+  inviterId: string;
+  email: string;
+  type: 'team' | 'friend';
+  role?: string;
+  status: 'pending' | 'accepted' | 'expired';
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // システム設定

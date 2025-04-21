@@ -5,11 +5,12 @@ import { AuthRequest } from '../../types/auth';
 
 /**
  * 友達検索API
- * @route GET /api/v1/friends/search
+ * @route GET /api/v1/friends/search?q={searchQuery}
+ * @param {string} q - 検索クエリ（名前やメールアドレス）
  */
 export const searchUsers = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { query } = req.query;
+    const { q: query } = req.query;
     
     if (!req.user) {
       return res.status(401).json({ message: '認証されていません' });
@@ -62,12 +63,17 @@ export const getFriendRequests = async (req: AuthRequest, res: Response, next: N
     }
     const userId = req.user._id;
     
+    console.log(`[DEBUG] 友達リクエスト取得: ユーザーID=${userId}`);
     const requests = await friendshipService.getFriendRequests(userId);
+    console.log(`[DEBUG] 友達リクエスト件数: ${requests.length}`);
+    console.log('[DEBUG] 友達リクエスト一覧:', requests);
+    
     res.status(200).json({
       success: true,
       data: requests
     });
   } catch (error) {
+    console.error('[ERROR] 友達リクエスト取得エラー:', error);
     next(error);
   }
 };
@@ -96,10 +102,12 @@ export const getSentRequests = async (req: AuthRequest, res: Response, next: Nex
 /**
  * 友達リクエスト送信API
  * @route POST /api/v1/friends/request
+ * @param {string} userId - 送信先ユーザーID（リクエストBody内）
  */
 export const sendFriendRequest = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { targetUserId } = req.body;
+    // 両方のパラメータ形式に対応
+    const { targetUserId = req.body.userId } = req.body;
     
     if (!req.user) {
       return res.status(401).json({ message: '認証されていません' });
@@ -210,6 +218,29 @@ export const getCompatibility = async (req: AuthRequest, res: Response, next: Ne
     res.status(200).json({
       success: true,
       data: compatibilityData
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 友達プロフィール取得API
+ * @route GET /api/v1/friends/:id/profile
+ */
+export const getFriendProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const userId = req.user._id;
+
+    const profileData = await friendshipService.getFriendProfile(userId, id);
+    res.status(200).json({
+      success: true,
+      data: profileData
     });
   } catch (error) {
     next(error);
