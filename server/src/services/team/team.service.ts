@@ -647,3 +647,41 @@ export const getUserTeamsWithMemberships = async (userId: string | mongoose.Type
     };
   });
 };
+
+/**
+ * ユーザーのデフォルトチームIDを取得（最新でジョインしたチーム）
+ * @param userId ユーザーID
+ * @returns チームID（なければnull）
+ */
+export const getDefaultTeamId = async (userId: string | mongoose.Types.ObjectId): Promise<mongoose.Types.ObjectId | null> => {
+  // TeamMembershipからユーザーのデフォルトチームを取得
+  const membership = await TeamMembership.findOne({ 
+    userId 
+  }).sort({ joinedAt: -1 });
+  
+  if (membership?.teamId) {
+    return membership.teamId;
+  }
+  
+  // 後方互換性のためにUser.teamIdもチェック
+  const user = await User.findById(userId);
+  return user?.teamId || null;
+};
+
+/**
+ * ユーザーのチーム内役割を取得する
+ * @param userId ユーザーID 
+ * @param teamId チームID
+ * @returns チーム内役割
+ */
+export const getUserTeamRole = async (
+  userId: string | mongoose.Types.ObjectId,
+  teamId: string | mongoose.Types.ObjectId
+): Promise<string> => {
+  const membership = await TeamMembership.findOne({
+    userId,
+    teamId
+  });
+  
+  return membership?.role || '';
+};

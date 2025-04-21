@@ -4,7 +4,9 @@ import { DayPillar } from '../models/DayPillar';
 import { User } from '../models/User';
 import { Team } from '../models/Team';
 import { TeamGoal } from '../models/TeamGoal';
+import { TeamMembership } from '../models/TeamMembership';
 import { FortuneScoreResult } from '../types';
+import { getDefaultTeamId, getUserTeamRole } from './team-membership-helpers';
 
 /**
  * 運勢サービス
@@ -51,8 +53,19 @@ export class FortuneService {
       
       // チームIDが指定されていない場合は、ユーザーのデフォルトチームを使用
       let targetTeamId = teamId;
-      if (!targetTeamId && user.teamId) {
-        targetTeamId = user.teamId.toString();
+      if (!targetTeamId) {
+        // TeamMembershipからユーザーの所属チームを取得
+        const membership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+        
+        if (membership) {
+          targetTeamId = membership.teamId.toString();
+        } else {
+          // 後方互換性のためにgetDefaultTeamIdを使用
+          const defaultTeamId = await getDefaultTeamId(user._id);
+          if (defaultTeamId) {
+            targetTeamId = defaultTeamId.toString();
+          }
+        }
       }
       
       // チームIDがあればチーム目標とランキングを取得
@@ -873,9 +886,19 @@ export class FortuneService {
       existingFortune.luckyItems = luckyItems;
       
       // チーム情報の更新
-      if (user.teamId) {
-        existingFortune.teamId = user.teamId;
-        existingFortune.teamGoalId = await this.getLatestTeamGoalId(user.teamId);
+      // TeamMembershipからユーザーのデフォルトチームを取得
+      const membership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+      
+      if (membership) {
+        existingFortune.teamId = membership.teamId;
+        existingFortune.teamGoalId = await this.getLatestTeamGoalId(membership.teamId);
+      } else {
+        // 後方互換性のためにgetDefaultTeamIdを使用
+        const defaultTeamId = await getDefaultTeamId(user._id);
+        if (defaultTeamId) {
+          existingFortune.teamId = defaultTeamId;
+          existingFortune.teamGoalId = await this.getLatestTeamGoalId(defaultTeamId);
+        }
       }
       
       await existingFortune.save();
@@ -891,10 +914,23 @@ export class FortuneService {
         dayPillarId: dayPillar._id,
         fortuneScore: fortuneScoreResult.score,
         advice: advice,
-        luckyItems: luckyItems,
-        teamId: user.teamId, // ユーザーのチームID
-        teamGoalId: user.teamId ? await this.getLatestTeamGoalId(user.teamId) : undefined // 最新のチーム目標ID
+        luckyItems: luckyItems
       });
+      
+      // TeamMembershipからユーザーのデフォルトチームを取得
+      const teamMembership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+      
+      if (teamMembership) {
+        fortune.teamId = teamMembership.teamId;
+        fortune.teamGoalId = await this.getLatestTeamGoalId(teamMembership.teamId);
+      } else {
+        // 後方互換性のためにgetDefaultTeamIdを使用
+        const defaultTeamId = await getDefaultTeamId(user._id);
+        if (defaultTeamId) {
+          fortune.teamId = defaultTeamId;
+          fortune.teamGoalId = await this.getLatestTeamGoalId(defaultTeamId);
+        }
+      }
 
       await fortune.save();
       console.log(`🔧 新規運勢データ作成完了: ID=${fortune._id}, 日付=${fortune.date}`);
@@ -1130,8 +1166,18 @@ export class FortuneService {
       
       // チーム目標情報の取得
       let teamGoal = null;
-      if (user.teamId) {
-        teamGoal = await TeamGoal.findOne({ teamId: user.teamId }).lean();
+      
+      // TeamMembershipからユーザーのデフォルトチームを取得
+      const teamMembership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+      
+      if (teamMembership) {
+        teamGoal = await TeamGoal.findOne({ teamId: teamMembership.teamId }).lean();
+      } else {
+        // 後方互換性のためにgetDefaultTeamIdを使用
+        const defaultTeamId = await getDefaultTeamId(user._id);
+        if (defaultTeamId) {
+          teamGoal = await TeamGoal.findOne({ teamId: defaultTeamId }).lean();
+        }
       }
       
       // 四柱推命情報からプロンプトを作成
@@ -1244,8 +1290,18 @@ export class FortuneService {
 
     // チーム目標情報の取得
     let teamGoal = null;
-    if (user.teamId) {
-      teamGoal = await TeamGoal.findOne({ teamId: user.teamId }).lean();
+    
+    // TeamMembershipからユーザーのデフォルトチームを取得
+    const teamMembership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+    
+    if (teamMembership) {
+      teamGoal = await TeamGoal.findOne({ teamId: teamMembership.teamId }).lean();
+    } else {
+      // 後方互換性のためにgetDefaultTeamIdを使用
+      const defaultTeamId = await getDefaultTeamId(user._id);
+      if (defaultTeamId) {
+        teamGoal = await TeamGoal.findOne({ teamId: defaultTeamId }).lean();
+      }
     }
 
     // 運勢の種類を決定
