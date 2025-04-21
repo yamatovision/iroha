@@ -17,11 +17,17 @@ import {
   ContentCopy as ContentCopyIcon,
   Person as PersonIcon,
   Favorite as FavoriteIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Park as ParkIcon,
+  LocalFireDepartment as LocalFireDepartmentIcon,
+  Landscape as LandscapeIcon,
+  Star as StarIcon,
+  WaterDrop as WaterDropIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import friendService from '../../services/friend.service';
 import apiService from '../../services/api.service';
+import sajuProfileService from '../../services/saju-profile.service';
 import Layout from '../../components/layout/Layout';
 
 /**
@@ -39,7 +45,6 @@ const FriendList: React.FC = () => {
   
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const [activeRequestTab, setActiveRequestTab] = useState(0); // 0: 受信, 1: 送信
   const [friends, setFriends] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [sentRequests, setSentRequests] = useState<any[]>([]);
@@ -65,11 +70,11 @@ const FriendList: React.FC = () => {
 
   // 五行属性の色とラベルマッピング
   const elementLabels: Record<string, { name: string, bg: string, color: string }> = {
-    water: { name: '水', bg: 'var(--element-water-bg)', color: 'var(--element-water-dark)' },
-    wood: { name: '木', bg: 'var(--element-wood-bg)', color: 'var(--element-wood-dark)' },
-    fire: { name: '火', bg: 'var(--element-fire-bg)', color: 'var(--element-fire-dark)' },
-    earth: { name: '土', bg: 'var(--element-earth-bg)', color: 'var(--element-earth-dark)' },
-    metal: { name: '金', bg: 'var(--element-metal-bg)', color: 'var(--element-metal-dark)' }
+    water: { name: '水', bg: 'var(--water-bg, #e6e6e6)', color: 'var(--water-color, #000000)' },
+    wood: { name: '木', bg: 'var(--wood-bg, #e6f2ff)', color: 'var(--wood-color, #0000ff)' },
+    fire: { name: '火', bg: 'var(--fire-bg, #ffe6e6)', color: 'var(--fire-color, #ff0000)' },
+    earth: { name: '土', bg: 'var(--earth-bg, #ffffcc)', color: 'var(--earth-color, #ffff00)' },
+    metal: { name: '金', bg: 'var(--metal-bg, #f9f9f9)', color: 'var(--metal-color, #ffffff)' }
   };
 
   // 初期データ読み込み
@@ -186,11 +191,10 @@ const FriendList: React.FC = () => {
       // 3秒後にメッセージを消去
       setTimeout(() => setSuccessMessage(null), 3000);
       
-      // リクエストタブの申請中タブに切り替える
+      // リクエストタブに切り替える
       if (activeTab !== 1) {
         setActiveTab(1);
       }
-      setActiveRequestTab(1); // 申請中タブに切り替え
     } catch (err: any) {
       console.error('友達申請の送信に失敗しました:', err);
       
@@ -207,11 +211,10 @@ const FriendList: React.FC = () => {
         // モーダルを閉じる
         setShowSearchModal(false);
         
-        // リクエストタブの申請中タブに自動的に切り替え
+        // リクエストタブに自動的に切り替え
         if (activeTab !== 1) {
           setActiveTab(1);
         }
-        setActiveRequestTab(1); // 申請中タブに切り替え
       } else {
         setError('友達申請の送信に失敗しました。');
       }
@@ -412,41 +415,6 @@ const FriendList: React.FC = () => {
           </Paper>
         )}
         
-        {/* 検索バー */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 2, 
-          p: 1.5, 
-          border: 'none',
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
-          <TextField
-            variant="standard"
-            placeholder="友達を検索"
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              disableUnderline: true
-            }}
-            sx={{ flexGrow: 1 }}
-          />
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleSearch}
-            size="small"
-            sx={{ minWidth: 40, p: 1 }}
-          >
-            <SearchIcon />
-          </Button>
-        </Box>
-        
         {/* アクションバー */}
         <Box sx={{ 
           display: 'flex', 
@@ -548,7 +516,7 @@ const FriendList: React.FC = () => {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography sx={{ fontWeight: 'inherit' }}>リクエスト</Typography>
-              {requests.length > 0 && (
+              {(requests.length > 0 || sentRequests.length > 0) && (
                 <Box sx={{ 
                   ml: 1, 
                   bgcolor: 'error.main', 
@@ -561,7 +529,7 @@ const FriendList: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  {requests.length}
+                  {requests.length + sentRequests.length}
                 </Box>
               )}
             </Box>
@@ -592,9 +560,9 @@ const FriendList: React.FC = () => {
                             height: 50,
                             fontSize: '1.5rem',
                             bgcolor: friend.elementAttribute ? 
-                              elementLabels[friend.elementAttribute]?.bg : 'grey.300',
+                              sajuProfileService.getElementBackground(friend.elementAttribute) : 'grey.300',
                             color: friend.elementAttribute ? 
-                              elementLabels[friend.elementAttribute]?.color : 'text.primary'
+                              sajuProfileService.getElementColor(friend.elementAttribute) : 'text.primary'
                           }}
                         >
                           {friend.displayName ? friend.displayName.charAt(0) : '?'}
@@ -611,20 +579,25 @@ const FriendList: React.FC = () => {
                         secondary={
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             {friend.elementAttribute && (
-                              <Chip 
-                                label={elementLabels[friend.elementAttribute]?.name || ''}
-                                size="small"
-                                sx={{ 
-                                  bgcolor: friend.elementAttribute ? 
-                                    elementLabels[friend.elementAttribute]?.color : 'grey.500',
-                                  color: 'white',
-                                  fontSize: '0.7rem',
-                                  height: 22,
-                                  fontWeight: 'bold',
-                                  px: 0.5,
-                                  mr: 1
-                                }}
-                              />
+                              <Box component="span" sx={{ 
+                                px: 1.5, 
+                                py: 0.5, 
+                                borderRadius: 10,
+                                bgcolor: friend.elementAttribute ? sajuProfileService.getElementBackground(friend.elementAttribute) : '#000000',
+                                color: '#000000',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                mr: 1,
+                                display: 'inline-flex',
+                                alignItems: 'center'
+                              }}>
+                                {friend.elementAttribute === 'wood' && <ParkIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                                {friend.elementAttribute === 'fire' && <LocalFireDepartmentIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                                {friend.elementAttribute === 'earth' && <LandscapeIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                                {friend.elementAttribute === 'metal' && <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                                {friend.elementAttribute === 'water' && <WaterDropIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', verticalAlign: 'text-top' }} />}
+                                {sajuProfileService.translateElementToJapanese(friend.elementAttribute)}
+                              </Box>
                             )}
                             <Typography 
                               component="span" 
@@ -726,86 +699,14 @@ const FriendList: React.FC = () => {
         {/* リクエストタブ */}
         {activeTab === 1 && (
           <Box>
-            {/* リクエストタブのサブタブ */}
-            <Box sx={{ 
-              borderBottom: '1px solid #eee',
-              mb: 2,
-              display: 'flex'
-            }}>
-              <Box 
-                sx={{ 
-                  flex: 1,
-                  py: 1.5,
-                  textAlign: 'center',
-                  fontWeight: activeRequestTab === 0 ? 'bold' : 'normal',
-                  color: activeRequestTab === 0 ? 'primary.main' : 'text.secondary',
-                  borderBottom: activeRequestTab === 0 ? '2px solid' : 'none',
-                  borderColor: 'primary.main',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveRequestTab(0)}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ fontWeight: 'inherit' }}>受信</Typography>
-                  {requests.length > 0 && (
-                    <Box sx={{ 
-                      ml: 1, 
-                      bgcolor: 'error.main', 
-                      color: 'white', 
-                      borderRadius: '50%', 
-                      width: 18, 
-                      height: 18, 
-                      fontSize: '0.7rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {requests.length}
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-              <Box 
-                sx={{ 
-                  flex: 1,
-                  py: 1.5,
-                  textAlign: 'center',
-                  fontWeight: activeRequestTab === 1 ? 'bold' : 'normal',
-                  color: activeRequestTab === 1 ? 'primary.main' : 'text.secondary',
-                  borderBottom: activeRequestTab === 1 ? '2px solid' : 'none',
-                  borderColor: 'primary.main',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setActiveRequestTab(1)}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ fontWeight: 'inherit' }}>申請中</Typography>
-                  {sentRequests.length > 0 && (
-                    <Box sx={{ 
-                      ml: 1, 
-                      bgcolor: 'info.main', 
-                      color: 'white', 
-                      borderRadius: '50%', 
-                      width: 18, 
-                      height: 18, 
-                      fontSize: '0.7rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {sentRequests.length}
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* 受信したリクエスト表示 */}
-            {activeRequestTab === 0 && (
-              <>
-                {requests.length > 0 ? (
+            {/* 統合されたリクエスト表示 */}
+            <Box>
+              {/* 受信したリクエスト表示 */}
+              {requests.length > 0 && (
+                <>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', pl: 1, color: 'text.secondary' }}>
+                    受信リクエスト
+                  </Typography>
                   <List sx={{ p: 0, mb: 3 }}>
                     {requests.map((request) => (
                       <Paper 
@@ -826,9 +727,9 @@ const FriendList: React.FC = () => {
                                 height: 50,
                                 fontSize: '1.5rem',
                                 bgcolor: request.userId1.elementAttribute ? 
-                                  elementLabels[request.userId1.elementAttribute]?.bg : 'grey.300',
+                                  sajuProfileService.getElementBackground(request.userId1.elementAttribute) : 'grey.300',
                                 color: request.userId1.elementAttribute ? 
-                                  elementLabels[request.userId1.elementAttribute]?.color : 'text.primary'
+                                  sajuProfileService.getElementColor(request.userId1.elementAttribute) : 'text.primary'
                               }}
                             >
                               {request.userId1.displayName ? request.userId1.displayName.charAt(0) : '?'}
@@ -880,32 +781,16 @@ const FriendList: React.FC = () => {
                       </Paper>
                     ))}
                   </List>
-                ) : (
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    py: 10, 
-                    px: 2,
-                    color: 'text.secondary',
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                  }}>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                      受信したリクエストはありません
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
-                      他のユーザーからの友達リクエストが届くとここに表示されます
-                    </Typography>
-                  </Box>
-                )}
-              </>
-            )}
-            
-            {/* 送信したリクエスト表示 */}
-            {activeRequestTab === 1 && (
-              <>
-                {sentRequests.length > 0 ? (
-                  <List sx={{ p: 0 }}>
+                </>
+              )}
+              
+              {/* 送信したリクエスト表示 */}
+              {sentRequests.length > 0 && (
+                <>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', pl: 1, color: 'text.secondary' }}>
+                    申請中
+                  </Typography>
+                  <List sx={{ p: 0, mb: 3 }}>
                     {sentRequests.map((request) => (
                       <Paper 
                         key={request._id} 
@@ -928,7 +813,7 @@ const FriendList: React.FC = () => {
                                 fontSize: '1.5rem',
                                 bgcolor: 'white',
                                 color: request.userId2.elementAttribute ? 
-                                  elementLabels[request.userId2.elementAttribute]?.color : 'primary.main'
+                                  sajuProfileService.getElementColor(request.userId2.elementAttribute) : 'primary.main'
                               }}
                             >
                               {request.userId2.displayName ? request.userId2.displayName.charAt(0) : '?'}
@@ -965,35 +850,38 @@ const FriendList: React.FC = () => {
                       </Paper>
                     ))}
                   </List>
-                ) : (
-                  <Box sx={{ 
-                    textAlign: 'center', 
-                    py: 10, 
-                    px: 2,
-                    color: 'text.secondary',
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                  }}>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                      申請中のリクエストはありません
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
-                      友達申請を送信するとここに表示されます
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={handleOpenSearchModal}
-                      startIcon={<AddIcon />}
-                      sx={{ borderRadius: 5, px: 3 }}
-                    >
-                      友達を探す
-                    </Button>
-                  </Box>
-                )}
-              </>
-            )}
+                </>
+              )}
+              
+              {/* リクエストがない場合 */}
+              {requests.length === 0 && sentRequests.length === 0 && (
+                <Box sx={{ 
+                  textAlign: 'center', 
+                  py: 10, 
+                  px: 2,
+                  color: 'text.secondary',
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    リクエストはありません
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ mb: 3, fontSize: '0.9rem' }}>
+                    友達申請を送信したり、他のユーザーからリクエストが届くとここに表示されます
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleOpenSearchModal}
+                    startIcon={<AddIcon />}
+                    sx={{ borderRadius: 5, px: 3 }}
+                  >
+                    友達を探す
+                  </Button>
+                </Box>
+              )}
+            </Box>
           </Box>
         )}
         
@@ -1134,9 +1022,9 @@ const FriendList: React.FC = () => {
                           <Avatar 
                             sx={{ 
                               bgcolor: user.elementAttribute ? 
-                                elementLabels[user.elementAttribute]?.bg : 'grey.300',
+                                sajuProfileService.getElementBackground(user.elementAttribute) : 'grey.300',
                               color: user.elementAttribute ? 
-                                elementLabels[user.elementAttribute]?.color : 'text.primary'
+                                sajuProfileService.getElementColor(user.elementAttribute) : 'text.primary'
                             }}
                           >
                             {user.displayName ? user.displayName.charAt(0) : '?'}

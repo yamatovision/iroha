@@ -45,21 +45,20 @@
             padding: 16px;
         }
         
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-        
+        /* 新しい検索バー */
         .search-bar {
             display: flex;
             align-items: center;
             background-color: #fff;
-            border-radius: 8px;
+            border-radius: 24px;
             padding: 8px 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+        }
+        
+        .search-bar:focus-within {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         }
         
         .search-input {
@@ -68,65 +67,45 @@
             padding: 8px;
             font-size: 16px;
             outline: none;
+            background-color: transparent;
         }
         
-        .search-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px;
-            cursor: pointer;
+        /* 「アプリへ招待」ボタン */
+        .invite-button {
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        .action-bar {
-            display: flex;
-            gap: 12px;
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-light);
+            border-radius: 24px;
+            padding: 8px 16px;
             margin-bottom: 24px;
-        }
-        
-        .action-card {
-            flex: 1;
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-            transition: background-color 0.2s;
-        }
-        
-        .action-card:hover {
-            background-color: #f9f9f9;
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
-            color: white;
-            background-color: var(--primary-light);
-        }
-        
-        .action-text {
-            color: #666;
             font-size: 14px;
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         
+        .invite-button:hover {
+            background-color: #f9f5ff;
+        }
+        
+        .invite-button .material-icons {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+        
+        /* 洗練されたタブ */
         .tabs {
             display: flex;
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 4px;
+            position: relative;
         }
         
         .tab {
@@ -136,61 +115,113 @@
             color: #757575;
             cursor: pointer;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            z-index: 1;
+            transition: color 0.3s;
+            font-weight: 500;
+            border-radius: 4px;
         }
         
         .tab.active {
             color: var(--primary-color);
-            font-weight: bold;
-            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .tab-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background-color: #f5edff;
+            border-radius: 4px;
+            transition: transform 0.3s;
+            z-index: 0;
+        }
+        
+        .tab-indicator.requests {
+            transform: translateX(calc(100% - 4px));
         }
         
         .badge {
-            margin-left: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background-color: var(--error-color);
             color: white;
             width: 18px;
             height: 18px;
             border-radius: 50%;
             font-size: 12px;
+            margin-left: 4px;
+        }
+        
+        /* リクエストセクション */
+        .request-section {
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        
+        .section-heading {
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
             display: flex;
             align-items: center;
-            justify-content: center;
         }
         
-        .friend-card {
+        /* カード共通スタイル */
+        .card {
             background-color: #fff;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 16px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        /* 友達カード */
         .friend-info {
             display: flex;
             padding: 16px;
         }
         
         .friend-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
             margin-right: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             color: #333;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover .friend-avatar {
+            transform: scale(1.05);
         }
         
         .friend-details {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         .friend-name {
-            font-weight: bold;
+            font-weight: 500;
             margin-bottom: 4px;
             font-size: 16px;
         }
@@ -206,7 +237,7 @@
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 500;
             color: white;
             margin-right: 8px;
             display: inline-block;
@@ -234,7 +265,7 @@
         
         .friend-actions {
             display: flex;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #f5f5f5;
         }
         
         .action-btn {
@@ -245,7 +276,7 @@
             padding: 12px;
             cursor: pointer;
             color: #666;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, color 0.2s;
         }
         
         .action-btn:hover {
@@ -255,6 +286,11 @@
         .action-btn .material-icons {
             margin-bottom: 4px;
             font-size: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .action-btn:hover .material-icons {
+            transform: scale(1.1);
         }
         
         .action-label {
@@ -275,149 +311,151 @@
         
         .divider {
             width: 1px;
-            background-color: #eee;
+            background-color: #f5f5f5;
         }
         
+        /* リクエストカード */
+        .request-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .request-actions {
+            display: flex;
+            padding: 8px 16px 16px;
+            gap: 8px;
+        }
+        
+        .btn {
+            border: none;
+            border-radius: 20px;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .btn .material-icons {
+            font-size: 18px;
+            margin-right: 4px;
+        }
+        
+        .primary-btn {
+            flex: 1;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(103, 58, 183, 0.3);
+        }
+        
+        .primary-btn:hover {
+            background-color: #5e35b1;
+            box-shadow: 0 3px 6px rgba(103, 58, 183, 0.4);
+        }
+        
+        .secondary-btn {
+            flex: 1;
+            background-color: #fff;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* 申請中カード */
+        .pending-card {
+            background-color: #f5edff;
+            border: 1px solid #e9ddf9;
+        }
+        
+        .pending-avatar {
+            background-color: white !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .pending-status {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--primary-color);
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.7);
+            align-self: flex-start;
+            margin-top: 4px;
+        }
+        
+        .pending-status::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            margin-right: 6px;
+        }
+        
+        /* 空の状態 */
         .empty-state {
             text-align: center;
             background-color: #fff;
-            border-radius: 8px;
-            padding: 40px 16px;
+            border-radius: 12px;
+            padding: 32px 24px;
             color: #666;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            color: var(--primary-light);
+            margin-bottom: 16px;
+            opacity: 0.8;
         }
         
         .empty-title {
             font-size: 18px;
             margin-bottom: 8px;
             color: #555;
+            font-weight: 500;
         }
         
         .empty-desc {
             font-size: 14px;
             margin-bottom: 24px;
+            max-width: 280px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
         }
         
         .add-btn {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 24px;
             display: inline-flex;
             align-items: center;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(103, 58, 183, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .add-btn:hover {
+            background-color: #5e35b1;
+            box-shadow: 0 3px 6px rgba(103, 58, 183, 0.4);
+            transform: translateY(-1px);
         }
         
         .add-btn .material-icons {
-            margin-right: 4px;
-        }
-        
-        /* リクエストタブ内のサブタブ */
-        .request-tabs {
-            display: flex;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 16px;
-        }
-        
-        .request-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            color: #757575;
-            cursor: pointer;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .request-tab.active {
-            color: var(--primary-color);
-            font-weight: bold;
-            border-bottom: 2px solid var(--primary-color);
-        }
-        
-        .request-card {
-            background-color: #fff;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-        }
-        
-        .request-actions {
-            display: flex;
-            padding: 8px;
-            gap: 8px;
-        }
-        
-        .accept-btn {
-            flex: 1;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .accept-btn .material-icons {
-            margin-right: 4px;
-        }
-        
-        .reject-btn {
-            flex: 1;
-            background-color: #fff;
-            color: #666;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .reject-btn .material-icons {
-            margin-right: 4px;
-        }
-        
-        .sent-request-card {
-            background-color: var(--primary-light);
-            color: white;
-            opacity: 0.9;
-        }
-        
-        .sent-request-avatar {
-            background-color: white;
-            color: var(--primary-color);
-        }
-        
-        .sent-request-name {
-            color: white;
-            font-weight: bold;
-        }
-        
-        .sent-request-status {
-            color: white;
-            opacity: 0.9;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .sent-request-status::before {
-            content: "";
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: white;
             margin-right: 8px;
         }
         
@@ -433,6 +471,8 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
         }
         
         .modal-content {
@@ -443,65 +483,97 @@
             max-height: 90vh;
             overflow: auto;
             padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: modal-appear 0.3s ease-out;
+        }
+        
+        @keyframes modal-appear {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
         
         .modal-title {
             font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
             color: #333;
         }
         
         .modal-search-container {
             display: flex;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .modal-search-input {
             flex: 1;
-            padding: 12px;
+            padding: 12px 16px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 24px;
             margin-right: 8px;
             font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .modal-search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(103, 58, 183, 0.2);
         }
         
         .modal-search-btn {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 50px;
+            width: 42px;
+            height: 42px;
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(103, 58, 183, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .modal-search-btn:hover {
+            background-color: #5e35b1;
+            box-shadow: 0 3px 6px rgba(103, 58, 183, 0.4);
         }
         
         .search-results {
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            border: 1px solid #eee;
+            border-radius: 12px;
             max-height: 300px;
             overflow: auto;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .search-item {
             display: flex;
             align-items: center;
             padding: 16px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background-color 0.2s;
         }
         
         .search-item:last-child {
             border-bottom: none;
         }
         
+        .search-item:hover {
+            background-color: #f9f5ff;
+        }
+        
         .search-item-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
             margin-right: 16px;
             display: flex;
             align-items: center;
@@ -515,12 +587,12 @@
         }
         
         .search-item-name {
-            font-weight: bold;
+            font-weight: 500;
             margin-bottom: 4px;
         }
         
         .search-item-email {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
         }
         
@@ -531,13 +603,34 @@
             border-radius: 20px;
             padding: 6px 12px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(103, 58, 183, 0.2);
+        }
+        
+        .friend-btn:hover {
+            background-color: #5e35b1;
+            box-shadow: 0 3px 6px rgba(103, 58, 183, 0.3);
+        }
+        
+        .friend-btn .material-icons {
+            font-size: 16px;
+            margin-right: 4px;
         }
         
         .friend-btn-disabled {
-            background-color: #ddd;
-            color: #666;
+            background-color: #eee;
+            color: #999;
             cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .friend-btn-disabled:hover {
+            background-color: #eee;
+            box-shadow: none;
         }
         
         .modal-actions {
@@ -549,39 +642,49 @@
             border: 1px solid #ddd;
             background-color: white;
             color: #333;
-            padding: 8px 16px;
+            padding: 8px 20px;
             border-radius: 20px;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background-color: #f5f5f5;
         }
         
         .no-results {
             text-align: center;
-            padding: 32px;
+            padding: 32px 24px;
             color: #666;
         }
         
         .no-results-title {
             margin-bottom: 8px;
+            font-weight: 500;
         }
         
         .no-results-subtitle {
-            font-size: 14px;
+            font-size: 13px;
+            color: #999;
         }
         
         /* 招待モーダル */
         .invite-desc {
             color: #666;
             font-size: 14px;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+            line-height: 1.5;
         }
         
         .invite-link-container {
             display: flex;
             align-items: center;
             background-color: #f5f5f5;
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            padding: 12px 16px;
+            border-radius: 24px;
+            border: 1px solid #eee;
             margin-bottom: 24px;
         }
         
@@ -605,6 +708,13 @@
             justify-content: center;
             border: none;
             cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--primary-color);
+            transform: scale(1.05);
         }
         
         /* 通知メッセージ */
@@ -616,21 +726,33 @@
             z-index: 2000;
             background-color: var(--success-color);
             color: white;
-            padding: 16px;
-            border-radius: 8px;
+            padding: 12px 20px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             width: 90%;
             max-width: 400px;
+            animation: message-appear 0.3s ease-out;
+        }
+        
+        @keyframes message-appear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
         
         .success-message .material-icons {
-            margin-right: 8px;
+            margin-right: 12px;
         }
         
         .success-text {
-            font-weight: bold;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -642,44 +764,31 @@
             <span class="success-text">友達申請を送信しました！</span>
         </div> -->
         
-        <!-- 検索バー -->
-        <div class="search-bar">
+        <!-- 検索バー (タップで検索モーダルを開く) -->
+        <div class="search-bar" id="search-bar">
             <span class="material-icons" style="color: #757575; margin-right: 8px;">search</span>
-            <input type="text" class="search-input" placeholder="友達を検索">
-            <button class="search-button">
-                <span class="material-icons">search</span>
-            </button>
+            <input type="text" class="search-input" placeholder="ユーザー名またはメールアドレスで検索" readonly>
         </div>
         
-        <!-- アクションバー -->
-        <div class="action-bar">
-            <div class="action-card" id="search-friends">
-                <div class="avatar">
-                    <span class="material-icons">person_add</span>
-                </div>
-                <div class="action-text">友達を探す</div>
-            </div>
-            <div class="action-card" id="invite-app">
-                <div class="avatar">
-                    <span class="material-icons">content_copy</span>
-                </div>
-                <div class="action-text">アプリに招待</div>
-            </div>
+        <!-- 招待ボタン -->
+        <div class="invite-button" id="invite-btn">
+            <span class="material-icons">share</span>
+            アプリに友達を招待する
         </div>
         
         <!-- タブナビゲーション -->
         <div class="tabs">
+            <div class="tab-indicator"></div>
             <div class="tab active" id="friends-tab">友達</div>
             <div class="tab" id="requests-tab">
-                リクエスト
-                <div class="badge">2</div>
+                リクエスト <div class="badge" style="display: inline-flex;">2</div>
             </div>
         </div>
         
         <!-- 友達リスト (タブ1) -->
         <div id="friends-content">
             <!-- 友達カード -->
-            <div class="friend-card">
+            <div class="card">
                 <div class="friend-info">
                     <div class="friend-avatar" style="background-color: var(--element-fire-bg); color: var(--element-fire-dark);">
                         S
@@ -710,7 +819,7 @@
                 </div>
             </div>
             
-            <div class="friend-card">
+            <div class="card">
                 <div class="friend-info">
                     <div class="friend-avatar" style="background-color: var(--element-wood-bg); color: var(--element-wood-dark);">
                         K
@@ -741,7 +850,7 @@
                 </div>
             </div>
             
-            <div class="friend-card">
+            <div class="card">
                 <div class="friend-info">
                     <div class="friend-avatar" style="background-color: var(--element-water-bg); color: var(--element-water-dark);">
                         T
@@ -774,6 +883,7 @@
             
             <!-- 空の状態 (友達がいない場合) -->
             <!-- <div class="empty-state">
+                <span class="material-icons empty-icon">people</span>
                 <div class="empty-title">まだ友達がいません</div>
                 <div class="empty-desc">友達を追加して、相性診断を楽しみましょう</div>
                 <button class="add-btn">
@@ -783,22 +893,17 @@
             </div> -->
         </div>
         
-        <!-- リクエスト (タブ2) -->
+        <!-- リクエスト (タブ2) - 単一ページに統合 -->
         <div id="requests-content" style="display: none;">
-            <!-- リクエストタブのサブタブ -->
-            <div class="request-tabs">
-                <div class="request-tab active" id="received-tab">
-                    <span>受信</span>
-                    <div class="badge">2</div>
+            <!-- 受信リクエストセクション -->
+            <div class="request-section">
+                <div class="section-title">
+                    <div class="section-heading">
+                        受信したリクエスト <div class="badge">2</div>
+                    </div>
                 </div>
-                <div class="request-tab" id="sent-tab">
-                    <span>申請中</span>
-                </div>
-            </div>
-            
-            <!-- 受信したリクエスト -->
-            <div id="received-content">
-                <div class="request-card">
+                
+                <div class="card request-card">
                     <div class="friend-info">
                         <div class="friend-avatar" style="background-color: var(--element-earth-bg); color: var(--element-earth-dark);">
                             Y
@@ -811,18 +916,18 @@
                         </div>
                     </div>
                     <div class="request-actions">
-                        <button class="accept-btn">
+                        <button class="btn primary-btn">
                             <span class="material-icons">check</span>
                             承認
                         </button>
-                        <button class="reject-btn">
+                        <button class="btn secondary-btn">
                             <span class="material-icons">close</span>
                             拒否
                         </button>
                     </div>
                 </div>
                 
-                <div class="request-card">
+                <div class="card request-card">
                     <div class="friend-info">
                         <div class="friend-avatar" style="background-color: var(--element-metal-bg); color: var(--element-metal-dark);">
                             I
@@ -835,11 +940,11 @@
                         </div>
                     </div>
                     <div class="request-actions">
-                        <button class="accept-btn">
+                        <button class="btn primary-btn">
                             <span class="material-icons">check</span>
                             承認
                         </button>
-                        <button class="reject-btn">
+                        <button class="btn secondary-btn">
                             <span class="material-icons">close</span>
                             拒否
                         </button>
@@ -848,27 +953,35 @@
                 
                 <!-- 受信リクエストがない場合の空の状態 -->
                 <!-- <div class="empty-state">
+                    <span class="material-icons empty-icon">mark_email_unread</span>
                     <div class="empty-title">受信したリクエストはありません</div>
                     <div class="empty-desc">他のユーザーからの友達リクエストが届くとここに表示されます</div>
                 </div> -->
             </div>
             
-            <!-- 送信したリクエスト (非表示) -->
-            <div id="sent-content" style="display: none;">
-                <div class="request-card sent-request-card">
+            <!-- 送信したリクエストセクション -->
+            <div class="request-section">
+                <div class="section-title">
+                    <div class="section-heading">
+                        申請中のリクエスト <div class="badge" style="background-color: var(--primary-light);">1</div>
+                    </div>
+                </div>
+                
+                <div class="card pending-card">
                     <div class="friend-info">
-                        <div class="friend-avatar sent-request-avatar">
+                        <div class="friend-avatar pending-avatar">
                             A
                         </div>
                         <div class="friend-details">
-                            <div class="friend-name sent-request-name">安藤聡</div>
-                            <div class="sent-request-status">承認待ち</div>
+                            <div class="friend-name">安藤聡</div>
+                            <div class="pending-status">承認待ち</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- 送信リクエストがない場合の空の状態 -->
                 <!-- <div class="empty-state">
+                    <span class="material-icons empty-icon">outgoing_mail</span>
                     <div class="empty-title">申請中のリクエストはありません</div>
                     <div class="empty-desc">友達申請を送信するとここに表示されます</div>
                     <button class="add-btn">
@@ -885,7 +998,7 @@
                 <h3 class="modal-title">友達を探す</h3>
                 
                 <div class="modal-search-container">
-                    <input type="text" class="modal-search-input" placeholder="ユーザー名またはメールアドレス">
+                    <input type="text" class="modal-search-input" placeholder="ユーザー名またはメールアドレス" autofocus>
                     <button class="modal-search-btn">
                         <span class="material-icons">search</span>
                     </button>
@@ -899,7 +1012,7 @@
                             <div class="search-item-email">y.nakamura@example.com</div>
                         </div>
                         <button class="friend-btn">
-                            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person_add</span>
+                            <span class="material-icons">person_add</span>
                             友達申請
                         </button>
                     </div>
@@ -922,7 +1035,7 @@
                             <div class="search-item-email">d.hayashi@example.com</div>
                         </div>
                         <button class="friend-btn">
-                            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">person_add</span>
+                            <span class="material-icons">person_add</span>
                             友達申請
                         </button>
                     </div>
@@ -970,6 +1083,7 @@
             document.getElementById('requests-tab').classList.remove('active');
             document.getElementById('friends-content').style.display = 'block';
             document.getElementById('requests-content').style.display = 'none';
+            document.querySelector('.tab-indicator').classList.remove('requests');
         });
         
         document.getElementById('requests-tab').addEventListener('click', function() {
@@ -977,33 +1091,20 @@
             document.getElementById('friends-tab').classList.remove('active');
             document.getElementById('requests-content').style.display = 'block';
             document.getElementById('friends-content').style.display = 'none';
+            document.querySelector('.tab-indicator').classList.add('requests');
         });
         
-        // リクエストタブ内のサブタブ切り替え
-        document.getElementById('received-tab').addEventListener('click', function() {
-            document.getElementById('received-tab').classList.add('active');
-            document.getElementById('sent-tab').classList.remove('active');
-            document.getElementById('received-content').style.display = 'block';
-            document.getElementById('sent-content').style.display = 'none';
-        });
-        
-        document.getElementById('sent-tab').addEventListener('click', function() {
-            document.getElementById('sent-tab').classList.add('active');
-            document.getElementById('received-tab').classList.remove('active');
-            document.getElementById('sent-content').style.display = 'block';
-            document.getElementById('received-content').style.display = 'none';
-        });
-        
-        // モーダル表示・非表示
-        document.getElementById('search-friends').addEventListener('click', function() {
+        // 検索バーのクリックで検索モーダルを開く
+        document.getElementById('search-bar').addEventListener('click', function() {
             document.getElementById('search-modal').style.display = 'flex';
         });
         
+        // モーダル表示・非表示
         document.getElementById('close-search-modal').addEventListener('click', function() {
             document.getElementById('search-modal').style.display = 'none';
         });
         
-        document.getElementById('invite-app').addEventListener('click', function() {
+        document.getElementById('invite-btn').addEventListener('click', function() {
             document.getElementById('invite-modal').style.display = 'flex';
         });
         
