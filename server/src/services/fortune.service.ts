@@ -54,16 +54,22 @@ export class FortuneService {
       // チームIDが指定されていない場合は、ユーザーのデフォルトチームを使用
       let targetTeamId = teamId;
       if (!targetTeamId) {
+        // 型安全にユーザーIDを取得
+        const userIdStr = user._id ? (typeof user._id === 'string' ? user._id : user._id.toString()) : '';
+        if (!userIdStr) {
+          throw new Error('有効なユーザーIDが見つかりません');
+        }
+        
         // TeamMembershipからユーザーの所属チームを取得
-        const membership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+        const membership = await TeamMembership.findOne({ userId: userIdStr }).sort({ joinedAt: -1 });
         
         if (membership) {
           targetTeamId = membership.teamId.toString();
         } else {
           // 後方互換性のためにgetDefaultTeamIdを使用
-          const defaultTeamId = await getDefaultTeamId(user._id);
+          const defaultTeamId = await getDefaultTeamId(userIdStr);
           if (defaultTeamId) {
-            targetTeamId = defaultTeamId.toString();
+            targetTeamId = defaultTeamId;
           }
         }
       }
@@ -886,17 +892,23 @@ export class FortuneService {
       existingFortune.luckyItems = luckyItems;
       
       // チーム情報の更新
+      // 型安全にユーザーIDを取得
+      const userIdStr = user._id ? (typeof user._id === 'string' ? user._id : user._id.toString()) : '';
+      if (!userIdStr) {
+        throw new Error('有効なユーザーIDが見つかりません');
+      }
+      
       // TeamMembershipからユーザーのデフォルトチームを取得
-      const membership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+      const membership = await TeamMembership.findOne({ userId: userIdStr }).sort({ joinedAt: -1 });
       
       if (membership) {
         existingFortune.teamId = membership.teamId;
         existingFortune.teamGoalId = await this.getLatestTeamGoalId(membership.teamId);
       } else {
         // 後方互換性のためにgetDefaultTeamIdを使用
-        const defaultTeamId = await getDefaultTeamId(user._id);
+        const defaultTeamId = await getDefaultTeamId(userIdStr);
         if (defaultTeamId) {
-          existingFortune.teamId = defaultTeamId;
+          existingFortune.teamId = new mongoose.Types.ObjectId(defaultTeamId);
           existingFortune.teamGoalId = await this.getLatestTeamGoalId(defaultTeamId);
         }
       }
@@ -917,17 +929,23 @@ export class FortuneService {
         luckyItems: luckyItems
       });
       
+      // 型安全にユーザーIDを取得
+      const userIdStr = user._id ? (typeof user._id === 'string' ? user._id : user._id.toString()) : '';
+      if (!userIdStr) {
+        throw new Error('有効なユーザーIDが見つかりません');
+      }
+      
       // TeamMembershipからユーザーのデフォルトチームを取得
-      const teamMembership = await TeamMembership.findOne({ userId: user._id }).sort({ joinedAt: -1 });
+      const teamMembership = await TeamMembership.findOne({ userId: userIdStr }).sort({ joinedAt: -1 });
       
       if (teamMembership) {
         fortune.teamId = teamMembership.teamId;
         fortune.teamGoalId = await this.getLatestTeamGoalId(teamMembership.teamId);
       } else {
         // 後方互換性のためにgetDefaultTeamIdを使用
-        const defaultTeamId = await getDefaultTeamId(user._id);
+        const defaultTeamId = await getDefaultTeamId(userIdStr);
         if (defaultTeamId) {
-          fortune.teamId = defaultTeamId;
+          fortune.teamId = new mongoose.Types.ObjectId(defaultTeamId);
           fortune.teamGoalId = await this.getLatestTeamGoalId(defaultTeamId);
         }
       }
@@ -1174,7 +1192,8 @@ export class FortuneService {
         teamGoal = await TeamGoal.findOne({ teamId: teamMembership.teamId }).lean();
       } else {
         // 後方互換性のためにgetDefaultTeamIdを使用
-        const defaultTeamId = await getDefaultTeamId(user._id);
+        const userIdForTeam = typeof user._id === 'string' ? user._id : user._id.toString();
+        const defaultTeamId = await getDefaultTeamId(userIdForTeam);
         if (defaultTeamId) {
           teamGoal = await TeamGoal.findOne({ teamId: defaultTeamId }).lean();
         }
@@ -1298,7 +1317,8 @@ export class FortuneService {
       teamGoal = await TeamGoal.findOne({ teamId: teamMembership.teamId }).lean();
     } else {
       // 後方互換性のためにgetDefaultTeamIdを使用
-      const defaultTeamId = await getDefaultTeamId(user._id);
+      const userId = user._id.toString();
+      const defaultTeamId = await getDefaultTeamId(userId);
       if (defaultTeamId) {
         teamGoal = await TeamGoal.findOne({ teamId: defaultTeamId }).lean();
       }

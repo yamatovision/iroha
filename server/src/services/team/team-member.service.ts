@@ -124,8 +124,17 @@ export const getTeamMembers = async (teamId: string | mongoose.Types.ObjectId, u
     return legacyMember;
   });
   
-  // 型を明示的に指定
-  const allMembers: ITeamMemberData[] = [...membershipUsers, ...formattedLegacyMembers];
+  // 型を明示的に指定し、Union型からITeamMemberData[]型へ変換
+  const allMembers = [
+    ...membershipUsers, 
+    ...formattedLegacyMembers.map(legacy => {
+      // formattedLegacyMembersの各要素をITeamMemberData型に適合させる
+      return {
+        ...legacy,
+        role: legacy.teamRole || '' // ITeamMemberDataが要求するroleプロパティを追加
+      };
+    })
+  ] as ITeamMemberData[]; // Type Assertionを使用して型を強制
   
   // チーム管理者は確実に含める
   if (team.adminId) {
@@ -390,9 +399,13 @@ export const addMember = async (
   }
 
   // ユーザーをチームに追加
+  const userId = user._id ? (typeof user._id === 'string' ? user._id : user._id.toString()) : '';
+  if (!userId) {
+    throw new Error('ユーザーIDが無効です');
+  }
   await addMemberById(
     teamId,
-    user._id.toString(), // 文字列として渡す
+    userId, // 文字列として渡す
     role,
     true, // 管理者チェックをスキップ（既に確認済み）
     false // 管理者権限は付与しない

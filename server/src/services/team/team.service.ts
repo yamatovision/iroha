@@ -81,9 +81,11 @@ export const getTeams = async (userId: string | mongoose.Types.ObjectId): Promis
       throw new NotFoundError('ユーザーが見つかりません');
     }
     
-    if (user.teamId) {
+    // 後方互換性のあるチームIDを取得
+    const defaultTeamId = await getDefaultTeamId(userId);
+    if (defaultTeamId) {
       // 古いデータ形式で保存されている場合は、そのチームを返す
-      const team = await Team.findById(user.teamId);
+      const team = await Team.findById(defaultTeamId);
       return team ? [team] : [];
     }
     
@@ -97,8 +99,11 @@ export const getTeams = async (userId: string | mongoose.Types.ObjectId): Promis
   // 管理者として管理しているチームも含める
   const adminTeams = await Team.find({ adminId: userId });
   
-  // 管理者チームのIDを取得
-  const adminTeamIds = adminTeams.map(team => team._id.toString());
+  // 管理者チームのIDを取得 - 型安全に変換
+  const adminTeamIds = adminTeams.map(team => {
+    if (!team._id) return '';
+    return typeof team._id === 'string' ? team._id : team._id.toString();
+  }).filter(id => id !== '');
   
   // 重複を除去したチームIDリスト（メンバーシップと管理者の両方を含む）
   const uniqueTeamIds = [...new Set([
@@ -267,15 +272,8 @@ export const isTeamMember = async (teamId: string | mongoose.Types.ObjectId, use
   
   if (membership) return true;
   
-  // 後方互換性のため、UserモデルのteamIdも確認
-  const teamIdStr = teamId.toString();
-  const user = await User.findById(userId);
-
-  if (!user || !user.teamId) {
-    return false;
-  }
-
-  return user.teamId.toString() === teamIdStr;
+  // TeamMembershipモデルに移行したため、旧モデルは確認しない
+  return false;
 };
 
 /**
@@ -664,8 +662,8 @@ export const getDefaultTeamId = async (userId: string | mongoose.Types.ObjectId)
   }
   
   // 後方互換性のためにUser.teamIdもチェック
-  const user = await User.findById(userId);
-  return user?.teamId || null;
+  // Note: teamIdフィールドは削除されたため、この部分は機能しなくなる
+  return null;
 };
 
 /**
