@@ -198,7 +198,7 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
           marginTop: '-8px',
           mb: 3,
           border: isMetalElement ? `1px solid ${theme.palette.primary.main}` : 'none',
-          borderTop: 'none'
+          ...(isMetalElement && { borderTop: 'none' })
         }}
       >
         <Box
