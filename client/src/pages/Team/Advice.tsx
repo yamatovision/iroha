@@ -1028,9 +1028,7 @@ const TeamAdvice: React.FC = () => {
 
         {/* チームメンバー運勢ランキング */}
         {teamId && (
-          <Box sx={{ mt: 2 }}>
-            <TeamFortuneRanking teamId={teamId} />
-          </Box>
+          <TeamFortuneRanking teamId={teamId} />
         )}
 
         {/* チームメンバーリスト */}
