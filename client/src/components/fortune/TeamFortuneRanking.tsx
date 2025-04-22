@@ -175,25 +175,47 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
     );
   }
 
-  if (!rankingData || rankingData.ranking.length === 0) {
+  // rankingDataがない、またはrankingがない、またはrankingが空の配列の場合
+  if (!rankingData || !rankingData.ranking || rankingData.ranking.length === 0) {
     return (
       <Paper
         elevation={3}
         sx={{
-          p: 3,
+          p: 0,
           borderRadius: 4,
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          overflow: 'hidden',
           mb: 3,
           maxWidth: '600px',
           mx: 'auto'
         }}
       >
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          ランキングデータがありません
-        </Typography>
-        <Typography variant="body2">
-          チームメンバーの運勢データが不足しているか、まだ生成されていません。
-        </Typography>
+        {/* ヘッダー部分 */}
+        <Box
+          sx={{
+            p: 3,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+            color: '#fff',
+            position: 'relative',
+            mb: 2
+          }}
+        >
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', mb: 1 }}>
+            チーム運勢ランキング
+          </Typography>
+          <Typography variant="body2">
+            {formattedDate}
+          </Typography>
+        </Box>
+        
+        <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
+          <Typography variant="h6" sx={{ mb: 2, color: 'text.primary', fontWeight: 'medium' }}>
+            ランキングデータがありません
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            チームメンバーの運勢データが不足しているか、まだ生成されていません。
+          </Typography>
+        </Box>
       </Paper>
     );
   }

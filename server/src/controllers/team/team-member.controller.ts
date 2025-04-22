@@ -31,6 +31,8 @@ export const getTeamMembers = async (req: AuthRequest, res: Response, next: Next
         displayName: doc.displayName || '',
         email: doc.email || '',
         role: doc.role || '',
+        memberRole: doc.memberRole || 'member',
+        isAdmin: doc.isAdmin || false,
         elementAttribute: doc.elementAttribute || '',
         motivation: typeof doc.motivation === 'number' ? doc.motivation : 0,
         leaveRisk: doc.leaveRisk || 'none'
@@ -70,6 +72,12 @@ export const addMember = async (req: AuthRequest, res: Response, next: NextFunct
       // TeamMembershipのroleフィールドを使用
       const memberRole = updatedUser.role || '';
       
+      // TeamMembershipを取得
+      const userId = updatedUser && updatedUser._id ? 
+        (typeof updatedUser._id === 'string' ? updatedUser._id : updatedUser._id.toString()) : 
+        '';
+      const membership = userId ? await teamMemberService.getTeamMembership(teamId, userId) : null;
+      
       res.status(200).json({
         success: true,
         message: 'メンバーが正常に追加されました',
@@ -79,6 +87,8 @@ export const addMember = async (req: AuthRequest, res: Response, next: NextFunct
           email: updatedUser.email,
           role: memberRole,
           elementAttribute: updatedUser.elementAttribute,
+          memberRole: membership?.memberRole || 'member',
+          isAdmin: membership?.isAdmin || false,
           isNewUser: (updatedUser as any).isNewUser
         }
       });
@@ -124,7 +134,9 @@ export const updateMemberRole = async (req: AuthRequest, res: Response, next: Ne
           userId: result.user._id,
           displayName: result.user.displayName,
           email: result.user.email,
-          role: memberRole
+          role: memberRole,
+          memberRole: result.membership.memberRole || 'member',
+          isAdmin: result.membership.isAdmin || false
         }
       });
     } else {

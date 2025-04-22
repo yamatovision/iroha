@@ -7,6 +7,9 @@ import { ITeam, TeamRequest, AddTeamMemberRequest } from '../../../shared/index'
  * チーム管理に関連するAPIとの通信を担当
  */
 class TeamService {
+  private teamDataCache: Map<string, { data: any, expiration: Date }> = new Map();
+  private readonly CACHE_DURATION_MS = 5 * 60 * 1000; // 5分
+
   /**
    * チーム一覧を取得する
    * @returns チーム一覧
@@ -17,6 +20,37 @@ class TeamService {
       return response.data.teams;
     } catch (error) {
       console.error('Failed to fetch teams:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * ユーザーの所属チーム一覧を取得する
+   * 複数チームメンバーシップをサポート
+   * @returns ユーザーが所属する全チーム一覧
+   */
+  async getUserTeams(): Promise<ITeam[]> {
+    try {
+      const cacheKey = 'userTeams';
+      const cachedData = this.teamDataCache.get(cacheKey);
+      
+      // 有効なキャッシュが存在する場合はそれを返す
+      if (cachedData && cachedData.expiration > new Date()) {
+        console.log('キャッシュからユーザーチーム一覧を取得');
+        return cachedData.data;
+      }
+      
+      // APIからデータを取得
+      const response = await apiService.get(TEAM.GET_USER_TEAMS);
+      const teams = response.data.teams;
+      
+      // キャッシュに保存
+      const expiration = new Date(new Date().getTime() + this.CACHE_DURATION_MS);
+      this.teamDataCache.set(cacheKey, { data: teams, expiration });
+      
+      return teams;
+    } catch (error) {
+      console.error('Failed to fetch user teams:', error);
       throw error;
     }
   }
@@ -111,6 +145,55 @@ class TeamService {
       console.error(`Failed to add member to team ${teamId}:`, error);
       throw error;
     }
+  }
+  
+  /**
+   * 友達をチームメンバーとして追加する
+   * @param teamId チームID
+   * @param friendId 友達のユーザーID
+   * @param role チーム内での役割
+   * @returns 追加結果
+   */
+  /**
+   * 友達をチームメンバーとして追加する
+   * @param teamId チームID
+   * @param friendId 友達のユーザーID
+   * @param role チーム内での役割
+   * @returns 追加結果
+   */
+  async addMemberFromFriend(teamId: string, friendId: string, role: string): Promise<any> {
+    try {
+      // ADD_MEMBER_FROM_FRIENDエンドポイントを使用してAPI呼び出し
+      const response = await apiService.post(TEAM.ADD_MEMBER_FROM_FRIEND(teamId), {
+        friendId,
+        role
+      });
+      
+      // キャッシュを無効化
+      this.invalidateTeamCache(teamId);
+      this.invalidateTeamCache('userTeams');
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to add friend ${friendId} to team ${teamId}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * チーム関連のキャッシュを無効化する
+   * @param cacheKey キャッシュキー (teamId または 'userTeams')
+   */
+  invalidateTeamCache(cacheKey: string): void {
+    // 指定したキーのキャッシュを削除
+    this.teamDataCache.delete(cacheKey);
+    
+    // userTeamsキーの場合は全てのチーム関連キャッシュをクリア
+    if (cacheKey === 'userTeams') {
+      this.teamDataCache.clear();
+    }
+    
+    console.log(`チームキャッシュを無効化: ${cacheKey}`);
   }
 
   /**

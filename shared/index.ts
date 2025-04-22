@@ -120,8 +120,10 @@ export const TEAM = {
   UPDATE_TEAM: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}`,
   DELETE_TEAM: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}`,
   LIST_TEAMS: `${API_BASE_PATH}/teams`,
+  GET_USER_TEAMS: `${API_BASE_PATH}/teams/user`,
   GET_TEAM_MEMBERS: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}/members`,
   ADD_TEAM_MEMBER: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}/members`,
+  ADD_MEMBER_FROM_FRIEND: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}/members/from-friend`,
   REMOVE_TEAM_MEMBER: (teamId: string, userId: string) => `${API_BASE_PATH}/teams/${teamId}/members/${userId}`,
   UPDATE_TEAM_MEMBER_ROLE: (teamId: string, userId: string) => `${API_BASE_PATH}/teams/${teamId}/members/${userId}/role`,
   SET_TEAM_GOAL: (teamId: string) => `${API_BASE_PATH}/teams/${teamId}/goal`,
@@ -293,6 +295,13 @@ export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
   SUPER_ADMIN = 'super_admin',
+}
+
+// チームメンバーロール
+export enum TeamMemberRole {
+  CREATOR = 'creator',   // チーム作成者（最高権限）
+  ADMIN = 'admin',       // 管理者（一部権限）
+  MEMBER = 'member'      // 一般メンバー
 }
 
 // 性別
@@ -672,8 +681,9 @@ export interface ITeamMembership {
   id: string;
   userId: string;
   teamId: string;
-  role: string;
-  isAdmin: boolean;
+  role: string;                  // 職務役割（例：エンジニア、マーケター）
+  memberRole?: TeamMemberRole;   // メンバー権限ロール（creator, admin, member）
+  isAdmin: boolean;              // 後方互換性のため維持
   joinedAt: Date;
   createdAt: Date;
   updatedAt: Date;

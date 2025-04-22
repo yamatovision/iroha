@@ -179,8 +179,22 @@ class FortuneService {
       
       const response = await apiService.get(FORTUNE.GET_TEAM_CONTEXT_FORTUNE(teamId), { params });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`チーム(${teamId})のコンテキスト運勢取得に失敗しました`, error);
+      
+      // 404エラーの場合は、機能が未実装であることを示す
+      if (error.response && error.response.status === 404) {
+        if (error.response.data && error.response.data.code === 'FEATURE_NOT_IMPLEMENTED') {
+          // 未実装機能に対して空のデータを返す
+          return {
+            success: false,
+            message: 'チームコンテキスト運勢機能は現在実装中です',
+            teamContextFortune: null
+          };
+        }
+      }
+      
+      // その他のエラーは通常通りスロー
       throw error;
     }
   }

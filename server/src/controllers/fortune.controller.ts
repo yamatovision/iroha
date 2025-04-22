@@ -266,6 +266,138 @@ export class FortuneController {
 
 
   /**
+   * チームコンテキスト運勢を取得する
+   * @param req リクエスト
+   * @param res レスポンス
+   */
+  public async getTeamContextFortune(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: '認証されていません' });
+        return;
+      }
+
+      const { teamId } = req.params;
+      if (!teamId) {
+        res.status(400).json({ error: 'チームIDが必要です' });
+        return;
+      }
+
+      // チームが存在するか確認
+      const team = await Team.findById(teamId);
+      if (!team) {
+        res.status(404).json({ error: 'チームが見つかりません' });
+        return;
+      }
+
+      // ユーザーがチームのメンバーか確認
+      const membership = await TeamMembership.findOne({ teamId, userId });
+      if (!membership) {
+        res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
+        return;
+      }
+
+      // タイムゾーン情報を取得（クライアントから送信された場合）
+      const timezone = req.query.timezone as string || 'Asia/Tokyo';
+      const tzOffset = parseInt(req.query.tzOffset as string || '-540', 10);
+
+      // クライアントのタイムゾーンに合わせた「今日」を計算
+      const now = new Date();
+      const offsetHours = Math.floor(Math.abs(tzOffset) / 60);
+      const offsetMinutes = Math.abs(tzOffset) % 60;
+
+      // タイムゾーンオフセットを適用
+      if (tzOffset < 0) {
+        now.setHours(now.getHours() + offsetHours);
+        now.setMinutes(now.getMinutes() + offsetMinutes);
+      } else {
+        now.setHours(now.getHours() - offsetHours);
+        now.setMinutes(now.getMinutes() - offsetMinutes);
+      }
+
+      const targetDate = now;
+      console.log(`🕒 チームコンテキスト運勢取得: タイムゾーン: ${timezone}, オフセット: ${tzOffset}分, 日付: ${targetDate.toISOString()}`);
+
+      // チームコンテキスト運勢を取得 - この関数はまだ実装されていない可能性があります
+      // const teamContextFortune = await fortuneService.getTeamContextFortune(userId, teamId, targetDate);
+
+      // とりあえずエラーを返す（後でサービス実装時に更新）
+      res.status(404).json({ 
+        error: 'チームコンテキスト運勢機能は現在実装中です', 
+        code: 'FEATURE_NOT_IMPLEMENTED'
+      });
+    } catch (error: any) {
+      console.error('チームコンテキスト運勢取得エラー:', error);
+      if (error.message.includes('見つかりません')) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      }
+    }
+  }
+
+  /**
+   * チームコンテキスト運勢を生成する
+   * @param req リクエスト
+   * @param res レスポンス
+   */
+  public async generateTeamContextFortune(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: '認証されていません' });
+        return;
+      }
+
+      const { teamId } = req.params;
+      if (!teamId) {
+        res.status(400).json({ error: 'チームIDが必要です' });
+        return;
+      }
+
+      // チームが存在するか確認
+      const team = await Team.findById(teamId);
+      if (!team) {
+        res.status(404).json({ error: 'チームが見つかりません' });
+        return;
+      }
+
+      // ユーザーがチームの管理者か確認
+      const membership = await TeamMembership.findOne({ 
+        teamId, 
+        userId,
+        isAdmin: true 
+      });
+      
+      const isAdmin = membership || (team.adminId && team.adminId.toString() === userId);
+      if (!isAdmin) {
+        res.status(403).json({ error: 'チームコンテキスト運勢の生成には管理者権限が必要です' });
+        return;
+      }
+
+      // 現在の日付
+      const targetDate = new Date();
+
+      // チームコンテキスト運勢を生成 - この関数はまだ実装されていない可能性があります
+      // const teamContextFortune = await fortuneService.generateTeamContextFortune(userId, teamId, targetDate);
+
+      // とりあえずエラーを返す（後でサービス実装時に更新）
+      res.status(404).json({ 
+        error: 'チームコンテキスト運勢機能は現在実装中です', 
+        code: 'FEATURE_NOT_IMPLEMENTED'
+      });
+    } catch (error: any) {
+      console.error('チームコンテキスト運勢生成エラー:', error);
+      if (error.message.includes('見つかりません')) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      }
+    }
+  }
+
+  /**
    * 運勢ダッシュボード情報を取得する
    * @param req リクエスト - クエリパラメータとしてteamId(オプション)を受け付ける
    * @param res レスポンス

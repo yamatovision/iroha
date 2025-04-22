@@ -1,13 +1,23 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 /**
+ * チームメンバーロール定義
+ */
+export enum TeamMemberRole {
+  CREATOR = 'creator',   // チーム作成者（最高権限）
+  ADMIN = 'admin',       // 管理者（一部権限）
+  MEMBER = 'member'      // 一般メンバー
+}
+
+/**
  * チームメンバーシップモデルのインターフェース
  */
 export interface ITeamMembership {
   userId: mongoose.Types.ObjectId;
   teamId: mongoose.Types.ObjectId;
-  role: string;
-  isAdmin: boolean;
+  role: string;                      // 職務役割（例：エンジニア、マーケター）
+  memberRole?: TeamMemberRole;       // メンバー権限ロール（creator, admin, member）
+  isAdmin: boolean;                  // 後方互換性のため維持
   joinedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +48,11 @@ const teamMembershipSchema = new Schema<ITeamMembershipDocument>(
       trim: true,
       maxlength: [50, 'チーム内の役割は50文字以下である必要があります'],
       default: ''
+    },
+    memberRole: {
+      type: String,
+      enum: Object.values(TeamMemberRole),
+      default: TeamMemberRole.MEMBER
     },
     isAdmin: {
       type: Boolean,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DailyFortune - チーム相性ページ（チーム目標アドバイス追加版）</title>
+  <title>DailyFortune - チーム運勢アドバイスページ</title>
   
   <!-- フォントとアイコン -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
@@ -116,6 +116,127 @@
     
     .header-icon {
       margin-right: 12px;
+    }
+    
+    /* チーム選択ドロップダウン */
+    .team-selector {
+      display: flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .team-selector:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .team-selector-name {
+      margin: 0 8px;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.95rem;
+    }
+    
+    /* チーム選択メニュー */
+    .team-selector-menu {
+      position: absolute;
+      top: 65px;
+      left: 24px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      width: 250px;
+      z-index: 110;
+      overflow: hidden;
+      display: none;
+    }
+    
+    .team-selector-menu.active {
+      display: block;
+      animation: fadeInDown 0.3s ease forwards;
+    }
+    
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .team-menu-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--divider);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .team-menu-item:hover {
+      background-color: var(--primary-bg);
+    }
+    
+    .team-menu-item.active {
+      background-color: var(--primary-bg);
+    }
+    
+    .team-menu-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      margin-right: 12px;
+    }
+    
+    .team-menu-info {
+      flex: 1;
+    }
+    
+    .team-menu-name {
+      font-weight: 500;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+      color: var(--text-primary);
+    }
+    
+    .team-menu-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+    }
+    
+    .team-menu-count .material-icons {
+      font-size: 14px;
+      margin-right: 4px;
+    }
+    
+    /* 管理ボタン (管理者のみ表示) */
+    .admin-button {
+      background-color: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-right: 12px;
+    }
+    
+    .admin-button:hover {
+      background-color: rgba(255, 255, 255, 0.25);
     }
     
     /* メインコンテンツ */
@@ -1087,13 +1208,67 @@
   <div class="app-container">
     <!-- ヘッダー -->
     <div class="header">
-      <h1 class="header-title">
-        <span class="material-icons header-icon">diversity_3</span>
-        チームページ
-      </h1>
+      <div style="display: flex; align-items: center;">
+        <div class="team-selector" id="team-selector">
+          <span class="material-icons">diversity_3</span>
+          <span class="team-selector-name">開発チーム</span>
+          <span class="material-icons">arrow_drop_down</span>
+        </div>
+        
+        <!-- 管理者のみ表示 -->
+        <button class="admin-button" id="admin-button" title="チーム管理">
+          <span class="material-icons">settings</span>
+        </button>
+      </div>
+      
       <div style="display: flex; align-items: center;">
         <span class="material-icons" style="margin-right: 20px; font-size: 1.4rem;">notifications</span>
         <span class="material-icons" style="font-size: 1.4rem;">account_circle</span>
+      </div>
+    </div>
+    
+    <!-- チーム選択メニュー (デフォルトでは非表示) -->
+    <div class="team-selector-menu" id="team-selector-menu">
+      <div class="team-menu-item active">
+        <div class="team-menu-avatar" style="background-color: var(--element-water);">開</div>
+        <div class="team-menu-info">
+          <div class="team-menu-name">開発チーム</div>
+          <div class="team-menu-count">
+            <span class="material-icons">people</span>
+            8人
+          </div>
+        </div>
+      </div>
+      
+      <div class="team-menu-item">
+        <div class="team-menu-avatar" style="background-color: var(--element-fire);">営</div>
+        <div class="team-menu-info">
+          <div class="team-menu-name">営業チーム</div>
+          <div class="team-menu-count">
+            <span class="material-icons">people</span>
+            5人
+          </div>
+        </div>
+      </div>
+      
+      <div class="team-menu-item">
+        <div class="team-menu-avatar" style="background-color: var(--element-wood);">マ</div>
+        <div class="team-menu-info">
+          <div class="team-menu-name">マーケティングチーム</div>
+          <div class="team-menu-count">
+            <span class="material-icons">people</span>
+            6人
+          </div>
+        </div>
+      </div>
+      
+      <div class="team-menu-item" style="border-top: 1px solid var(--primary-light);">
+        <div class="team-menu-avatar" style="background-color: var(--primary-light);">
+          <span class="material-icons">add</span>
+        </div>
+        <div class="team-menu-info">
+          <div class="team-menu-name">新しいチームを作成</div>
+        </div>
       </div>
     </div>
     
@@ -1398,6 +1573,68 @@
     const memberModal = document.getElementById('member-modal');
     const modalClose = document.getElementById('modal-close');
     const fab = document.querySelector('.fab');
+    const teamSelector = document.getElementById('team-selector');
+    const teamSelectorMenu = document.getElementById('team-selector-menu');
+    const teamMenuItems = document.querySelectorAll('.team-menu-item');
+    const adminButton = document.getElementById('admin-button');
+    
+    // チーム選択メニュー表示/非表示の切り替え
+    teamSelector.addEventListener('click', () => {
+      teamSelectorMenu.classList.toggle('active');
+      
+      // メニュー表示時にクリックイベントを追加して、メニュー外クリックで閉じるようにする
+      if (teamSelectorMenu.classList.contains('active')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeTeamMenu);
+        }, 10);
+      }
+    });
+    
+    // メニュー外クリックで閉じる関数
+    function closeTeamMenu(e) {
+      // チームセレクターまたはメニュー自体のクリックでなければメニューを閉じる
+      if (!teamSelector.contains(e.target) && !teamSelectorMenu.contains(e.target)) {
+        teamSelectorMenu.classList.remove('active');
+        document.removeEventListener('click', closeTeamMenu);
+      }
+    }
+    
+    // チームメニューアイテムのクリックイベント
+    teamMenuItems.forEach(item => {
+      item.addEventListener('click', () => {
+        // 現在のアクティブクラスを削除
+        teamMenuItems.forEach(i => i.classList.remove('active'));
+        
+        // クリックされたアイテムをアクティブに
+        item.classList.add('active');
+        
+        // チーム名を取得し、セレクターに設定
+        const teamName = item.querySelector('.team-menu-name').textContent;
+        const teamSelectorName = document.querySelector('.team-selector-name');
+        
+        // 「新しいチームを作成」ではない場合のみ、チーム名を更新
+        if (teamName !== '新しいチームを作成') {
+          teamSelectorName.textContent = teamName;
+          
+          // 実際のアプリでは、ここでチーム情報を取得し、画面を更新
+          // 例: fetchTeamData(teamId).then(updateUI);
+          
+          // メニューを閉じる
+          teamSelectorMenu.classList.remove('active');
+          document.removeEventListener('click', closeTeamMenu);
+        } else {
+          // 「新しいチームを作成」をクリックした場合、チーム作成画面に遷移
+          // 実際のアプリではここで遷移やモーダル表示
+          alert('チーム作成画面へ遷移します');
+        }
+      });
+    });
+    
+    // 管理ボタンのクリックイベント
+    adminButton.addEventListener('click', () => {
+      // 管理者の場合、管理画面へ遷移
+      window.location.href = 'team-management.html';
+    });
     
     // 相性ボタンクリックでモーダル表示
     compatibilityButtons.forEach(button => {
@@ -1418,9 +1655,6 @@
       });
     });
     
-    // カード自体のクリックハンドラーは必要に応じて追加
-    // 例えば、カードクリックでユーザーの基本情報を表示する場合など
-    
     // モーダルを閉じる
     modalClose.addEventListener('click', () => {
       memberModal.classList.remove('active');
@@ -1437,6 +1671,17 @@
     fab.addEventListener('click', () => {
       // チャットページへ遷移
       window.location.href = 'integrated-chat.html';
+    });
+    
+    // ページロード時に自動でチーム選択
+    document.addEventListener('DOMContentLoaded', () => {
+      // 最初のチームを選択状態に (実際のアプリではローカルストレージやサーバーから取得)
+      const firstTeam = teamMenuItems[0];
+      if (firstTeam) {
+        firstTeam.classList.add('active');
+        const teamName = firstTeam.querySelector('.team-menu-name').textContent;
+        document.querySelector('.team-selector-name').textContent = teamName;
+      }
     });
   </script>
 </body>

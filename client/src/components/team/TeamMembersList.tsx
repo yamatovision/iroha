@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import teamService from '../../services/team.service';
 import MemberCardView from './MemberCardView';
+import TeamMemberAddModal from './TeamMemberAddModal';
+import { useTeam } from '../../contexts/TeamContext';
 
 type TeamMembersListProps = {
   teamId: string;
@@ -14,12 +16,11 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // 新規メンバー追加用の状態
-  const [email, setEmail] = useState<string>('');
-  const [role, setRole] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [displayName, setDisplayName] = useState<string>('');
-  const [showAddForm, setShowAddForm] = useState<boolean>(false);
+  // TeamContextを取得
+  const { refreshTeams, hasTeamPermission } = useTeam();
+  
+  // チームメンバー追加モーダル用の状態
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
   
   // 編集モーダル用の状態
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
@@ -51,6 +52,9 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
     metal: { name: '金', bg: 'var(--element-metal-bg)', color: 'var(--element-metal-dark)' }
   };
 
+  // 権限状態
+  const [canManageMembers, setCanManageMembers] = useState<boolean>(false);
+
   // チームメンバー一覧を取得
   useEffect(() => {
     const fetchMembers = async () => {
@@ -58,6 +62,11 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
       
       try {
         setLoading(true);
+        // 権限チェック
+        const hasManagePermission = await hasTeamPermission('manage_members', teamId);
+        setCanManageMembers(hasManagePermission);
+        
+        // メンバーデータ取得
         const data = await teamService.getTeamMembers(teamId);
         setMembers(data);
         setError(null);
@@ -70,36 +79,24 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
     };
 
     fetchMembers();
-  }, [teamId]);
+  }, [teamId, hasTeamPermission]);
 
-  // メンバー追加処理
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !role) return;
-
+  // メンバー追加モーダルを表示
+  const handleShowAddModal = () => {
+    setShowAddModal(true);
+  };
+  
+  // メンバー追加後の処理
+  const handleMemberAdded = async () => {
     try {
       setLoading(true);
-      await teamService.addTeamMember(teamId, {
-        email,
-        role,
-        password: password || undefined,
-        displayName: displayName || undefined
-      });
-
-      // 新しいメンバーリストを取得するか、結果から直接追加する
+      // メンバーリストを更新
       const updatedMembers = await teamService.getTeamMembers(teamId);
       setMembers(updatedMembers);
-      
-      // フォームをリセット
-      setEmail('');
-      setRole('');
-      setPassword('');
-      setDisplayName('');
-      setShowAddForm(false);
       setError(null);
     } catch (err) {
-      console.error(`Failed to add member to team ${teamId}:`, err);
-      setError('メンバーの追加に失敗しました。メールアドレスが既に存在するか、入力情報が正しくありません。');
+      console.error(`Failed to fetch updated team members for team ${teamId}:`, err);
+      setError('メンバーリストの更新に失敗しました。ページを再読み込みしてください。');
     } finally {
       setLoading(false);
     }
@@ -113,6 +110,9 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
     try {
       setLoading(true);
       await teamService.updateMemberRole(teamId, editMemberId, editRole);
+      
+      // TeamContextを更新
+      await refreshTeams();
       
       // メンバーリストを更新
       const updatedMembers = await teamService.getTeamMembers(teamId);
@@ -138,6 +138,9 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
     try {
       setLoading(true);
       await teamService.removeTeamMember(teamId, userId);
+      
+      // TeamContextを更新
+      await refreshTeams();
       
       // 削除したメンバーを除外
       setMembers(members.filter(member => member.userId !== userId));
@@ -182,195 +185,15 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
         </div>
       )}
 
-      {/* メンバー追加フォーム */}
-      <div className="card" style={{ 
-        marginBottom: '24px',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: showAddForm ? '0 6px 16px rgba(103, 58, 183, 0.15)' : 'none',
-        transition: 'all 0.3s ease'
-      }}>
-        {showAddForm ? (
-          <div style={{ border: '1px solid rgba(103, 58, 183, 0.2)', borderRadius: '12px' }}>
-            <div style={{ 
-              padding: '16px 20px', 
-              borderBottom: '1px solid rgba(103, 58, 183, 0.1)',
-              backgroundColor: 'rgba(103, 58, 183, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#673ab7' }}>
-                新しいメンバーを追加
-              </h3>
-              <button
-                type="button"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  color: '#9575cd',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  transition: 'background-color 0.2s'
-                }}
-                onClick={() => setShowAddForm(false)}
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddMember} style={{ padding: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#555' }}>
-                    メールアドレス<span style={{ color: '#673ab7', marginLeft: '4px' }}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px 16px', 
-                      borderRadius: '8px', 
-                      border: '1px solid rgba(0, 0, 0, 0.15)',
-                      transition: 'border 0.2s',
-                      fontSize: '15px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="example@company.com"
-                    required
-                  />
-                </div>
-                
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#555' }}>
-                    パスワード
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px 16px', 
-                      borderRadius: '8px', 
-                      border: '1px solid rgba(0, 0, 0, 0.15)',
-                      transition: 'border 0.2s',
-                      fontSize: '15px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="未登録ユーザー用の初期パスワード"
-                  />
-                  <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '6px', fontSize: '13px' }}>
-                    未登録ユーザーを招待する場合のみ必要です
-                  </small>
-                </div>
-                
-                <div style={{ marginBottom: '16px', gridColumn: '1 / 3' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#555' }}>
-                    役割<span style={{ color: '#673ab7', marginLeft: '4px' }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px 16px', 
-                      borderRadius: '8px', 
-                      border: '1px solid rgba(0, 0, 0, 0.15)',
-                      transition: 'border 0.2s',
-                      fontSize: '15px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="エンジニア、デザイナー、マネージャーなど"
-                    required
-                  />
-                </div>
-                
-                <div style={{ marginBottom: '16px', gridColumn: '1 / 3' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#555' }}>
-                    表示名（オプション）
-                  </label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '12px 16px', 
-                      borderRadius: '8px', 
-                      border: '1px solid rgba(0, 0, 0, 0.15)',
-                      transition: 'border 0.2s',
-                      fontSize: '15px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="未入力の場合はメールアドレスから自動生成されます"
-                  />
-                </div>
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
-                marginTop: '16px',
-                gap: '12px',
-                padding: '16px 0 0',
-                borderTop: '1px solid rgba(0, 0, 0, 0.06)'
-              }}>
-                <button 
-                  type="button" 
-                  style={{ 
-                    padding: '10px 20px', 
-                    backgroundColor: 'transparent',
-                    border: '1px solid #673ab7',
-                    color: '#673ab7',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    transition: 'background-color 0.2s'
-                  }}
-                  onClick={() => setShowAddForm(false)}
-                >
-                  キャンセル
-                </button>
-                <button 
-                  type="submit" 
-                  style={{ 
-                    padding: '10px 24px', 
-                    backgroundColor: '#673ab7',
-                    color: '#ffffff',
-                    border: 'none', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    boxShadow: '0 2px 8px rgba(103, 58, 183, 0.3)',
-                    fontSize: '15px',
-                    fontWeight: 500,
-                    transition: 'all 0.2s ease'
-                  }}
-                  disabled={loading}
-                >
-                  <span style={{ fontSize: '18px', marginRight: '8px' }}>+</span>
-                  メンバーを追加
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : (
+      {/* メンバー追加ボタン - 権限のあるユーザーのみ表示 */}
+      {canManageMembers && (
+        <div className="card" style={{ 
+          marginBottom: '24px',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+          transition: 'all 0.3s ease'
+        }}>
           <button 
             style={{ 
               width: '100%', 
@@ -380,55 +203,54 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
               borderRadius: '12px', 
               cursor: 'pointer',
               overflow: 'hidden',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+              transition: 'all 0.3s ease'
             }}
-            onClick={() => setShowAddForm(true)}
+            onClick={handleShowAddModal}
             disabled={loading}
           >
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '24px 16px',
+            backgroundColor: 'rgba(103, 58, 183, 0.02)',
+            transition: 'background-color 0.3s'
+          }}>
             <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(103, 58, 183, 0.1)',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              padding: '24px 16px',
-              backgroundColor: 'rgba(103, 58, 183, 0.02)',
-              transition: 'background-color 0.3s'
+              justifyContent: 'center',
+              marginBottom: '12px',
+              color: '#673ab7',
+              fontSize: '24px',
+              fontWeight: 'bold'
             }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(103, 58, 183, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '12px',
-                color: '#673ab7',
-                fontSize: '24px',
-                fontWeight: 'bold'
-              }}>
-                +
-              </div>
-              <div style={{ 
-                fontSize: '16px', 
-                fontWeight: '600', 
-                color: '#673ab7',
-                marginBottom: '4px'
-              }}>
-                メンバーを追加
-              </div>
-              <div style={{ 
-                fontSize: '14px', 
-                color: '#666',
-                maxWidth: '80%',
-                textAlign: 'center'
-              }}>
-                チームにメンバーを招待してコラボレーションを始めましょう
-              </div>
+              +
             </div>
-          </button>
-        )}
+            <div style={{ 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              color: '#673ab7',
+              marginBottom: '4px'
+            }}>
+              メンバーを追加
+            </div>
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#666',
+              maxWidth: '80%',
+              textAlign: 'center'
+            }}>
+              友達リストから選択してメンバーを追加しましょう
+            </div>
+          </div>
+        </button>
       </div>
+      )}
 
       {/* メンバー一覧テーブル */}
       {loading && !showEditModal ? (
@@ -529,43 +351,49 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
                           <span style={{ fontSize: '16px', marginRight: '4px' }}>📋</span>
                           カルテ
                         </button>
-                        <button 
-                          className="btn btn-outline btn-sm edit-member-btn"
-                          style={{ 
-                            padding: '6px 12px', 
-                            backgroundColor: 'transparent',
-                            border: '1px solid #673ab7', // 明示的な紫色
-                            color: '#673ab7', // 明示的な紫色 
-                            borderRadius: '8px', 
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            marginRight: '8px',
-                            fontSize: '14px'
-                          }}
-                          onClick={() => openEditModal(member)}
-                        >
-                          <span style={{ fontSize: '16px', marginRight: '4px' }}>✏️</span>
-                          編集
-                        </button>
-                        <button 
-                          className="btn btn-outline btn-sm"
-                          style={{ 
-                            padding: '6px 12px', 
-                            backgroundColor: 'transparent',
-                            border: '1px solid #f44336', // 明示的な赤色
-                            color: '#f44336', // 明示的な赤色
-                            borderRadius: '8px', 
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            fontSize: '14px'
-                          }}
-                          onClick={() => handleRemoveMember(member.userId)}
-                        >
-                          <span style={{ fontSize: '16px', marginRight: '4px' }}>🗑️</span>
-                          削除
-                        </button>
+                        
+                        {/* 管理者権限のあるユーザーのみ表示 */}
+                        {canManageMembers && (
+                          <>
+                            <button 
+                              className="btn btn-outline btn-sm edit-member-btn"
+                              style={{ 
+                                padding: '6px 12px', 
+                                backgroundColor: 'transparent',
+                                border: '1px solid #673ab7', // 明示的な紫色
+                                color: '#673ab7', // 明示的な紫色 
+                                borderRadius: '8px', 
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                marginRight: '8px',
+                                fontSize: '14px'
+                              }}
+                              onClick={() => openEditModal(member)}
+                            >
+                              <span style={{ fontSize: '16px', marginRight: '4px' }}>✏️</span>
+                              編集
+                            </button>
+                            <button 
+                              className="btn btn-outline btn-sm"
+                              style={{ 
+                                padding: '6px 12px', 
+                                backgroundColor: 'transparent',
+                                border: '1px solid #f44336', // 明示的な赤色
+                                color: '#f44336', // 明示的な赤色
+                                borderRadius: '8px', 
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                fontSize: '14px'
+                              }}
+                              onClick={() => handleRemoveMember(member.userId)}
+                            >
+                              <span style={{ fontSize: '16px', marginRight: '4px' }}>🗑️</span>
+                              削除
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -674,46 +502,51 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
                         <span style={{ fontSize: '16px', marginRight: '4px' }}>📋</span>
                         カルテ
                       </button>
-                      <button 
-                        style={{ 
-                          flex: '1 0 auto',
-                          minWidth: '80px',
-                          padding: '8px 12px', 
-                          backgroundColor: 'transparent',
-                          border: '1px solid #673ab7',
-                          color: '#673ab7', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px'
-                        }}
-                        onClick={() => openEditModal(member)}
-                      >
-                        <span style={{ fontSize: '16px', marginRight: '4px' }}>✏️</span>
-                        編集
-                      </button>
-                      <button 
-                        style={{ 
-                          flex: '1 0 auto',
-                          minWidth: '80px',
-                          padding: '8px 12px', 
-                          backgroundColor: 'transparent',
-                          border: '1px solid #f44336',
-                          color: '#f44336', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px'
-                        }}
-                        onClick={() => handleRemoveMember(member.userId)}
-                      >
-                        <span style={{ fontSize: '16px', marginRight: '4px' }}>🗑️</span>
-                        削除
-                      </button>
+                      {/* 管理者権限のあるユーザーのみ表示 */}
+                      {canManageMembers && (
+                        <>
+                          <button 
+                            style={{ 
+                              flex: '1 0 auto',
+                              minWidth: '80px',
+                              padding: '8px 12px', 
+                              backgroundColor: 'transparent',
+                              border: '1px solid #673ab7',
+                              color: '#673ab7', 
+                              borderRadius: '8px', 
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}
+                            onClick={() => openEditModal(member)}
+                          >
+                            <span style={{ fontSize: '16px', marginRight: '4px' }}>✏️</span>
+                            編集
+                          </button>
+                          <button 
+                            style={{ 
+                              flex: '1 0 auto',
+                              minWidth: '80px',
+                              padding: '8px 12px', 
+                              backgroundColor: 'transparent',
+                              border: '1px solid #f44336',
+                              color: '#f44336', 
+                              borderRadius: '8px', 
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}
+                            onClick={() => handleRemoveMember(member.userId)}
+                          >
+                            <span style={{ fontSize: '16px', marginRight: '4px' }}>🗑️</span>
+                            削除
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -891,6 +724,14 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
           isDialog={true} 
         />
       )}
+      
+      {/* チームメンバー追加モーダル */}
+      <TeamMemberAddModal
+        teamId={teamId}
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onMemberAdded={handleMemberAdded}
+      />
     </div>
   );
 };

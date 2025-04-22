@@ -68,6 +68,65 @@ router.get('/daily', hybridAuthenticate, fortuneController.getDailyFortune);
  */
 router.get('/team/:teamId/ranking', hybridAuthenticate, fortuneController.getTeamFortuneRanking);
 
+/**
+ * @swagger
+ * /api/v1/fortune/team/{teamId}/context:
+ *   get:
+ *     summary: チームコンテキスト運勢を取得する
+ *     description: 特定チームのコンテキストに基づいた運勢情報を取得します。
+ *     tags:
+ *       - Fortune
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: チームID
+ *     responses:
+ *       200:
+ *         description: チームコンテキスト運勢を取得しました
+ *       401:
+ *         description: 認証エラー
+ *       403:
+ *         description: 権限エラー
+ *       404:
+ *         description: チームコンテキスト運勢が見つかりません
+ *       500:
+ *         description: サーバーエラー
+ */
+router.get('/team/:teamId/context', hybridAuthenticate, fortuneController.getTeamContextFortune);
+
+/**
+ * @swagger
+ * /api/v1/fortune/team/{teamId}/context/generate:
+ *   post:
+ *     summary: チームコンテキスト運勢を生成する
+ *     description: 特定チームのコンテキスト運勢を新たに生成します。
+ *     tags:
+ *       - Fortune
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: チームID
+ *     responses:
+ *       201:
+ *         description: チームコンテキスト運勢を生成しました
+ *       401:
+ *         description: 認証エラー
+ *       403:
+ *         description: 権限エラー
+ *       500:
+ *         description: サーバーエラー
+ */
+router.post('/team/:teamId/context/generate', hybridAuthenticate, fortuneController.generateTeamContextFortune);
 
 
 /**

@@ -191,3 +191,35 @@ export const deleteTeam = async (req: AuthRequest, res: Response, next: NextFunc
     next(error);
   }
 };
+
+/**
+ * ユーザーの所属チーム一覧とメンバーシップ情報を取得
+ */
+export const getUserTeams = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = ensureString(req.user?.id);
+    if (!userId) {
+      throw new BadRequestError('ユーザーIDが必要です');
+    }
+    
+    const teamsWithMemberships = await teamService.getUserTeamsWithMemberships(userId);
+    
+    res.status(200).json({
+      success: true,
+      teams: teamsWithMemberships.map(item => ({
+        id: item.team._id,
+        name: item.team.name,
+        description: item.team.description,
+        iconInitial: item.team.iconInitial,
+        iconColor: item.team.iconColor,
+        adminId: item.team.adminId,
+        isAdmin: item.isAdmin,
+        role: item.membership?.role || '',
+        createdAt: item.team.createdAt,
+        updatedAt: item.team.updatedAt
+      }))
+    });
+  } catch (error) {
+    next(error);
+  }
+};

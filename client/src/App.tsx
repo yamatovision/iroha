@@ -5,6 +5,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { useAuth } from './contexts/AuthContext'
+import { TeamProvider } from './contexts/TeamContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import RequireSajuProfile from './components/common/RequireSajuProfile'
 import LoadingIndicator from './components/common/LoadingIndicator'
@@ -23,7 +24,9 @@ import Profile from './pages/Profile'
 import Fortune from './pages/Fortune'
 import Chat from './pages/Chat'
 import Team from './pages/Team'
+import TeamHub from './pages/Team/TeamHub'
 import AisyouPage from './pages/Team/Aisyou'
+import TeamAdvice from './pages/Team/Advice'
 import FriendList from './pages/Friend'
 import Unauthorized from './pages/Unauthorized'
 
@@ -140,7 +143,7 @@ function App() {
           if (teamId) {
             navigate(`/team/${teamId}`);
           } else {
-            navigate('/team');
+            navigate('/team-hub');
           }
         });
         
@@ -190,6 +193,7 @@ function App() {
         <CssBaseline />
         {/* アプリ終了処理ハンドラー */}
         <AppExitHandler />
+        <TeamProvider>
         
         <Routes>
           {/* 公開ルート */}
@@ -217,14 +221,26 @@ function App() {
                   <Chat />
                 </ProtectedRoute>
               } />
+              <Route path="/team-hub" element={
+                <ProtectedRoute>
+                  <TeamHub />
+                </ProtectedRoute>
+              } />
               <Route path="/team" element={
                 <ProtectedRoute>
-                  <Team />
+                  <TeamHub />
                 </ProtectedRoute>
               } />
               <Route path="/team/:teamId" element={
                 <ProtectedRoute>
                   <Team />
+                </ProtectedRoute>
+              } />
+              <Route path="/team/:teamId/advice" element={
+                <ProtectedRoute>
+                  <RequireSajuProfile>
+                    <TeamAdvice />
+                  </RequireSajuProfile>
                 </ProtectedRoute>
               } />
               <Route path="/team/:teamId/aisyou" element={
@@ -250,7 +266,7 @@ function App() {
               <Route path="/myteam" element={
                 <ProtectedRoute>
                   {userProfile?.teamId ? 
-                    <Navigate to={`/team/${userProfile.teamId}/aisyou`} replace /> : 
+                    <Navigate to={`/team/${userProfile.teamId}/advice`} replace /> : 
                     <Navigate to="/team" replace />
                   }
                 </ProtectedRoute>
@@ -264,6 +280,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
+        </TeamProvider>
       </ThemeProvider>
     </ErrorBoundary>
   )

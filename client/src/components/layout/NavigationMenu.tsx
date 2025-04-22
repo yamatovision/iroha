@@ -49,10 +49,10 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
                         (activeTeamId || userTeamId) : 
                         userTeamId;
   
-  // ダイレクトリンク - 全ユーザー共通で相性分析ページへ直接アクセス
+  // ダイレクトリンク - 全ユーザー共通でチームアドバイスページへ直接アクセス
   const directTeamPath = targetTeamId ? 
-                        `/team/${targetTeamId}/aisyou` : 
-                        '/myteam'; // チームIDがない場合はリダイレクト用ルートへ
+                        `/team/${targetTeamId}/advice` : 
+                        '/team-hub'; // チームIDがない場合はチームハブへ（新規チーム作成用）
 
   // 基本メニュー項目
   const baseMenuItems: MenuItem[] = [
@@ -61,13 +61,13 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
     { text: '設定', icon: <AccountCircleIcon />, path: '/profile' },
   ]
 
-  // チームメニュー項目 - 全ユーザー共通で相性ページへ直接
+  // チームメニュー項目 - ダイレクトリンクに変更
   const teamMenuItem: MenuItem = { 
     text: 'チーム', 
     icon: <GroupsIcon />, 
-    path: directTeamPath, 
-    disabled: !targetTeamId, // チームIDがない場合のみ無効化
-    disabledCheck: !targetTeamId // TypeScriptエラー回避用
+    path: directTeamPath, // '/team/{teamId}/advice' または '/team-hub'
+    disabled: false, // チームハブは常に有効
+    disabledCheck: false // TypeScriptエラー回避用
   }
   
   // 友達メニュー項目
@@ -93,7 +93,7 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
 
   // 管理者メニュー項目 - チームリスト選択ページに遷移する
   const adminMenuItems: MenuItem[] = [
-    { text: '管理', icon: <AdminPanelSettingsIcon />, path: '/team' },
+    { text: '管理', icon: <AdminPanelSettingsIcon />, path: '/team-hub' },
   ]
 
   // 現在のパスがメニュー項目と一致するかチェック

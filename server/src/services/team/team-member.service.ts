@@ -1,10 +1,23 @@
 import mongoose from 'mongoose';
 import { User } from '../../models/User';
 import { Team } from '../../models/Team';
-import { TeamMembership } from '../../models/TeamMembership';
+import { TeamMembership, TeamMemberRole } from '../../models/TeamMembership';
 import { Friendship } from '../../models/Friendship';
 import { NotFoundError, UnauthorizedError, BadRequestError } from '../../utils/error-handler';
 import { isTeamAdmin as checkTeamAdmin, establishTeamFriendships, isTeamMember } from './team.service';
+
+/**
+ * チームメンバーシップを取得する
+ */
+export const getTeamMembership = async (
+  teamId: string | mongoose.Types.ObjectId,
+  userId: string | mongoose.Types.ObjectId
+) => {
+  return await TeamMembership.findOne({
+    teamId,
+    userId
+  });
+};
 
 // 具体的なドキュメント型を定義
 interface IUserDocument extends mongoose.Document {
@@ -185,6 +198,7 @@ export const getTeamMembers = async (teamId: string | mongoose.Types.ObjectId, u
             userId: adminId,
             role: 'チーム管理者',
             isAdmin: true,
+            memberRole: TeamMemberRole.CREATOR,
             joinedAt: new Date()
           });
         }
@@ -243,6 +257,7 @@ export const getTeamMembers = async (teamId: string | mongoose.Types.ObjectId, u
               userId: adminId,
               role: 'チーム管理者',
               isAdmin: true,
+              memberRole: TeamMemberRole.ADMIN,
               joinedAt: new Date()
             });
           }
@@ -304,6 +319,12 @@ export const addMemberById = async (
     // 既存のメンバーシップを更新
     existingMembership.role = role || existingMembership.role;
     existingMembership.isAdmin = isAdmin || existingMembership.isAdmin;
+    // memberRoleを更新（チーム作成者の場合はCREATORを維持）
+    if (existingMembership.memberRole !== TeamMemberRole.CREATOR) {
+      existingMembership.memberRole = isAdmin || existingMembership.isAdmin 
+        ? TeamMemberRole.ADMIN 
+        : TeamMemberRole.MEMBER;
+    }
     await existingMembership.save();
   } else {
     // 新規メンバーシップ作成
@@ -312,6 +333,7 @@ export const addMemberById = async (
       userId,
       role: role || '',
       isAdmin,
+      memberRole: isAdmin ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER,
       joinedAt: new Date()
     });
   }
@@ -462,6 +484,7 @@ export const updateMemberRole = async (
     // 既存のメンバーシップを更新
     membership.role = role;
     membership.isAdmin = isAdmin;
+    membership.memberRole = isAdmin ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER;
     await membership.save();
   }
 
@@ -589,6 +612,7 @@ export const addFriendAsMember = async (
     // 既に存在する場合は更新
     existingMembership.role = role || existingMembership.role;
     existingMembership.isAdmin = isAdmin;
+    existingMembership.memberRole = isAdmin ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER;
     await existingMembership.save();
     
     // 後方互換性のため、Userモデルも更新
@@ -609,6 +633,7 @@ export const addFriendAsMember = async (
     userId: friendId,
     role,
     isAdmin,
+    memberRole: isAdmin ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER,
     joinedAt: new Date()
   });
 

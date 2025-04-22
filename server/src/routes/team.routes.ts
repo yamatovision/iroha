@@ -16,6 +16,7 @@ const router = express.Router();
 // チーム関連のルート
 router.get('/', hybridAuthenticate, teamController.getTeams);
 router.post('/', hybridAuthenticate, teamController.createTeam);
+router.get('/user', hybridAuthenticate, teamController.getUserTeams);
 router.get('/:teamId', hybridAuthenticate, teamController.getTeamById);
 router.put('/:teamId', hybridAuthenticate, teamController.updateTeam);
 router.delete('/:teamId', hybridAuthenticate, teamController.deleteTeam);
