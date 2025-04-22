@@ -111,7 +111,7 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
             fontWeight: 500, 
             mb: 1.5, 
             position: 'relative', 
-            zIndex: 1 
+            zIndex: 1
           }}
         >
           今日の運勢

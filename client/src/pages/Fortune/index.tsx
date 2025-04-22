@@ -4,7 +4,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import FortuneCard from '../../components/fortune/FortuneCard';
 import LuckyItems from '../../components/fortune/LuckyItems';
 import FortuneDetails from '../../components/fortune/FortuneDetails';
-import TeamSelectorDropdown from '../../components/fortune/TeamSelectorDropdown';
 import TeamFortuneRanking from '../../components/fortune/TeamFortuneRanking';
 import AiConsultButton from '../../components/fortune/AiConsultButton';
 import fortuneService from '../../services/fortune.service';
@@ -13,10 +12,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNetworkAwareDataSync } from '../../components/network';
 import './../../components/fortune/styles.css';
 
-interface Team {
-  id: string;
-  name: string;
-}
 
 const Fortune: React.FC = () => {
   const [fortune, setFortune] = useState<IFortune | null>(null);
@@ -30,10 +25,6 @@ const Fortune: React.FC = () => {
     severity: 'info' as 'info' | 'success' | 'warning' | 'error'
   });
   
-  // チーム管理用の状態
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-
   // 認証コンテキストから userProfile を取得
   const { userProfile } = useAuth();
   
@@ -112,19 +103,6 @@ const Fortune: React.FC = () => {
         setCurrentDate(fortuneService.formatDate(date));
       }
       
-      // チーム一覧を設定（管理者用、または所属チームがある場合）
-      if (dashboardData.teamsList && dashboardData.teamsList.length > 0) {
-        setTeams(dashboardData.teamsList);
-        
-        // ユーザーの所属チームがあればデフォルトで選択
-        if (userProfile && userProfile.teamId) {
-          const team = dashboardData.teamsList.find(t => t.id === userProfile.teamId);
-          if (team) {
-            setSelectedTeamId(team.id);
-          }
-        }
-      }
-      
     } catch (err: any) {
       console.error('運勢ダッシュボードの取得に失敗しました', err);
       
@@ -157,10 +135,6 @@ const Fortune: React.FC = () => {
     }
   };
   
-  // チーム選択が変更されたときの処理
-  useEffect(() => {
-    // チーム選択が変更されたときの追加処理があれば実装
-  }, [selectedTeamId, teams]);
 
   // コンテンツが読み込まれた後にアニメーションを有効化
   useEffect(() => {
@@ -178,10 +152,6 @@ const Fortune: React.FC = () => {
     }
   }, [fortune, loading]);
 
-  // チーム選択変更処理
-  const handleTeamChange = (teamId: string | null) => {
-    setSelectedTeamId(teamId);
-  };
 
   // 運勢情報を手動で更新
   const handleRefreshFortune = async () => {
@@ -389,17 +359,6 @@ const Fortune: React.FC = () => {
         </Tooltip>
       </Box>
       
-      {/* チーム選択ドロップダウン（チームが存在する場合のみ表示） */}
-      {teams.length > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <TeamSelectorDropdown
-            teams={teams}
-            selectedTeamId={selectedTeamId}
-            onChange={handleTeamChange}
-            disabled={loading || refreshing}
-          />
-        </Box>
-      )}
       
       {/* タブ切り替えを削除 */}
       
@@ -534,12 +493,6 @@ const Fortune: React.FC = () => {
                 <FortuneDetails fortune={fortune} />
               </Paper>
               
-              {/* チーム運勢ランキング（チームに所属している場合のみ表示） */}
-              {selectedTeamId && (
-                <div className="animate-on-load">
-                  <TeamFortuneRanking teamId={selectedTeamId} />
-                </div>
-              )}
             </>
           ) : (
             // データがない場合
