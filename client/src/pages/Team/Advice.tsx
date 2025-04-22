@@ -24,6 +24,8 @@ import TeamFortuneRanking from '../../components/fortune/TeamFortuneRanking';
 import TeamMembersList from '../../components/team/TeamMembersList';
 import TeamGoalForm from '../../components/team/TeamGoalForm';
 import TeamList from '../../components/team/TeamList';
+import apiService from '../../services/api.service';
+import { TEAM } from '../../../../shared';
 
 // 管理アクションバーコンポーネント
 // 管理者アクションバーは削除 - Material-UI コンポーネントで実装した新しいバージョンを使用
@@ -132,13 +134,12 @@ const TeamSelectorHeader: React.FC<{
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              fontWeight: 'bold',
               cursor: 'pointer',
               transition: 'background-color 0.2s ease',
               marginLeft: '12px',
               boxShadow: '0 3px 10px rgba(0,0,0,0.25)',
               fontSize: '14px',
-              fontWeight: '500',
+              fontWeight: 500,
             }}
             title="チーム管理"
             onClick={onOpenManagement}
@@ -411,79 +412,137 @@ const TeamAdvice: React.FC = () => {
     }
   }, [teamId, activeTeamId, navigate, setActiveTeamId]);
   
-  // ユーザーの権限チェック - 強制的にリフレッシュするよう修正
+  // ユーザーの権限チェック - キャッシュを活用して不要な再取得を防止
   useEffect(() => {
     const checkPermissions = async () => {
       if (!teamId) return;
       
       console.log(`[TeamAdvice] 権限チェック開始: チームID=${teamId}`);
       
-      // チームデータをリフレッシュ (teamService内のキャッシュをクリア)
-      await refreshTeams();
-      
-      // 管理者権限をチェック - 管理権限があるかどうか
-      const hasManagePermission = await hasTeamPermission('manage_team', teamId);
-      console.log(`[TeamAdvice] 管理権限チェック結果: ${hasManagePermission}`);
-      
-      // ユーザーロールも直接取得して確認
-      const userRole = await getUserTeamRole(teamId);
-      console.log(`[TeamAdvice] 詳細なユーザーロール情報:`, userRole);
-      
-      // 管理者かどうかを判断 - memberRoleが'admin'または'creator'ならtrue
-      const isAdmin = userRole.memberRole === 'admin' || userRole.memberRole === 'creator';
-      console.log(`[TeamAdvice] memberRoleからの管理者判定: ${isAdmin}`);
-      
-      // 最終的な管理者判定結果を設定
-      setIsTeamAdmin(isAdmin || hasManagePermission);
-      
-      // チーム目標の有無をチェック
       try {
-        const goal = await teamService.getTeamGoal(teamId);
-        console.log(`[TeamAdvice] チーム目標取得結果:`, goal);
-        const hasGoal = !!goal && !!goal.content;
-        console.log(`[TeamAdvice] チーム目標の有無: ${hasGoal}`);
-        setHasTeamGoal(hasGoal);
-      } catch (err) {
-        console.warn('[TeamAdvice] チーム目標取得エラー:', err);
-        setHasTeamGoal(false);
+        // 管理者権限をチェック - 管理権限があるかどうか
+        const hasManagePermission = await hasTeamPermission('manage_team', teamId);
+        console.log(`[TeamAdvice] 管理権限チェック結果: ${hasManagePermission}`);
+        
+        // ユーザーロールも取得して確認 (キャッシュが利用される)
+        const userRole = await getUserTeamRole(teamId);
+        console.log(`[TeamAdvice] 詳細なユーザーロール情報:`, userRole);
+        
+        // 管理者かどうかを判断 - memberRoleが'admin'または'creator'ならtrue
+        const isAdmin = userRole.memberRole === 'admin' || userRole.memberRole === 'creator';
+        console.log(`[TeamAdvice] memberRoleからの管理者判定: ${isAdmin}`);
+        
+        // 最終的な管理者判定結果を設定
+        setIsTeamAdmin(isAdmin || hasManagePermission);
+        
+        // チーム目標の有無をチェック - キャッシュのためにclearCacheを使わない
+        try {
+          const goal = await teamService.getTeamGoal(teamId);
+          console.log(`[TeamAdvice] チーム目標取得結果:`, goal);
+          const hasGoal = !!goal && !!goal.content;
+          console.log(`[TeamAdvice] チーム目標の有無: ${hasGoal}`);
+          setHasTeamGoal(hasGoal);
+        } catch (err) {
+          console.warn('[TeamAdvice] チーム目標取得エラー:', err);
+          setHasTeamGoal(false);
+        }
+  
+        // 実際の権限とUI状態を確認するための追加ログ
+        console.log('[TeamAdvice] 権限確認まとめ:');
+        console.log(`- チームID: ${teamId}`);
+        console.log(`- 管理者権限(hasTeamPermission): ${hasManagePermission}`);
+        console.log(`- 管理者権限(memberRole): ${isAdmin}`);
+        console.log(`- 最終isTeamAdmin設定: ${isAdmin || hasManagePermission}`);
+      } catch (error) {
+        console.error('[TeamAdvice] 権限チェックエラー:', error);
       }
-
-      // 実際の権限とUI状態を確認するための追加ログ
-      console.log('[TeamAdvice] 権限確認まとめ:');
-      console.log(`- チームID: ${teamId}`);
-      console.log(`- 管理者権限(hasTeamPermission): ${hasManagePermission}`);
-      console.log(`- 管理者権限(memberRole): ${isAdmin}`);
-      console.log(`- 最終isTeamAdmin設定: ${isAdmin || hasManagePermission}`);
     };
     
     checkPermissions();
-  }, [teamId, hasTeamPermission, getUserTeamRole, refreshTeams]);
+  }, [teamId, hasTeamPermission, getUserTeamRole]);
 
   // チームコンテキスト運勢データの取得
   useEffect(() => {
     const fetchTeamContextFortune = async () => {
       if (!teamId) return;
       
+      console.log(`[TeamContextFortune] 🚀 運勢データ取得開始: teamId=${teamId}, userId=${userProfile?.id || '不明'}`);
+      const startTime = Date.now();
+      
       try {
         setLoading(true);
-        const data = await fortuneService.getTeamContextFortune(teamId);
+        
+        // ダイレクトAPI呼び出しでデータを取得（キャッシュを完全に回避）
+        console.log(`[TeamContextFortune] 🔄 API直接呼び出し: /api/v1/fortune/team/${teamId}/context`);
+        
+        // JWT認証トークンを取得（サービスから直接）
+        // Note: トークンは実際にはapiServiceが内部で処理するので、
+        // ここではキャッシュのみをクリアする
+        console.log(`[TeamContextFortune] 🧹 キャッシュをクリアします: /api/v1/fortune/team/${teamId}/context`);
+        await apiService.clearCache(`/api/v1/fortune/team/${teamId}/context`);
+        
+        // apiServiceを使用してデータ取得（キャッシュをスキップオプション付き）
+        const response = await apiService.get(`/api/v1/fortune/team/${teamId}/context`, undefined, {
+          skipCache: true,
+          forceRefresh: true
+        });
+        
+        // レスポンスボディの全体をログ出力（truncateなし）
+        const data = response.data;
+        const elapsedTime = Date.now() - startTime;
+        
+        console.log('[TeamContextFortune] 📦 生データ完全版:');
+        console.log(JSON.stringify(data, null, 2));
         
         // 成功フラグをチェック
         if (data && data.success === false) {
           // 未実装・開発中の場合はエラーではなく情報提供として扱う
           if (data.message) {
-            console.log('チームコンテキスト運勢情報:', data.message);
+            console.log(`[TeamContextFortune] ℹ️ 情報: ${data.message} (${elapsedTime}ms)`);
           }
           setTeamContextFortune(null);
         } else if (data && data.teamContextFortune) {
+          console.log(`[TeamContextFortune] ✅ 既存データ取得成功: ID=${data.teamContextFortune._id || '不明'}, 日付=${new Date(data.teamContextFortune.date).toLocaleDateString()} (${elapsedTime}ms)`);
+          
+          // データの詳細な分析
+          console.log('teamContextAdvice:', JSON.stringify(data.teamContextFortune.teamContextAdvice));
+          console.log('collaborationTips:', JSON.stringify(data.teamContextFortune.collaborationTips));
+          
+          // 特に問題があるかもしれないプロパティをチェック
+          const checkForNull = (obj: any, path = '') => {
+            if (obj === null) {
+              console.warn(`[TeamContextFortune] ⚠️ NULL値を検出: ${path}`);
+              return;
+            }
+            if (typeof obj !== 'object') return;
+            
+            Object.entries(obj).forEach(([key, value]) => {
+              const newPath = path ? `${path}.${key}` : key;
+              if (value === null) {
+                console.warn(`[TeamContextFortune] ⚠️ NULL値を検出: ${newPath}`);
+              } else if (value === undefined) {
+                console.warn(`[TeamContextFortune] ⚠️ undefined値を検出: ${newPath}`);
+              } else if (typeof value === 'object') {
+                checkForNull(value, newPath);
+              }
+            });
+          };
+          
+          checkForNull(data.teamContextFortune);
+          
+          // 状態を更新
           setTeamContextFortune(data.teamContextFortune);
+        } else if (data && data.isNewlyGenerated) {
+          console.log(`[TeamContextFortune] 🆕 新規生成完了: ID=${data._id || '不明'}, 日付=${new Date(data.date).toLocaleDateString()} (${elapsedTime}ms)`);
+          setTeamContextFortune(data);
         } else {
+          console.log(`[TeamContextFortune] ℹ️ データ取得: (${elapsedTime}ms)`);
           setTeamContextFortune(data);
         }
         
         setError(null);
       } catch (err) {
-        console.error('チームコンテキスト運勢取得エラー:', err);
+        console.error(`[TeamContextFortune] ❌ 取得エラー: ${err}`, err);
         // エラーがあっても致命的ではないため、共通エラーはセットしない
         // チームコンテキスト運勢がないだけで他の機能は動作可能
         setTeamContextFortune(null);
@@ -493,7 +552,7 @@ const TeamAdvice: React.FC = () => {
     };
     
     fetchTeamContextFortune();
-  }, [teamId]);
+  }, [teamId, userProfile?.id]);
 
   // チーム選択処理
   const handleTeamSelect = async (selectedTeamId: string) => {
@@ -535,8 +594,19 @@ const TeamAdvice: React.FC = () => {
     try {
       // チーム目標の有無を再チェック
       if (teamId) {
+        console.log('チーム目標設定完了 - データ再取得');
+        
+        // キャッシュの代わりにPRG (Post-Redirect-Get) パターンを使用
+        // apiServiceのキャッシュをクリアせず、代わりに新しいリクエストを送信
+        
+        // 目標データを取得 (キャッシュの有効期限が短い場合は新しいデータが取得される)
         const goal = await teamService.getTeamGoal(teamId);
-        setHasTeamGoal(!!goal && !!goal.content);
+        console.log('チーム目標データ:', goal);
+        
+        // 目標の有無を更新
+        const hasGoal = !!goal && !!goal.content;
+        console.log(`チーム目標の有無を更新: ${hasGoal}`);
+        setHasTeamGoal(hasGoal);
       }
       
       // モーダルを閉じる
@@ -761,11 +831,199 @@ const TeamAdvice: React.FC = () => {
         </div>
         
         {/* チーム目標達成アドバイス */}
-        {activeTeam && teamContextFortune && (
-          <TeamContextFortuneCard 
-            fortune={teamContextFortune} 
-            teamName={activeTeam.name}
-          />
+        {activeTeam && (
+          <div className="section" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            padding: '24px',
+            overflow: 'hidden',
+            position: 'relative',
+            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            marginBottom: '32px'
+          }}>
+            <div className="section-title" style={{
+              fontSize: '1.3rem',
+              fontWeight: 600,
+              marginBottom: '16px',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              letterSpacing: '0.01em'
+            }}>
+              <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
+                insights
+              </span>
+              チームコンテキスト運勢
+            </div>
+            
+            <Divider sx={{ mb: 3 }} />
+            
+            {teamContextFortune ? (
+              <>
+                {/* 通常のカードは使わない（表示に問題があるため） */}
+                {false && (
+                  <TeamContextFortuneCard 
+                    fortune={teamContextFortune} 
+                    teamName={activeTeam.name}
+                  />
+                )}
+                {/* 超シンプルな直接表示（通常カードは非表示） */}
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+                  padding: '0',
+                  overflow: 'hidden',
+                  margin: '8px 0 24px 0'
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    backgroundImage: 'linear-gradient(135deg, #673ab7 0%, #9c27b0 100%)',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span>チームコンテキスト運勢</span>
+                    <span style={{
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '16px'
+                    }}>スコア: {teamContextFortune.score}</span>
+                  </div>
+                
+                  <div style={{
+                    padding: '24px',
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: '1.6'
+                  }}>
+                    <h2 style={{
+                      color: '#673ab7', 
+                      fontSize: '20px', 
+                      marginTop: '0',
+                      marginBottom: '20px',
+                      borderBottom: '2px solid #f0f0f0',
+                      paddingBottom: '10px'
+                    }}>
+                      本日のチーム運勢 - {activeTeam?.name || 'チーム'}
+                    </h2>
+                    
+                    <p style={{
+                      color: '#666',
+                      fontSize: '14px',
+                      marginBottom: '20px'
+                    }}>
+                      {new Date(teamContextFortune.date).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'long'
+                      })}
+                    </p>
+                    
+                    {/* チームコンテキスト運勢とチーム目標達成アドバイスの表示 */}
+                    {teamContextFortune.teamContextAdvice && (
+                      <div style={{marginBottom: '24px'}}>
+                        {/* セクション1: チームコンテキストにおける運勢 */}
+                        {(() => {
+                          const text = teamContextFortune.teamContextAdvice;
+                          const contextSection = text.split('## チームコンテキストにおける運勢');
+                          if (contextSection.length > 1) {
+                            const contextContent = contextSection[1].split('##')[0].trim();
+                            if (contextContent) {
+                              return (
+                                <div style={{marginBottom: '20px'}}>
+                                  <h3 style={{color: '#673ab7', fontSize: '16px', marginBottom: '12px'}}>
+                                    チームコンテキストにおける運勢:
+                                  </h3>
+                                  <div style={{lineHeight: '1.7'}}>{contextContent}</div>
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
+
+                        {/* セクション2: チーム目標達成のための具体的アドバイス */}
+                        {(() => {
+                          const text = teamContextFortune.teamContextAdvice;
+                          const goalSection = text.split('## チーム目標達成のための具体的アドバイス');
+                          if (goalSection.length > 1) {
+                            const goalContent = goalSection[1].split('##')[0].trim();
+                            if (goalContent) {
+                              return (
+                                <div style={{marginBottom: '20px'}}>
+                                  <h3 style={{color: '#673ab7', fontSize: '16px', marginBottom: '12px'}}>
+                                    チーム目標達成のためのアドバイス:
+                                  </h3>
+                                  <div style={{lineHeight: '1.7'}}>{goalContent}</div>
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+                    
+                    {/* チーム内での役割発揮のポイントを表示（MarkDownから抽出） */}
+                    {teamContextFortune.teamContextAdvice && (
+                      <div style={{
+                        marginTop: '8px', 
+                        padding: '16px', 
+                        backgroundColor: '#f5f0ff', 
+                        borderRadius: '8px',
+                        border: '1px solid #e9e3f5'
+                      }}>
+                        <h3 style={{
+                          color: '#673ab7', 
+                          fontSize: '16px', 
+                          marginTop: '0',
+                          marginBottom: '12px'
+                        }}>
+                          今日のチーム協力アドバイス:
+                        </h3>
+                        <div style={{lineHeight: '1.7'}}>
+                          {/* マークダウンから「チーム内での役割発揮のポイント」セクションを抽出して表示 */}
+                          {(() => {
+                            const text = teamContextFortune.teamContextAdvice;
+                            const roleSection = text.split('## チーム内での役割発揮のポイント');
+                            if (roleSection.length > 1) {
+                              // 次の見出しまたは文末までの内容を抽出
+                              const content = roleSection[1].split('##')[0].trim();
+                              return content;
+                            } else {
+                              // セクションが見つからない場合、全文を表示
+                              return text;
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <Box sx={{ 
+                p: 3,
+                backgroundColor: 'rgba(103, 58, 183, 0.05)',
+                borderRadius: 2,
+                textAlign: 'center',
+                mb: 3
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, color: '#673ab7' }}>
+                  チームコンテキスト運勢データが見つかりません
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+                  現在、このチームのコンテキスト運勢データがありません。データが生成されるまでお待ちください。
+                </Typography>
+              </Box>
+            )}
+          </div>
         )}
 
         {/* チームメンバー運勢ランキング */}
@@ -1048,7 +1306,11 @@ const TeamGoalDisplay: React.FC<{ teamId: string }> = ({ teamId }) => {
       
       try {
         setLoading(true);
+        
+        // キャッシュを使用して取得（キャッシュクリアは行わない）
         const goalData = await teamService.getTeamGoal(teamId);
+        console.log('TeamGoalDisplay: チーム目標データ取得:', goalData);
+        
         setGoal(goalData);
         setError(null);
       } catch (err) {

@@ -60,6 +60,14 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       setIsLoading(true);
+      
+      // ロールキャッシュをクリア (チーム更新時には役割情報も再取得する)
+      roleCache.current.clear();
+      console.log('[TeamContext] ロールキャッシュをクリア');
+      
+      // ストレージキャッシュも選択的にクリア
+      teamService.invalidateTeamCache('userTeams');
+      
       const userTeams = await teamService.getUserTeams();
       setTeams(userTeams);
       
@@ -113,7 +121,12 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initialize();
   }, [auth.userProfile?.id]);  // auth.userProfile?.idが変更された時に再実行
 
-  // ユーザーのチーム内の役割情報を取得 - 直接APIを呼び出してキャッシュの問題を回避
+  // キャッシュ用に最後に取得した役割情報を保持
+  const roleCache = React.useRef<Map<string, {info: TeamMembershipInfo, timestamp: number}>>(new Map());
+  // キャッシュの有効期間 (5分)
+  const ROLE_CACHE_TTL = 5 * 60 * 1000;
+
+  // ユーザーのチーム内の役割情報を取得 - キャッシュを活用して永久ループを防止
   const getUserTeamRole = async (teamId?: string): Promise<TeamMembershipInfo> => {
     try {
       const targetTeamId = teamId || activeTeamId;
@@ -122,13 +135,20 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { isCreator: false, isAdmin: false, isMember: false, role: '' };
       }
       
+      // キャッシュをチェック
+      const cacheKey = `${targetTeamId}`;
+      const now = Date.now();
+      const cachedRole = roleCache.current.get(cacheKey);
+      
+      // キャッシュが有効期間内なら使用
+      if (cachedRole && (now - cachedRole.timestamp) < ROLE_CACHE_TTL) {
+        console.log(`[TeamContext] キャッシュから役割情報を取得: teamId=${targetTeamId}`);
+        return cachedRole.info;
+      }
+      
       console.log(`[TeamContext] チームメンバー情報取得を開始: teamId=${targetTeamId}, userId=${auth.userProfile?.id}`);
       
-      // キャッシュを無視して直接APIを呼び出し（teamService内部キャッシュをクリア）
-      teamService.invalidateTeamCache(targetTeamId);
-      teamService.invalidateTeamCache('userTeams');
-      
-      // チームメンバー情報を取得
+      // チームメンバー情報を取得 (キャッシュのクリアは行わない)
       const members = await teamService.getTeamMembers(targetTeamId);
       console.log(`[TeamContext] チームメンバー一覧取得完了:`, members);
       
@@ -136,10 +156,12 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log(`[TeamContext] ユーザーのメンバーシップ情報:`, userMembership);
       
       if (!userMembership) {
-        return { isCreator: false, isAdmin: false, isMember: false, role: '' };
+        const noMemberInfo = { isCreator: false, isAdmin: false, isMember: false, role: '' };
+        roleCache.current.set(cacheKey, {info: noMemberInfo, timestamp: now});
+        return noMemberInfo;
       }
       
-      // チーム情報を取得してcreatorかどうか確認（こちらも直接API呼び出し）
+      // チーム情報を取得してcreatorかどうか確認
       const team = await teamService.getTeamById(targetTeamId);
       console.log(`[TeamContext] チーム情報:`, team);
       
@@ -154,13 +176,18 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log(`[TeamContext] 計算された最終的なmemberRole: ${memberRole}`);
       
-      return {
+      const roleInfo = {
         isCreator,
         isAdmin: userMembership.isAdmin || false,
         isMember: true,
         role: userMembership.role || '',
         memberRole: memberRole
       };
+      
+      // 結果をキャッシュ
+      roleCache.current.set(cacheKey, {info: roleInfo, timestamp: now});
+      
+      return roleInfo;
     } catch (error) {
       console.error('チーム役割情報取得エラー:', error);
       return { isCreator: false, isAdmin: false, isMember: false, role: '' };

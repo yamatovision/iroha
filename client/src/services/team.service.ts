@@ -239,6 +239,16 @@ class TeamService {
   async setTeamGoal(teamId: string, goal: string, deadline?: Date): Promise<any> {
     try {
       const response = await apiService.post(TEAM.SET_TEAM_GOAL(teamId), { content: goal, deadline });
+      
+      // 重要: 関連するキャッシュを明示的に無効化
+      await apiService.clearCache(TEAM.GET_TEAM_GOAL(teamId));
+      
+      // チーム自体のキャッシュも更新して確実に最新情報を反映
+      await apiService.clearCache(TEAM.GET_TEAM(teamId));
+      
+      // キャッシュ操作を確認するログ
+      console.log(`チーム目標設定後にキャッシュを無効化: ${TEAM.GET_TEAM_GOAL(teamId)}`);
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to set goal for team ${teamId}:`, error);
@@ -313,11 +323,21 @@ class TeamService {
    * メンバーカルテ情報を取得する
    * @param teamId チームID
    * @param userId ユーザーID
+   * @param skipCache キャッシュをスキップするかどうか
    * @returns メンバーカルテ情報
    */
-  async getMemberCard(teamId: string, userId: string): Promise<any> {
+  async getMemberCard(teamId: string, userId: string, skipCache: boolean = false): Promise<any> {
     try {
-      const response = await apiService.get(TEAM.GET_MEMBER_CARD(teamId, userId));
+      // カルテ生成中はキャッシュを使わないようにする
+      const url = TEAM.GET_MEMBER_CARD(teamId, userId);
+      
+      if (skipCache) {
+        // キャッシュをクリアしてから取得
+        await apiService.clearCache(url);
+        console.log(`メンバーカルテのキャッシュをクリア: ${url}`);
+      }
+      
+      const response = await apiService.get(url, {}, { skipCache });
       return response.data;
     } catch (error) {
       console.error(`Failed to get member card for user ${userId} in team ${teamId}:`, error);

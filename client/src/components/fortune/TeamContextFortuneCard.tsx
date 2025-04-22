@@ -4,6 +4,24 @@ import { ITeamContextFortune } from '../../../../shared';
 import fortuneService from '../../services/fortune.service';
 import './styles.css';
 
+// マークダウン表示用ユーティリティ関数
+const formatMarkdown = (text: string): React.ReactNode => {
+  // 単純な改行とスタイル処理
+  const lines = text.split('\n');
+  return lines.map((line, index) => {
+    // 見出し (# または ##)
+    if (line.startsWith('# ')) {
+      return <Typography key={index} variant="h5" sx={{ mt: 1, mb: 2, fontWeight: 'bold' }}>{line.substring(2)}</Typography>;
+    } else if (line.startsWith('## ')) {
+      return <Typography key={index} variant="h6" sx={{ mt: 1, mb: 1.5, fontWeight: 'bold' }}>{line.substring(3)}</Typography>;
+    } else if (line.trim() === '') {
+      return <Box key={index} sx={{ height: 16 }} />;
+    } else {
+      return <Typography key={index} variant="body1" paragraph>{line}</Typography>;
+    }
+  });
+};
+
 interface TeamContextFortuneCardProps {
   fortune: ITeamContextFortune;
   teamName: string;
@@ -32,10 +50,24 @@ const TeamContextFortuneCard: React.FC<TeamContextFortuneCardProps> = ({ fortune
     }
   })();
   
-  // 日付のフォーマット
-  const formattedDate = fortune.date ? 
-    fortuneService.formatDate(fortune.date) : 
-    fortuneService.formatDate(new Date());
+  // デバッグ用に全プロパティを表示
+  console.log('[TeamContextFortuneCard] 受け取ったデータ:', JSON.stringify(fortune, null, 2));
+  
+  // 日付のフォーマット (日付がDate型でない場合は文字列からDateオブジェクトへ変換)
+  const dateObj = fortune.date ? 
+    (fortune.date instanceof Date ? fortune.date : new Date(fortune.date)) : 
+    new Date();
+    
+  const formattedDate = fortuneService.formatDate(dateObj);
+  
+  // チームコンテキストアドバイスのテキストを取得 (リファクタリング後)
+  const advice = fortune.teamContextAdvice || '';
+  
+  // デバッグログ
+  console.log('teamContextAdvice:', JSON.stringify(advice));
+  
+  // リファクタリング: AIレスポンス全体を直接表示するように簡略化
+  const fullAdvice = advice;
   
   return (
     <Paper
@@ -159,54 +191,52 @@ const TeamContextFortuneCard: React.FC<TeamContextFortuneCardProps> = ({ fortune
         </Box>
       </Box>
       
-      {/* チームコンテキストアドバイス */}
+      {/* チームコンテキストアドバイス - 最もシンプルな表示 */}
       <CardContent sx={{ pt: 2, px: 3, pb: 1 }}>
-        <Typography 
-          variant="body1" 
-          sx={{ 
-            fontWeight: 500, 
-            color: theme.palette.text.primary,
-            mb: 2,
-            lineHeight: 1.7
-          }}
-        >
-          {fortune.teamContextAdvice}
-        </Typography>
+        <div style={{ padding: '0', margin: '0 0 20px 0' }}>
+          {/* マークダウンの見出しを手動で変換 */}
+          {fullAdvice.split('\n').map((line, index) => {
+            if (line.startsWith('# ')) {
+              return (
+                <h2 key={index} style={{ 
+                  fontSize: '1.5rem', 
+                  fontWeight: 'bold',
+                  marginBottom: '16px',
+                  color: '#673ab7' 
+                }}>
+                  {line.substring(2)}
+                </h2>
+              );
+            } else if (line.startsWith('## ')) {
+              return (
+                <h3 key={index} style={{ 
+                  fontSize: '1.2rem', 
+                  fontWeight: 'bold',
+                  marginTop: '16px',
+                  marginBottom: '12px',
+                  color: '#9575cd' 
+                }}>
+                  {line.substring(3)}
+                </h3>
+              );
+            } else if (line.trim() === '') {
+              return <div key={index} style={{ height: '16px' }} />;
+            } else {
+              return (
+                <p key={index} style={{ 
+                  margin: '8px 0', 
+                  lineHeight: '1.7',
+                  fontSize: '1rem' 
+                }}>
+                  {line}
+                </p>
+              );
+            }
+          })}
+        </div>
       </CardContent>
       
-      {/* チーム協力ヒント */}
-      <Box sx={{ px: 3, pb: 3 }}>
-        <Divider sx={{ mb: 2 }} />
-        <Typography 
-          variant="subtitle1" 
-          sx={{ 
-            fontWeight: 'bold', 
-            color: theme.palette.primary.main,
-            mb: 1.5
-          }}
-        >
-          今日のチーム協力ポイント
-        </Typography>
-        
-        {fortune.collaborationTips && fortune.collaborationTips.map((tip, index) => (
-          <Card 
-            key={index} 
-            variant="outlined" 
-            sx={{ 
-              mb: 1, 
-              borderRadius: 2,
-              borderColor: 'rgba(0, 0, 0, 0.08)',
-              backgroundColor: index % 2 === 0 ? 'rgba(0, 0, 0, 0.02)' : 'transparent'
-            }}
-          >
-            <CardContent sx={{ py: 1, px: 2, '&:last-child': { pb: 1.5 } }}>
-              <Typography variant="body2">
-                {tip}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
+      {/* リファクタリング: 協力ヒントの表示をマークダウン表示に統合 */}
     </Paper>
   );
 };

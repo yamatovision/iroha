@@ -109,6 +109,17 @@ export const generateTestToken = (userId: string = 'test-user') => {
 };
 
 /**
+ * テスト用の認証ヘッダーを取得
+ */
+export const getTestAuthHeaders = async () => {
+  // テスト用の認証トークンを生成
+  const token = generateTestToken();
+  return {
+    Authorization: `Bearer ${token}`
+  };
+};
+
+/**
  * テストの実行前にデータベースをクリーンアップする関数
  */
 export const cleanDatabase = async () => {

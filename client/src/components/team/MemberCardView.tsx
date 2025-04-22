@@ -15,6 +15,8 @@ import {
 import { Close as CloseIcon, WaterDrop, Whatshot, Park, Public, Diamond } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import teamService from '../../services/team.service';
+import apiService from '../../services/api.service';
+import { TEAM } from '../../../../shared';
 
 // 五行属性のアイコンマッピング
 const elementIcons: { [key: string]: React.ReactNode } = {
@@ -48,37 +50,43 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
   const [cardData, setCardData] = useState<any>(null);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
     const fetchMemberCard = async () => {
       try {
         setLoading(true);
-        const data = await teamService.getMemberCard(teamId, userId);
+        // 初回はキャッシュありで取得
+        const data = await teamService.getMemberCard(teamId, userId, false);
         
         // カルテ生成中の場合
         if (data.isGenerating) {
           setGenerating(true);
+          console.log('カルテ生成中状態を検出しました - ポーリングを開始します');
           
           // カルテが生成されるまで5秒ごとにポーリング
-          const intervalId = setInterval(async () => {
+          intervalId = setInterval(async () => {
             try {
               console.log('カルテ生成状況を確認中...');
-              const updatedData = await teamService.getMemberCard(teamId, userId);
+              // ポーリング時はキャッシュを無効化して最新データを取得
+              const updatedData = await teamService.getMemberCard(teamId, userId, true);
               
               // 生成完了した場合
               if (!updatedData.isGenerating) {
+                console.log('カルテ生成が完了しました:', updatedData);
                 setCardData(updatedData);
                 setGenerating(false);
                 setLoading(false);
                 clearInterval(intervalId);
+              } else {
+                console.log('カルテはまだ生成中です');
               }
             } catch (pollingErr) {
               console.error('カルテポーリング中のエラー:', pollingErr);
               // エラーが発生しても即座に停止せず、次のポーリングを待つ
             }
           }, 5000);
-          
-          // コンポーネントのクリーンアップ時にインターバルをクリア
-          return () => clearInterval(intervalId);
         } else {
+          console.log('カルテはすでに生成されています:', data);
           setCardData(data);
           setGenerating(false);
           setError(null);
@@ -94,12 +102,26 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
     };
 
     if (teamId && userId) {
-      fetchMemberCard();
+      // 最初にキャッシュをクリアしてから取得開始
+      const clearCacheAndFetch = async () => {
+        try {
+          await apiService.clearCache(TEAM.GET_MEMBER_CARD(teamId, userId));
+          await fetchMemberCard();
+        } catch (error) {
+          console.error('キャッシュクリア中にエラーが発生しました:', error);
+          await fetchMemberCard();
+        }
+      };
+      
+      clearCacheAndFetch();
     }
     
-    // コンポーネントのアンマウント時にクリーンアップ
+    // コンポーネントのアンマウント時にインターバルをクリア
     return () => {
-      // このスコープの外でインターバルが設定されてる場合は、ここでは何もしない
+      if (intervalId) {
+        clearInterval(intervalId);
+        console.log('ポーリングを停止しました');
+      }
     };
   }, [teamId, userId]);
 
@@ -125,10 +147,13 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
       );
     }
 
-    if (error) {
+    if (error && !isDialog) {
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
+          <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
+            メンバーカルテを表示できません。メンバーが四柱推命プロフィールを登録していない可能性があります。
+          </Typography>
           <Button 
             variant="contained" 
             onClick={() => window.location.reload()} 
@@ -144,6 +169,9 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography>データが見つかりません</Typography>
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            メンバーの四柱推命プロフィールが登録されていない可能性があります。
+          </Typography>
         </Box>
       );
     }
@@ -242,7 +270,23 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
           )}
         </DialogTitle>
         <DialogContent dividers>
-          {renderContent()}
+          {error && !loading && !generating && (
+            <Box sx={{ textAlign: 'center', p: 3 }}>
+              <Typography color="error">
+                {error}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
+                メンバーカルテを表示できません。メンバーが四柱推命プロフィールを登録していない可能性があります。
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={onClose}
+              >
+                閉じる
+              </Button>
+            </Box>
+          )}
+          {!error && renderContent()}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>閉じる</Button>

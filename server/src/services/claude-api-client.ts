@@ -9,20 +9,43 @@ import fetch from 'cross-fetch';
 // 環境変数から設定を取得
 // サーバー起動時にはAPIの状態を確認するだけで、エラーはスローしない
 const getConfig = () => {
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-  const defaultModel = process.env.CLAUDE_MODEL || 'claude-3-7-sonnet-20250219';
-  const useClaudeApi = process.env.USE_CLAUDE_API === 'true';
+  console.log('===== Claude API 設定の読み込み =====');
+  
+  // .envからの変数読み込み確認
+  const rawApiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  const rawModel = process.env.CLAUDE_API_MODEL || process.env.CLAUDE_MODEL;
+  const rawUseApi = process.env.USE_CLAUDE_API;
+  
+  console.log('API設定:', {
+    hasApiKey: !!rawApiKey,
+    apiKeyPrefix: rawApiKey ? rawApiKey.substring(0, 10) + '...' : 'not set',
+    model: rawModel || 'claude-3-7-sonnet-20250219 (default)',
+    useApiFlag: rawUseApi
+  });
+  
+  // 値の正規化
+  const apiKey = rawApiKey;
+  const defaultModel = rawModel || 'claude-3-7-sonnet-20250219';
+  const useClaudeApi = rawUseApi === 'true';
   
   // API使用が有効で、かつAPIキーが設定されていない場合のみ警告
   if (useClaudeApi && !apiKey) {
-    console.warn('Anthropic APIキーが設定されていませんが、USE_CLAUDE_API=trueとなっています。一部機能が無効になります。');
+    console.warn('⚠️ Anthropic APIキーが設定されていませんが、USE_CLAUDE_API=trueとなっています。一部機能が無効になります。');
   }
   
-  return { 
+  const result = { 
     apiKey: apiKey || 'dummy-key-for-disabled-api', 
     defaultModel,
     apiEnabled: useClaudeApi && !!apiKey 
   };
+  
+  console.log('Claude API設定結果:', {
+    apiEnabled: result.apiEnabled, 
+    model: result.defaultModel
+  });
+  console.log('===== Claude API 設定の読み込み完了 =====');
+  
+  return result;
 };
 
 // クライアント設定インターフェース
@@ -116,11 +139,19 @@ export class ClaudeApiClient {
       
       const startTime = Date.now();
       
+      // タイムアウト制御のための AbortController を追加
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒タイムアウト
+      
       const response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal // AbortController のシグナルを追加
       });
+      
+      // タイムアウトタイマーをクリア
+      clearTimeout(timeoutId);
       
       const endTime = Date.now();
       
@@ -134,18 +165,28 @@ export class ClaudeApiClient {
         }
         
         try {
-          const errorData = await response.json();
-          if (this.debug) {
-            console.error('🤖 APIエラー詳細:', JSON.stringify(errorData));
+          // レスポンスボディを一度だけ消費
+          const responseText = await response.text();
+          let errorInfo = responseText;
+          
+          // JSONとしてパースを試みる
+          try {
+            const errorData = JSON.parse(responseText);
+            errorInfo = JSON.stringify(errorData);
+            if (this.debug) {
+              console.error('🤖 APIエラー詳細:', errorInfo);
+            }
+          } catch (jsonError) {
+            // JSONパースに失敗した場合はテキストをそのまま使用
+            if (this.debug) {
+              console.error('🤖 APIエラーテキスト:', errorInfo);
+            }
           }
-          throw new Error(`Claude API error: ${response.status} ${JSON.stringify(errorData)}`);
-        } catch (jsonError) {
-          // JSONパースに失敗した場合はテキストとして取得
-          const errorText = await response.text();
-          if (this.debug) {
-            console.error('🤖 APIエラーテキスト:', errorText);
-          }
-          throw new Error(`Claude API error: ${response.status} ${errorText}`);
+          
+          throw new Error(`Claude API error: ${response.status} ${errorInfo}`);
+        } catch (error) {
+          // レスポンスボディの取得に失敗した場合
+          throw new Error(`Claude API error: ${response.status} (Response body unavailable)`);
         }
       }
       
@@ -251,8 +292,12 @@ export class ClaudeApiClient {
       });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Claude API error: ${response.status} - ${errorText}`);
+        try {
+          const errorText = await response.text();
+          throw new Error(`Claude API error: ${response.status} - ${errorText}`);
+        } catch (error) {
+          throw new Error(`Claude API error: ${response.status} (Response body unavailable)`);
+        }
       }
       
       // レスポンスボディの確認

@@ -41,11 +41,13 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
 
       try {
         setLoading(true);
+        console.log(`TeamFortuneRanking: ランキングデータ取得開始 - teamId=${teamId}`);
         const data = await fortuneService.getTeamFortuneRanking(teamId);
+        console.log('TeamFortuneRanking: 取得成功', data);
         setRankingData(data);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch team fortune ranking:', err);
+        console.error('TeamFortuneRanking: 取得失敗:', err);
         setError('チーム運勢ランキングの取得に失敗しました');
       } finally {
         setLoading(false);
@@ -175,8 +177,10 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
     );
   }
 
-  // rankingDataがない、またはrankingがない、またはrankingが空の配列の場合
-  if (!rankingData || !rankingData.ranking || rankingData.ranking.length === 0) {
+  console.log("rankingData詳細:", JSON.stringify(rankingData, null, 2));
+  
+  // rankingDataがない、またはdata.rankingがない、またはdata.rankingが空の配列の場合
+  if (!rankingData || !rankingData.data || !rankingData.data.ranking || rankingData.data.ranking.length === 0) {
     return (
       <Paper
         elevation={3}
@@ -215,11 +219,27 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             チームメンバーの運勢データが不足しているか、まだ生成されていません。
           </Typography>
+          {/* デバッグ情報の表示 */}
+          {rankingData && rankingData.debug && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, fontSize: '0.8rem' }}>
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', mb: 1 }}>
+                デバッグ情報:
+              </Typography>
+              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                {JSON.stringify(rankingData.debug, null, 2)}
+              </pre>
+            </Box>
+          )}
         </Box>
       </Paper>
     );
   }
 
+  // ランキングデータを取得
+  const ranking = rankingData.data.ranking;
+  const teamName = rankingData.data.teamName;
+  console.log(`ランキング表示準備: ${ranking.length}件のデータ`, ranking);
+  
   return (
     <Paper
       elevation={3}
@@ -250,9 +270,9 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
             <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
               <EmojiEvents sx={{ mr: 1 }} /> チーム運勢ランキング
             </Typography>
-            {rankingData.userRank && (
+            {false && (
               <Chip 
-                label={`あなたの順位: ${rankingData.userRank}位`}
+                label={`あなたの順位: 1位`}
                 size="small"
                 sx={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.25)', 
@@ -309,7 +329,7 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
           本日のチームメンバー運勢ランキング
         </Typography>
         
-        {rankingData.ranking.map((member, index) => {
+        {ranking.map((member, index) => {
           const rank = index + 1;
           const rankBadge = getRankBadge(rank);
           const isCurrentUser = userProfile?.id === member.userId;

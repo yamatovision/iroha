@@ -112,3 +112,18 @@ firebase-config.json
 gcp-service-account.json
 *.key
 *.pem
+
+# 追加のテストスクリプト
+debug-team-context-fortune.js
+server/check-mongoose.js
+server/scripts/check-and-clean-fortune.js
+server/scripts/check-existing-team-context-fortune.js
+server/scripts/check-team-context-fortune.js
+server/scripts/delete-team-context-fortune.js
+server/scripts/generate-test-fortune.js
+server/scripts/migrate-team-context-fortune.js
+server/scripts/test-claude-response.js
+server/scripts/test-team-context-fortune.js
+server/server_logs.txt
+server/team-context-*
+EOF < /dev/null

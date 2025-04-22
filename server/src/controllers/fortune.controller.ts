@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { fortuneService } from '../services/fortune.service';
+import { teamContextFortuneService } from '../services/team-context-fortune.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Team } from '../models/Team';
 import { User } from '../models/User';
@@ -152,20 +153,26 @@ export class FortuneController {
    */
   public async getTeamFortuneRanking(req: AuthRequest, res: Response): Promise<void> {
     try {
+      console.log('=== チーム運勢ランキング取得開始 ===');
       const userId = req.user?.id;
       if (!userId) {
+        console.log('認証エラー: ユーザーIDが見つかりません');
         res.status(401).json({ error: '認証されていません' });
         return;
       }
+      console.log(`リクエストユーザーID: ${userId}`);
 
       const { teamId } = req.params;
+      console.log(`チームID: ${teamId}`);
       
       // チームが存在するか確認
       const team = await Team.findById(teamId);
       if (!team) {
+        console.log(`チームが見つかりません: ${teamId}`);
         res.status(404).json({ error: 'チームが見つかりません' });
         return;
       }
+      console.log(`チーム名: ${team.name}`);
       
       // TeamMembershipモデルを使用してチームメンバーかどうかを確認
       const membership = await TeamMembership.findOne({ 
@@ -174,23 +181,28 @@ export class FortuneController {
       });
       
       if (!membership) {
-        // 後方互換性のためにレガシーのメンバーシップチェック
-        // この箇所は旧モデルに依存していたため、その機能を削除（新モデルだけをチェック）
-        const isLegacyMember = false;
-        
-        if (!isLegacyMember) {
-          res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
-          return;
-        }
+        console.log(`ユーザーはチームメンバーではありません: userId=${userId}, teamId=${teamId}`);
+        res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
+        return;
       }
+      console.log(`ユーザーのチームメンバーシップ確認: role=${membership.role}, memberRole=${membership.memberRole}`);
       
       // 今日の日付 (日本時間)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      console.log(`今日の日付: ${today.toISOString()}`);
       
-      // User.teamIdを使用したチームメンバーのユーザーID一覧を取得（標準化された方法）
-      const teamMembers = await User.find({ teamId: teamId });
-      const memberIds = teamMembers.map(member => member._id);
+      // TeamMembershipを使用したチームメンバーのユーザーID一覧を取得（新しいデータモデルに基づいた方法）
+      const teamMemberships = await TeamMembership.find({ teamId });
+      console.log(`チームメンバーシップ数: ${teamMemberships.length}`);
+      
+      // デバッグ: メンバーシップ情報の表示
+      teamMemberships.forEach((membership, index) => {
+        console.log(`メンバー ${index+1}: userId=${membership.userId}, role=${membership.role}`);
+      });
+      
+      const memberIds = teamMemberships.map(membership => membership.userId);
+      console.log(`チームメンバーID一覧: ${memberIds.length}件`);
       
       // チームメンバー全員の今日の運勢を取得
       const fortunes = await DailyFortune.find({
@@ -201,8 +213,16 @@ export class FortuneController {
         }
       }).lean();
       
+      console.log(`運勢データ取得結果: ${fortunes.length}件のデータが見つかりました`);
+      
+      // デバッグ: 運勢データの表示
+      fortunes.forEach((fortune, index) => {
+        console.log(`運勢データ ${index+1}: userId=${fortune.userId}, date=${new Date(fortune.date).toISOString()}, score=${fortune.fortuneScore}`);
+      });
+      
       // 各メンバーの詳細情報を取得
       const memberDetails = await User.find({ _id: { $in: memberIds } }).lean();
+      console.log(`メンバー詳細情報: ${memberDetails.length}件のユーザー情報が見つかりました`);
       
       // 重複するユーザーIDを防ぐために、最新/最高スコアのみを使用
       const userIdToFortuneMap = new Map();
@@ -213,10 +233,12 @@ export class FortuneController {
         // まだそのユーザーの運勢がマップになければ追加
         if (!userIdToFortuneMap.has(userId)) {
           userIdToFortuneMap.set(userId, fortune);
+          console.log(`ユーザー ${userId} の運勢データを追加: score=${fortune.fortuneScore}`);
         } else {
           // すでに存在する場合、より新しい日付の運勢を優先
           const existingFortune = userIdToFortuneMap.get(userId);
           if (new Date(fortune.date) > new Date(existingFortune.date)) {
+            console.log(`ユーザー ${userId} の運勢データを更新: 古いscore=${existingFortune.fortuneScore} -> 新しいscore=${fortune.fortuneScore}`);
             userIdToFortuneMap.set(userId, fortune);
           }
         }
@@ -224,30 +246,54 @@ export class FortuneController {
       
       // マップから重複のない運勢データの配列を作成
       const uniqueFortunes = Array.from(userIdToFortuneMap.values());
+      console.log(`重複排除後の運勢データ: ${uniqueFortunes.length}件`);
       
       // 運勢ランキングデータを作成（重複排除後）
       const ranking = uniqueFortunes.map(fortune => {
         const member = memberDetails.find(m => m._id && m._id.toString() === fortune.userId.toString());
+        const isCurrentUser = fortune.userId.toString() === userId;
+        console.log(`ランキングデータ作成: userId=${fortune.userId}, displayName=${member?.displayName || '不明'}, score=${fortune.fortuneScore}, isCurrentUser=${isCurrentUser}`);
         return {
           userId: fortune.userId,
           displayName: member?.displayName || '不明なユーザー',
           score: fortune.fortuneScore, // スコア
           elementAttribute: member?.elementAttribute || 'unknown',
           jobTitle: member?.role || member?.jobTitle || '',
-          isCurrentUser: fortune.userId.toString() === userId
+          isCurrentUser: isCurrentUser
         };
       });
       
       // スコアの降順で並べ替え
       ranking.sort((a, b) => b.score - a.score);
+      console.log(`ソート後のランキング: ${ranking.length}件`);
       
       // 順位を追加
-      const rankedList = ranking.map((item, index) => ({
-        ...item,
-        rank: index + 1
-      }));
+      const rankedList = ranking.map((item, index) => {
+        console.log(`ランク ${index+1}: ${item.displayName} (${item.userId}), score=${item.score}, isCurrentUser=${item.isCurrentUser}`);
+        return {
+          ...item,
+          rank: index + 1
+        };
+      });
       
       // レスポンスを返す
+      console.log(`ランキングデータサイズ: ${rankedList.length}件`);
+      
+      // 最終チェック: もしランキングが空なら、なぜ空なのかの情報を追加
+      let debugInfo = {};
+      if (rankedList.length === 0) {
+        debugInfo = {
+          debug: {
+            teamMembersCount: teamMemberships.length,
+            fortunesCount: fortunes.length,
+            memberDetailsCount: memberDetails.length,
+            today: today.toISOString(),
+            currentUserId: userId
+          }
+        };
+        console.log('警告: ランキングデータが空です。デバッグ情報:', debugInfo);
+      }
+      
       res.status(200).json({
         success: true,
         data: {
@@ -255,9 +301,11 @@ export class FortuneController {
           teamName: team.name,
           date: today,
           nextUpdateTime: '03:00', // 次回更新時刻（固定）
-          ranking: rankedList
+          ranking: rankedList,
+          ...debugInfo  // デバッグ情報を追加（ランキングが空の場合のみ）
         }
       });
+      console.log('=== チーム運勢ランキング取得完了 ===');
     } catch (error: any) {
       console.error('チーム運勢ランキング取得エラー:', error);
       res.status(500).json({ error: 'サーバーエラーが発生しました' });
@@ -265,9 +313,10 @@ export class FortuneController {
   }
 
 
+
   /**
    * チームコンテキスト運勢を取得する
-   * @param req リクエスト
+   * @param req リクエスト - パラメータとしてteamIdを受け付ける
    * @param res レスポンス
    */
   public async getTeamContextFortune(req: AuthRequest, res: Response): Promise<void> {
@@ -277,56 +326,46 @@ export class FortuneController {
         res.status(401).json({ error: '認証されていません' });
         return;
       }
-
+      
       const { teamId } = req.params;
       if (!teamId) {
-        res.status(400).json({ error: 'チームIDが必要です' });
+        res.status(400).json({ error: 'チームIDが指定されていません' });
         return;
       }
-
-      // チームが存在するか確認
-      const team = await Team.findById(teamId);
-      if (!team) {
-        res.status(404).json({ error: 'チームが見つかりません' });
-        return;
-      }
-
-      // ユーザーがチームのメンバーか確認
-      const membership = await TeamMembership.findOne({ teamId, userId });
-      if (!membership) {
-        res.status(403).json({ error: 'このチームのデータにアクセスする権限がありません' });
-        return;
-      }
-
-      // タイムゾーン情報を取得（クライアントから送信された場合）
-      const timezone = req.query.timezone as string || 'Asia/Tokyo';
-      const tzOffset = parseInt(req.query.tzOffset as string || '-540', 10);
-
-      // クライアントのタイムゾーンに合わせた「今日」を計算
-      const now = new Date();
-      const offsetHours = Math.floor(Math.abs(tzOffset) / 60);
-      const offsetMinutes = Math.abs(tzOffset) % 60;
-
-      // タイムゾーンオフセットを適用
-      if (tzOffset < 0) {
-        now.setHours(now.getHours() + offsetHours);
-        now.setMinutes(now.getMinutes() + offsetMinutes);
-      } else {
-        now.setHours(now.getHours() - offsetHours);
-        now.setMinutes(now.getMinutes() - offsetMinutes);
-      }
-
-      const targetDate = now;
-      console.log(`🕒 チームコンテキスト運勢取得: タイムゾーン: ${timezone}, オフセット: ${tzOffset}分, 日付: ${targetDate.toISOString()}`);
-
-      // チームコンテキスト運勢を取得 - この関数はまだ実装されていない可能性があります
-      // const teamContextFortune = await fortuneService.getTeamContextFortune(userId, teamId, targetDate);
-
-      // とりあえずエラーを返す（後でサービス実装時に更新）
-      res.status(404).json({ 
-        error: 'チームコンテキスト運勢機能は現在実装中です', 
-        code: 'FEATURE_NOT_IMPLEMENTED'
+      
+      // チームメンバーシップ確認
+      const membership = await TeamMembership.findOne({
+        userId,
+        teamId
       });
+      
+      if (!membership) {
+        res.status(403).json({ error: 'このチームにアクセスする権限がありません' });
+        return;
+      }
+      
+      // 日付パラメータ取得
+      const dateParam = req.query.date as string;
+      
+      try {
+        // チームコンテキスト運勢を取得（存在しない場合は生成）
+        const result = await teamContextFortuneService.getTeamContextFortune(userId, teamId, dateParam);
+        res.json(result);
+      } catch (error: any) {
+        // API未実装または開発中の場合
+        if (error.message && (
+          error.message.includes('未実装') || 
+          error.message.includes('開発中')
+        )) {
+          res.status(404).json({
+            success: false,
+            code: 'FEATURE_NOT_IMPLEMENTED',
+            message: 'チームコンテキスト運勢機能は現在実装中です'
+          });
+        } else {
+          throw error; // 他のエラーは再スロー
+        }
+      }
     } catch (error: any) {
       console.error('チームコンテキスト運勢取得エラー:', error);
       if (error.message.includes('見つかりません')) {
@@ -336,10 +375,10 @@ export class FortuneController {
       }
     }
   }
-
+  
   /**
    * チームコンテキスト運勢を生成する
-   * @param req リクエスト
+   * @param req リクエスト - パラメータとしてteamIdを受け付ける
    * @param res レスポンス
    */
   public async generateTeamContextFortune(req: AuthRequest, res: Response): Promise<void> {
@@ -349,44 +388,32 @@ export class FortuneController {
         res.status(401).json({ error: '認証されていません' });
         return;
       }
-
+      
       const { teamId } = req.params;
       if (!teamId) {
-        res.status(400).json({ error: 'チームIDが必要です' });
+        res.status(400).json({ error: 'チームIDが指定されていません' });
         return;
       }
-
-      // チームが存在するか確認
-      const team = await Team.findById(teamId);
-      if (!team) {
-        res.status(404).json({ error: 'チームが見つかりません' });
-        return;
-      }
-
-      // ユーザーがチームの管理者か確認
-      const membership = await TeamMembership.findOne({ 
-        teamId, 
+      
+      // チームメンバーシップと管理者権限確認
+      const membership = await TeamMembership.findOne({
         userId,
-        isAdmin: true 
+        teamId
       });
       
-      const isAdmin = membership || (team.adminId && team.adminId.toString() === userId);
-      if (!isAdmin) {
-        res.status(403).json({ error: 'チームコンテキスト運勢の生成には管理者権限が必要です' });
+      if (!membership) {
+        res.status(403).json({ error: 'このチームにアクセスする権限がありません' });
         return;
       }
-
-      // 現在の日付
-      const targetDate = new Date();
-
-      // チームコンテキスト運勢を生成 - この関数はまだ実装されていない可能性があります
-      // const teamContextFortune = await fortuneService.generateTeamContextFortune(userId, teamId, targetDate);
-
-      // とりあえずエラーを返す（後でサービス実装時に更新）
-      res.status(404).json({ 
-        error: 'チームコンテキスト運勢機能は現在実装中です', 
-        code: 'FEATURE_NOT_IMPLEMENTED'
-      });
+      
+      // 日付パラメータ取得
+      const dateParam = req.query.date as string;
+      const date = dateParam ? new Date(dateParam) : new Date();
+      
+      // チームコンテキスト運勢を生成
+      const teamContextFortune = await teamContextFortuneService.generateTeamContextFortune(userId, teamId, date);
+      
+      res.status(201).json({ teamContextFortune });
     } catch (error: any) {
       console.error('チームコンテキスト運勢生成エラー:', error);
       if (error.message.includes('見つかりません')) {

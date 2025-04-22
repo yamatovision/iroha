@@ -158,7 +158,33 @@ class FortuneService {
    */
   async getTeamFortuneRanking(teamId: string): Promise<any> {
     try {
-      const response = await apiService.get(FORTUNE.GET_TEAM_FORTUNE_RANKING(teamId));
+      // apiServiceを使うが、フォースリフレッシュとキャッシュスキップで確実に最新データを取得
+      console.log(`チーム運勢ランキング取得 (キャッシュなし): teamId=${teamId}`);
+      
+      // キャッシュをクリア
+      await apiService.clearCache(FORTUNE.GET_TEAM_FORTUNE_RANKING(teamId));
+      
+      // タイムスタンプ付きのクエリパラメータを追加
+      const timestamp = new Date().getTime();
+      
+      // apiServiceを使ってデータ取得（リフレッシュフラグを強制指定）
+      const response = await apiService.get(
+        FORTUNE.GET_TEAM_FORTUNE_RANKING(teamId),
+        { _cb: timestamp }, // キャッシュバスティング用のパラメータ
+        { 
+          skipCache: true,
+          forceRefresh: true,
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        }
+      );
+      
+      // レスポンスデータのログ
+      console.log(`チーム運勢ランキング取得成功: チームID=${teamId}`, response.data);
+      
       return response.data;
     } catch (error) {
       console.error(`チーム(${teamId})の運勢ランキング取得に失敗しました`, error);
@@ -173,19 +199,48 @@ class FortuneService {
    * @returns チームコンテキスト運勢データ
    */
   async getTeamContextFortune(teamId: string, date?: string): Promise<any> {
+    const endpoint = FORTUNE.GET_TEAM_CONTEXT_FORTUNE(teamId);
+    console.log(`[FortuneService] 📡 チームコンテキスト運勢APIリクエスト: ${endpoint}`);
+    const start = Date.now();
+    
     try {
       // 日付パラメータがある場合は追加
       const params = date ? { date } : {};
       
-      const response = await apiService.get(FORTUNE.GET_TEAM_CONTEXT_FORTUNE(teamId), { params });
+      // タイムゾーン情報を追加
+      const tzInfo = this.getTimezoneInfo();
+      Object.assign(params, {
+        timezone: tzInfo.timezone,
+        tzOffset: tzInfo.offset
+      });
+      
+      console.log(`[FortuneService] 📡 APIパラメータ: ${JSON.stringify(params)}`);
+      
+      // キャッシュが原因の可能性があるためキャッシュをスキップするオプションを追加
+      const response = await apiService.get(endpoint, { params }, {
+        skipCache: true,
+        forceRefresh: true
+      });
+      
+      const elapsed = Date.now() - start;
+      
+      // レスポンスの詳細をログに出力（デバッグ用）
+      console.log(`[FortuneService] 📩 レスポンス詳細:`, JSON.stringify(response.data).substring(0, 300) + '...');
+      
+      // 結果に新規生成フラグがあるかチェック
+      const isNewlyGenerated = response.data.isNewlyGenerated || false;
+      console.log(`[FortuneService] 📩 APIレスポンス受信 (${elapsed}ms): ${isNewlyGenerated ? '🆕 新規生成' : '✅ 既存データ'}`);
+      
       return response.data;
     } catch (error: any) {
-      console.error(`チーム(${teamId})のコンテキスト運勢取得に失敗しました`, error);
+      const elapsed = Date.now() - start;
+      console.error(`[FortuneService] ❌ チーム(${teamId})のコンテキスト運勢取得に失敗しました (${elapsed}ms)`, error);
       
       // 404エラーの場合は、機能が未実装であることを示す
       if (error.response && error.response.status === 404) {
         if (error.response.data && error.response.data.code === 'FEATURE_NOT_IMPLEMENTED') {
           // 未実装機能に対して空のデータを返す
+          console.log(`[FortuneService] ⚠️ 未実装機能: 'FEATURE_NOT_IMPLEMENTED'`);
           return {
             success: false,
             message: 'チームコンテキスト運勢機能は現在実装中です',
