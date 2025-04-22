@@ -89,33 +89,34 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
   // ローディング中の表示
   if (loading) {
     return (
-      <Paper
-        elevation={3}
-        sx={{
-          p: 0,
-          borderRadius: 4,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          overflow: 'hidden',
-          mb: 3,
-          maxWidth: '600px',
-          mx: 'auto'
-        }}
-      >
-        <Box
-          sx={{
-            p: 3,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-            color: '#fff'
-          }}
-        >
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', mb: 1 }}>
-            チーム運勢ランキング
-          </Typography>
-          <Typography variant="body2">
-            {formattedDate}
-          </Typography>
-        </Box>
-        <Box sx={{ p: 3 }}>
+      <div className="section" style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+        padding: '24px',
+        overflow: 'hidden',
+        position: 'relative',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        marginBottom: '32px'
+      }}>
+        <div className="section-title" style={{
+          fontSize: '1.3rem',
+          fontWeight: 600,
+          marginBottom: '16px',
+          color: 'var(--primary)',
+          display: 'flex',
+          alignItems: 'center',
+          letterSpacing: '0.01em'
+        }}>
+          <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
+            leaderboard
+          </span>
+          メンバー運勢ランキング
+        </div>
+        
+        <Divider sx={{ mb: 3 }} />
+        
+        <Box sx={{ p: 2 }}>
           {[...Array(3)].map((_, index) => (
             <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2, p: 1 }}>
               <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
@@ -126,31 +127,49 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
             </Box>
           ))}
         </Box>
-      </Paper>
+      </div>
     );
   }
 
   // エラー表示
   if (error) {
     return (
-      <Paper
-        elevation={3}
-        sx={{
-          p: 3,
-          borderRadius: 4,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          mb: 3,
-          maxWidth: '600px',
-          mx: 'auto'
-        }}
-      >
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
-        </Typography>
-        <Typography variant="body2">
-          後ほど再度お試しください。
-        </Typography>
-      </Paper>
+      <div className="section" style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+        padding: '24px',
+        overflow: 'hidden',
+        position: 'relative',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        marginBottom: '32px'
+      }}>
+        <div className="section-title" style={{
+          fontSize: '1.3rem',
+          fontWeight: 600,
+          marginBottom: '16px',
+          color: 'var(--primary)',
+          display: 'flex',
+          alignItems: 'center',
+          letterSpacing: '0.01em'
+        }}>
+          <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
+            leaderboard
+          </span>
+          メンバー運勢ランキング
+        </div>
+        
+        <Divider sx={{ mb: 3 }} />
+        
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+          <Typography variant="body2">
+            後ほど再度お試しください。
+          </Typography>
+        </Box>
+      </div>
     );
   }
 
@@ -193,57 +212,9 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
       
       <Divider sx={{ mb: 3 }} />
       
-      <Paper
-        elevation={0}
-        sx={{
-          p: 0,
-          borderRadius: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          overflow: 'hidden'
-        }}
-      >
-      <Box
-        sx={{
-          p: 3,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-          color: '#fff',
-          position: 'relative'
-        }}
-      >
-        <Box sx={{ position: 'relative', zIndex: 2 }}>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', mb: 1, display: 'flex', alignItems: 'center' }}>
-            <EmojiEvents sx={{ mr: 1 }} /> チーム運勢ランキング
-          </Typography>
-          <Typography variant="body2">
-            {formattedDate}
-          </Typography>
-        </Box>
-        
-        {/* 装飾的な背景要素 */}
-        <Box 
-          sx={{ 
-            position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            zIndex: 1
-          }} 
-        />
-      </Box>
-      
-      <Box sx={{ p: 3 }}>
-        <Typography 
-          variant="subtitle1" 
-          sx={{ 
-            fontWeight: 'bold', 
-            color: theme.palette.text.secondary,
-            mb: 2
-          }}
-        >
-          本日のチームメンバー運勢ランキング
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 1, fontWeight: 'medium' }}>
+          {formattedDate}の運勢ランキング
         </Typography>
         
         {ranking.map((member, index) => {
@@ -362,7 +333,6 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
           運勢スコアは四柱推命に基づく本日の運勢値です。ランキングは日々更新されます。
         </Typography>
       </Box>
-    </Paper>
     </div>
   );
 };
