@@ -91,10 +91,8 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
     menuItems.splice(2, 0, teamMenuItem)
   }
 
-  // 管理者メニュー項目 - チームリスト選択ページに遷移する
-  const adminMenuItems: MenuItem[] = [
-    { text: '管理', icon: <AdminPanelSettingsIcon />, path: '/team-hub' },
-  ]
+  // 管理者メニュー項目は削除
+  const adminMenuItems: MenuItem[] = []
 
   // 現在のパスがメニュー項目と一致するかチェック
   const isActive = (path: string) => {
@@ -150,12 +148,8 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
     // すべてのメニュー項目を表示
     const bottomNavItems = [...menuItems];
     
-    // 管理者メニューの準備（管理者のみ）
+    // 管理者メニューは削除したため、この変数は不要になりました
     let adminItem = null;
-    if (isAdmin || isSuperAdmin) {
-      adminItem = adminMenuItems[0];
-      // 設定メニューは常に表示
-    }
     
     console.log("Bottom navigation items:", bottomNavItems.map(i => i.text));
     
@@ -212,55 +206,6 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
             </Typography>
           </Box>
         ))}
-        
-        {isAdmin && adminItem && (
-          <Box
-            component={RouterLink}
-            to={adminItem.path}
-            onClick={onNavigate}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textDecoration: 'none',
-              color: isActive(adminItem.path) ? 'primary.main' : 'text.secondary',
-              p: 1,
-              minWidth: 0,
-              flex: 1,
-              '&:hover': {
-                color: 'primary.main',
-              },
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 0.5,
-                // アクティブアイテムを少し大きく表示
-                transform: isActive(adminItem.path) ? 'scale(1.2)' : 'scale(1)',
-                transition: 'transform 0.2s ease',
-                '& .MuiSvgIcon-root': {
-                  fontSize: '1.4rem', // アイコンサイズ拡大
-                }
-              }}
-            >
-              {adminItem.icon}
-            </Box>
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: '0.7rem', // フォントサイズを少し小さく
-                fontWeight: isActive(adminItem.path) ? '600' : '400', // アクティブはより太く
-                whiteSpace: 'nowrap',
-                opacity: isActive(adminItem.path) ? 1 : 0.8, // 非アクティブは少し薄く
-              }}
-            >
-              {adminItem.text}
-            </Typography>
-          </Box>
-        )}
       </>
     )
   }
@@ -299,40 +244,6 @@ const NavigationMenu = ({ onNavigate, layout = 'sidebar' }: NavigationMenuProps)
           </ListItem>
         ))}
       </List>
-      
-      {isAdmin && (
-        <>
-          <Divider />
-          <List>
-            {adminMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  component={RouterLink} 
-                  to={item.path}
-                  onClick={onNavigate}
-                  selected={isActive(item.path)}
-                  sx={{
-                    borderLeft: isActive(item.path) ? `4px solid ${theme.palette.primary.main}` : 'none',
-                    '&.Mui-selected': {
-                      backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                    }
-                  }}
-                >
-                  <ListItemIcon sx={{ color: isActive(item.path) ? 'primary.main' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text}
-                    primaryTypographyProps={{
-                      fontWeight: isActive(item.path) ? 500 : 400,
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </>
-      )}
       
       {/* ネットワーク状態インジケータ */}
       <Box sx={{ mt: 'auto', p: 1 }}>

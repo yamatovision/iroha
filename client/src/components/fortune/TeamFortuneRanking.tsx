@@ -50,13 +50,18 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
     if (!element) return 'var(--water-color)';
     
     switch (element) {
-      case 'water': return 'var(--water-color)';
-      case 'fire': return 'var(--fire-color)';
-      case 'wood': return 'var(--wood-color)';
-      case 'earth': return 'var(--earth-color)';
-      case 'metal': return 'var(--metal-color)';
-      default: return 'var(--water-color)';
+      case 'water': return '#7d94a6'; // 水（黒/紺系）
+      case 'fire': return '#e67373'; // 火（赤系）
+      case 'wood': return '#94b8eb'; // 木（青/緑系）
+      case 'earth': return '#f2d06b'; // 土（黄系）
+      case 'metal': return '#ffffff'; // 金（白系）
+      default: return '#7d94a6';
     }
+  };
+
+  // 五行属性のテキスト色を取得
+  const getElementTextColor = (element?: string): string => {
+    return element === 'water' ? '#ffffff' : '#000000';
   };
 
   // 五行属性のアイコンを取得
@@ -217,7 +222,7 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
           {formattedDate}の運勢ランキング
         </Typography>
         
-        {ranking.map((member, index) => {
+        {ranking.map((member: any, index: number) => {
           const rank = index + 1;
           const isCurrentUser = userProfile?.id === member.userId;
           const elementColor = getElementColor(member.elementAttribute);
@@ -285,11 +290,15 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
                       label={member.elementAttribute.toUpperCase()}
                       size="small"
                       sx={{
-                        bgcolor: `${elementColor}20`,
-                        color: elementColor,
+                        bgcolor: getElementColor(member.elementAttribute),
+                        color: getElementTextColor(member.elementAttribute),
                         mr: 1,
                         height: 24,
-                        '& .MuiChip-icon': { color: elementColor }
+                        border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.2)' : 'none',
+                        '& .MuiChip-icon': { 
+                          color: member.elementAttribute === 'water' ? '#ffffff' : 
+                                 member.elementAttribute === 'metal' ? '#b3b3b3' : '#000000' 
+                        }
                       }}
                     />
                   )}

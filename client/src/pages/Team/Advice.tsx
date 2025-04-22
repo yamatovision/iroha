@@ -864,8 +864,8 @@ const TeamAdvice: React.FC = () => {
                 {/* 通常のカードは使わない（表示に問題があるため） */}
                 {false && (
                   <TeamContextFortuneCard 
-                    fortune={teamContextFortune} 
-                    teamName={activeTeam.name}
+                    fortune={teamContextFortune as ITeamContextFortune} 
+                    teamName={activeTeam?.name || 'チーム'}
                   />
                 )}
                 {/* 超シンプルな直接表示（通常カードは非表示） */}

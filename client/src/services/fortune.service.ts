@@ -168,17 +168,13 @@ class FortuneService {
       const timestamp = new Date().getTime();
       
       // apiServiceを使ってデータ取得（リフレッシュフラグを強制指定）
+      // タイムスタンプをクエリパラメータに追加してキャッシュバスティング
       const response = await apiService.get(
         FORTUNE.GET_TEAM_FORTUNE_RANKING(teamId),
-        { _cb: timestamp }, // キャッシュバスティング用のパラメータ
+        { params: { _cb: timestamp } }, // キャッシュバスティング用のパラメータ
         { 
           skipCache: true,
-          forceRefresh: true,
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
+          forceRefresh: true
         }
       );
       
@@ -341,50 +337,56 @@ class FortuneService {
    * @param element 五行属性名（heavenlyStem の値）
    * @returns 色情報
    */
-  getElementColors(element: string): { main: string, light: string, bg: string, dark: string } {
+  getElementColors(element: string): { main: string, light: string, bg: string, dark: string, textColor: string } {
     if (element.includes('木') || element === '甲' || element === '乙') {
       return {
-        main: 'var(--wood-color)',
-        light: 'var(--wood-light)',
-        bg: 'var(--wood-bg)',
-        dark: 'var(--wood-dark)'
+        main: '#000000',
+        light: '#4d4dff',
+        bg: '#94b8eb',
+        dark: '#0000b3',
+        textColor: '#000000'
       };
     } else if (element.includes('火') || element === '丙' || element === '丁') {
       return {
-        main: 'var(--fire-color)',
-        light: 'var(--fire-light)',
-        bg: 'var(--fire-bg)',
-        dark: 'var(--fire-dark)'
+        main: '#000000',
+        light: '#ff4d4d',
+        bg: '#e67373',
+        dark: '#b30000',
+        textColor: '#000000'
       };
     } else if (element.includes('土') || element === '戊' || element === '己') {
       return {
-        main: 'var(--earth-color)',
-        light: 'var(--earth-light)',
-        bg: 'var(--earth-bg)',
-        dark: 'var(--earth-dark)'
+        main: '#000000',
+        light: '#ffff66',
+        bg: '#f2d06b',
+        dark: '#b3b300',
+        textColor: '#000000'
       };
     } else if (element.includes('金') || element === '庚' || element === '辛') {
       return {
-        main: 'var(--metal-color)',
-        light: 'var(--metal-light)',
-        bg: 'var(--metal-bg)',
-        dark: 'var(--metal-dark)'
+        main: '#000000',
+        light: '#ffffff',
+        bg: '#ffffff',
+        dark: '#e6e6e6',
+        textColor: '#000000'
       };
     } else if (element.includes('水') || element === '壬' || element === '癸') {
       return {
-        main: 'var(--water-color)',
-        light: 'var(--water-light)',
-        bg: 'var(--water-bg)',
-        dark: 'var(--water-dark)'
+        main: '#ffffff', // 水の場合は文字色を白に
+        light: '#333333',
+        bg: '#7d94a6',
+        dark: '#000000',
+        textColor: '#ffffff'
       };
     }
     
     // デフォルト値（水）
     return {
-      main: 'var(--water-color)',
-      light: 'var(--water-light)',
-      bg: 'var(--water-bg)',
-      dark: 'var(--water-dark)'
+      main: '#ffffff',
+      light: '#333333',
+      bg: '#7d94a6',
+      dark: '#000000',
+      textColor: '#ffffff'
     };
   }
 

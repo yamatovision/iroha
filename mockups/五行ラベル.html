@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五行ラベルサンプル</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.3/dist/cdn.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 木の色（緑系） */
+            --wood-color: #43a047;
+            --wood-light: #81c784;
+            --wood-dark: #2e7d32;
+            --wood-bg: #e8f5e9;
+            
+            /* 火の色（赤系） */
+            --fire-color: #e53935;
+            --fire-light: #ef5350;
+            --fire-dark: #c62828;
+            --fire-bg: #ffebee;
+            
+            /* 土の色（黄/茶系） */
+            --earth-color: #ff8f00;
+            --earth-light: #ffd54f;
+            --earth-dark: #ef6c00;
+            --earth-bg: #fff8e1;
+            
+            /* 金の色（金系） */
+            --metal-color: #fdd835;
+            --metal-light: #ffee58;
+            --metal-dark: #f9a825;
+            --metal-bg: #fffde7;
+            
+            /* 水の色（青系） */
+            --water-color: #1e88e5;
+            --water-light: #64b5f6;
+            --water-dark: #0d47a1;
+            --water-bg: #e3f2fd;
+            
+            /* アプリ基本色 */
+            --primary: #7b1fa2;
+            --primary-light: #9c27b0;
+            --primary-dark: #6a1b9a;
+            --background: #f5f5f5;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title .material-icons {
+            margin-right: 10px;
+            color: var(--primary-light);
+        }
+        
+        .label-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .example-card {
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        /* バッジスタイル - 各形状 */
+        .element-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin: 5px;
+            font-size: 0.95rem;
+            color: #000; /* 基本文字色は黒 */
+        }
+        
+        .element-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin: 5px;
+            font-size: 0.85rem;
+            color: #000;
+        }
+        
+        .element-square {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 5px;
+            font-size: 0.9rem;
+            min-width: 40px;
+            min-height: 40px;
+            color: #000;
+        }
+        
+        .element-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        
+        /* 個別の五行要素のスタイル */
+        
+        /* 木 (Wood) */
+        .wood {
+            background-color: var(--wood-bg);
+            border: 1px solid var(--wood-color);
+        }
+        .wood.filled {
+            background-color: var(--wood-color);
+            color: white;
+            border: none;
+        }
+        .wood .element-icon {
+            color: var(--wood-dark);
+        }
+        .wood.filled .element-icon {
+            color: white;
+        }
+        
+        /* 火 (Fire) */
+        .fire {
+            background-color: var(--fire-bg);
+            border: 1px solid var(--fire-color);
+        }
+        .fire.filled {
+            background-color: var(--fire-color);
+            color: white;
+            border: none;
+        }
+        .fire .element-icon {
+            color: var(--fire-dark);
+        }
+        .fire.filled .element-icon {
+            color: white;
+        }
+        
+        /* 土 (Earth) */
+        .earth {
+            background-color: var(--earth-bg);
+            border: 1px solid var(--earth-color);
+        }
+        .earth.filled {
+            background-color: var(--earth-color);
+            color: white;
+            border: none;
+        }
+        .earth .element-icon {
+            color: var(--earth-dark);
+        }
+        .earth.filled .element-icon {
+            color: white;
+        }
+        
+        /* 金 (Metal) */
+        .metal {
+            background-color: var(--metal-bg);
+            border: 1px solid var(--metal-color);
+        }
+        .metal.filled {
+            background-color: var(--metal-color);
+            color: black; /* 金の場合は明るい色なので文字は黒 */
+            border: none;
+        }
+        .metal .element-icon {
+            color: var(--metal-dark);
+        }
+        .metal.filled .element-icon {
+            color: black;
+        }
+        
+        /* 水 (Water) */
+        .water {
+            background-color: var(--water-bg);
+            border: 1px solid var(--water-color);
+        }
+        .water.filled {
+            background-color: var(--water-color);
+            color: white;
+            border: none;
+        }
+        .water .element-icon {
+            color: var(--water-dark);
+        }
+        .water.filled .element-icon {
+            color: white;
+        }
+        
+        /* 運勢カードの見た目 */
+        .fortune-display {
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .fortune-header {
+            padding: 16px;
+            border-radius: 10px 10px 0 0;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .element-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .element-select {
+            margin-top: 30px;
+        }
+        
+        .element-select button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .element-select button:hover {
+            opacity: 0.9;
+        }
+        
+        .element-select .wood-btn {
+            background-color: var(--wood-color);
+            color: white;
+        }
+        
+        .element-select .fire-btn {
+            background-color: var(--fire-color);
+            color: white;
+        }
+        
+        .element-select .earth-btn {
+            background-color: var(--earth-color);
+            color: white;
+        }
+        
+        .element-select .metal-btn {
+            background-color: var(--metal-color);
+            color: black;
+        }
+        
+        .element-select .water-btn {
+            background-color: var(--water-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>五行属性表示サンプル</h1>
+        
+        <div class="section">
+            <div class="section-title">
+                <span class="material-icons">style</span>
+                五行ラベルのデザインバリエーション
+            </div>
+            
+            <p>五行属性（木・火・土・金・水）を表示するさまざまなスタイルです。枠付き・塗りつぶしでデザインを変更できます。</p>
+            
+            <h3>バッジスタイル</h3>
+            <div>
+                <span class="element-badge wood">
+                    <span class="element-icon">
+                        <span class="material-icons">park</span>
+                    </span>
+                    木 (Wood)
+                </span>
+                
+                <span class="element-badge fire">
+                    <span class="element-icon">
+                        <span class="material-icons">whatshot</span>
+                    </span>
+                    火 (Fire)
+                </span>
+                
+                <span class="element-badge earth">
+                    <span class="element-icon">
+                        <span class="material-icons">public</span>
+                    </span>
+                    土 (Earth)
+                </span>
+                
+                <span class="element-badge metal">
+                    <span class="element-icon">
+                        <span class="material-icons">diamond</span>
+                    </span>
+                    金 (Metal)
+                </span>
+                
+                <span class="element-badge water">
+                    <span class="element-icon">
+                        <span class="material-icons">water_drop</span>
+                    </span>
+                    水 (Water)
+                </span>
+            </div>
+            
+            <h3>塗りつぶしバッジ</h3>
+            <div>
+                <span class="element-badge wood filled">
+                    <span class="element-icon">
+                        <span class="material-icons">park</span>
+                    </span>
+                    木 (Wood)
+                </span>
+                
+                <span class="element-badge fire filled">
+                    <span class="element-icon">
+                        <span class="material-icons">whatshot</span>
+                    </span>
+                    火 (Fire)
+                </span>
+                
+                <span class="element-badge earth filled">
+                    <span class="element-icon">
+                        <span class="material-icons">public</span>
+                    </span>
+                    土 (Earth)
+                </span>
+                
+                <span class="element-badge metal filled">
+                    <span class="element-icon">
+                        <span class="material-icons">diamond</span>
+                    </span>
+                    金 (Metal)
+                </span>
+                
+                <span class="element-badge water filled">
+                    <span class="element-icon">
+                        <span class="material-icons">water_drop</span>
+                    </span>
+                    水 (Water)
+                </span>
+            </div>
+            
+            <h3>ピルスタイル（小型）</h3>
+            <div>
+                <span class="element-pill wood">木</span>
+                <span class="element-pill fire">火</span>
+                <span class="element-pill earth">土</span>
+                <span class="element-pill metal">金</span>
+                <span class="element-pill water">水</span>
+            </div>
+            
+            <h3>ピルスタイル（塗りつぶし）</h3>
+            <div>
+                <span class="element-pill wood filled">木</span>
+                <span class="element-pill fire filled">火</span>
+                <span class="element-pill earth filled">土</span>
+                <span class="element-pill metal filled">金</span>
+                <span class="element-pill water filled">水</span>
+            </div>
+            
+            <h3>四角形スタイル</h3>
+            <div>
+                <span class="element-square wood">木</span>
+                <span class="element-square fire">火</span>
+                <span class="element-square earth">土</span>
+                <span class="element-square metal">金</span>
+                <span class="element-square water">水</span>
+            </div>
+            
+            <h3>四角形スタイル（塗りつぶし）</h3>
+            <div>
+                <span class="element-square wood filled">木</span>
+                <span class="element-square fire filled">火</span>
+                <span class="element-square earth filled">土</span>
+                <span class="element-square metal filled">金</span>
+                <span class="element-square water filled">水</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <span class="material-icons">auto_awesome</span>
+                運勢カードの五行表示例
+            </div>
+            
+            <p>運勢カードに五行属性を表示する例です。下のボタンで五行を切り替えて表示を確認できます。</p>
+            
+            <div class="fortune-display">
+                <div id="elementHeader" class="fortune-header" style="background: linear-gradient(135deg, var(--water-color), var(--water-dark));">
+                    <div>今日の運勢</div>
+                    <div id="elementBadge" class="element-badge water filled">
+                        <span class="element-icon">
+                            <span class="material-icons">water_drop</span>
+                        </span>
+                        水の陽 (甲子)
+                    </div>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <div class="element-info">
+                        <span id="elementName" style="font-weight: 500; color: var(--water-color);">水</span>
+                        <span style="margin-left: 10px; color: #666;">適応力と知恵を象徴する属性です</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: center; margin: 30px 0;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; font-weight: 700; color: var(--water-color);" id="elementScore">78</div>
+                            <div style="color: #666; font-size: 0.9rem;">命式との相性</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="element-select">
+                <button class="wood-btn" onclick="changeElement('wood')">木に切替</button>
+                <button class="fire-btn" onclick="changeElement('fire')">火に切替</button>
+                <button class="earth-btn" onclick="changeElement('earth')">土に切替</button>
+                <button class="metal-btn" onclick="changeElement('metal')">金に切替</button>
+                <button class="water-btn" onclick="changeElement('water')">水に切替</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeElement(element) {
+            const headerElement = document.getElementById('elementHeader');
+            const badgeElement = document.getElementById('elementBadge');
+            const nameElement = document.getElementById('elementName');
+            const scoreElement = document.getElementById('elementScore');
+            
+            // 全てのクラスをリセット
+            badgeElement.className = 'element-badge';
+            
+            // 五行ごとのデータセット
+            const elementData = {
+                wood: {
+                    color: 'var(--wood-color)',
+                    darkColor: 'var(--wood-dark)',
+                    text: '木の陽 (甲寅)',
+                    description: '成長と発展を象徴する属性です',
+                    icon: 'park',
+                    score: 82
+                },
+                fire: {
+                    color: 'var(--fire-color)',
+                    darkColor: 'var(--fire-dark)',
+                    text: '火の陰 (丁巳)',
+                    description: '情熱と変化を象徴する属性です',
+                    icon: 'whatshot',
+                    score: 69
+                },
+                earth: {
+                    color: 'var(--earth-color)',
+                    darkColor: 'var(--earth-dark)',
+                    text: '土の陽 (戊辰)',
+                    description: '安定と調和を象徴する属性です',
+                    icon: 'public',
+                    score: 75
+                },
+                metal: {
+                    color: 'var(--metal-color)',
+                    darkColor: 'var(--metal-dark)',
+                    text: '金の陰 (辛酉)',
+                    description: '強靭さと決断力を象徴する属性です',
+                    icon: 'diamond',
+                    score: 88
+                },
+                water: {
+                    color: 'var(--water-color)',
+                    darkColor: 'var(--water-dark)',
+                    text: '水の陽 (壬子)',
+                    description: '適応力と知恵を象徴する属性です',
+                    icon: 'water_drop',
+                    score: 78
+                }
+            };
+            
+            // 選択された要素のデータを取得
+            const data = elementData[element];
+            
+            // スタイルとコンテンツを更新
+            headerElement.style.background = `linear-gradient(135deg, ${data.color}, ${data.darkColor})`;
+            
+            badgeElement.classList.add(element);
+            badgeElement.classList.add('filled');
+            
+            badgeElement.innerHTML = `
+                <span class="element-icon">
+                    <span class="material-icons">${data.icon}</span>
+                </span>
+                ${data.text}
+            `;
+            
+            nameElement.innerText = element.charAt(0).toUpperCase() + element.slice(1);
+            nameElement.style.color = data.color;
+            
+            scoreElement.innerText = data.score;
+            scoreElement.style.color = data.color;
+        }
+    </script>
+</body>
+</html>

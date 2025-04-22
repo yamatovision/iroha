@@ -29,6 +29,39 @@
   animation: slideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* 五行配色変数 */
+:root {
+  /* 木の色（青/緑系） */
+  --wood-color: #000000; /* テキスト色 */
+  --wood-light: #4d4dff;
+  --wood-dark: #0000b3;
+  --wood-bg: #94b8eb;
+  
+  /* 火の色（赤系） */
+  --fire-color: #000000; /* テキスト色 */
+  --fire-light: #ff4d4d;
+  --fire-dark: #b30000;
+  --fire-bg: #e67373;
+  
+  /* 土の色（黄系） */
+  --earth-color: #000000; /* テキスト色 */
+  --earth-light: #ffff66;
+  --earth-dark: #b3b300;
+  --earth-bg: #f2d06b;
+  
+  /* 金の色（白系） */
+  --metal-color: #000000; /* テキスト色 */
+  --metal-light: #ffffff;
+  --metal-dark: #e6e6e6;
+  --metal-bg: #ffffff;
+  
+  /* 水の色（黒/紺系） */
+  --water-color: #000000; /* テキスト色（背景が暗いときは白） */
+  --water-light: #333333;
+  --water-dark: #000000;
+  --water-bg: #7d94a6;
+}
+
 /* マークダウンコンテンツ用スタイル */
 .markdown-content {
   margin-bottom: 24px;
