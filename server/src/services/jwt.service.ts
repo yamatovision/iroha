@@ -3,7 +3,7 @@ import { IUser } from '../models/User';
 
 // トークンの有効期限設定
 const ACCESS_TOKEN_EXPIRY = '15m';  // アクセストークンは短め（15分）
-const REFRESH_TOKEN_EXPIRY = '7d';  // リフレッシュトークンは長め（7日）
+const REFRESH_TOKEN_EXPIRY = '30d';  // リフレッシュトークンを30日間に延長
 
 /**
  * JWTサービス

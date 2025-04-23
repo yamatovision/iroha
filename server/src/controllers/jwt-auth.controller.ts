@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User, IUser } from '../models/User';
 import { JwtService } from '../services/jwt.service';
+import jwt from 'jsonwebtoken';
 
 /**
  * JWT認証コントローラー
@@ -268,13 +269,32 @@ export class JwtAuthController {
         return;
       }
 
-      // 新しいアクセストークンとリフレッシュトークンを生成
+      // 新しいアクセストークンを生成
       const newAccessToken = JwtService.generateAccessToken(user);
-      const newRefreshToken = JwtService.generateRefreshToken(user);
-
-      // リフレッシュトークンをデータベースに保存
-      user.refreshToken = newRefreshToken;
-      await user.save();
+      
+      // リフレッシュトークンは基本的に再利用（使い捨てにしない）
+      let newRefreshToken = refreshToken;
+      
+      // トークンの有効期限を確認（オプション：期限切れが近い場合のみ更新）
+      try {
+        const tokenPayload = jwt.decode(refreshToken) as any;
+        const expiryTime = tokenPayload.exp * 1000;
+        const remainingTime = expiryTime - Date.now();
+        
+        // 残り3日未満の場合のみリフレッシュトークンを更新
+        if (remainingTime < 3 * 24 * 60 * 60 * 1000) {
+          console.log('リフレッシュトークンの有効期限が近いため更新します（残り時間:', Math.floor(remainingTime / (1000 * 60 * 60 * 24)), '日）');
+          newRefreshToken = JwtService.generateRefreshToken(user);
+          user.refreshToken = newRefreshToken;
+          await user.save();
+        }
+      } catch (error) {
+        // トークンのデコードに失敗した場合は新しいトークンを発行
+        console.error('トークンの期限確認中にエラーが発生しました:', error);
+        newRefreshToken = JwtService.generateRefreshToken(user);
+        user.refreshToken = newRefreshToken;
+        await user.save();
+      }
 
       // レスポンスを返す
       res.status(200).json({

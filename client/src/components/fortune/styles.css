@@ -129,3 +129,77 @@
     box-shadow: 0 0 40px rgba(156, 39, 176, 0.1);
   }
 }
+
+/* ローディングアニメーション用スタイル */
+.fortune-animation-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fortune-circle {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 8px solid rgba(156, 39, 176, 0.2);
+  border-top: 8px solid rgba(156, 39, 176, 0.8);
+  border-left: 8px solid rgba(156, 39, 176, 0.8);
+}
+
+.fortune-square {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border: 6px solid rgba(233, 30, 99, 0.2);
+  border-right: 6px solid rgba(233, 30, 99, 0.8);
+  border-bottom: 6px solid rgba(233, 30, 99, 0.8);
+}
+
+.fortune-triangle {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 52px solid rgba(103, 58, 183, 0.5);
+}
+
+.fortune-star {
+  position: absolute;
+  font-size: 28px;
+  color: rgba(156, 39, 176, 0.7);
+}
+
+/* アニメーション定義 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.spin {
+  animation: spin 4s linear infinite;
+}
+
+.spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+.spin-reverse {
+  animation: spin-reverse 6s linear infinite;
+}

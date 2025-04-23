@@ -51,6 +51,15 @@
   --space-xl: 32px;
   --space-xxl: 48px;
   
+  /* セーフエリア対応のためのCSS変数 */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  
+  /* モバイルのステータスバー高さ */
+  --status-bar-height: 24px;
+  
   /* アクセス制御 */
   font-family: 'Noto Sans JP', 'Roboto', sans-serif;
   line-height: 1.5;
@@ -71,6 +80,35 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+/* セーフエリア対応のためのユーティリティクラス */
+.safe-area-padding-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.safe-area-padding-left {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.safe-area-padding-right {
+  padding-right: var(--safe-area-inset-right);
+}
+
+/* デスクトップとモバイルで異なるスタイル適用のためのクラス */
+@media (min-width: 600px) {
+  .header-toolbar {
+    min-height: 64px !important;
+    padding-top: 0 !important;
+  }
+  
+  .content-spacer {
+    height: 64px !important;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

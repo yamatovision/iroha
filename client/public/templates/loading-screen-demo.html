@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>運勢ローディング画面 - デモ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      --primary-main: #673ab7;
+      --primary-light: #9575cd;
+      --primary-dark: #4527a0;
+      --primary-bg: #ede7f6;
+      --secondary-main: #e040fb;
+      --text-primary: #212121;
+      --text-secondary: #757575;
+      --bg-default: #ffffff;
+      --bg-paper: #f5f5f5;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f6edff;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: var(--primary-main);
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.6rem;
+      font-weight: 500;
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .tab-button {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--primary-main);
+      background: white;
+      color: var(--primary-main);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .tab-button.active {
+      background: var(--primary-main);
+      color: white;
+    }
+    
+    .tab-button:hover {
+      background: var(--primary-bg);
+    }
+    
+    .loading-container {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .tab-content {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tab-content.active {
+      display: flex;
+    }
+    
+    /* アニメーション関連のスタイル */
+    .fortune-animation-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .fortune-circle {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 8px solid rgba(156, 39, 176, 0.2);
+      border-top: 8px solid rgba(156, 39, 176, 0.8);
+      border-left: 8px solid rgba(156, 39, 176, 0.8);
+      animation: spin 8s linear infinite;
+    }
+    
+    .fortune-square {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border: 6px solid rgba(233, 30, 99, 0.2);
+      border-right: 6px solid rgba(233, 30, 99, 0.8);
+      border-bottom: 6px solid rgba(233, 30, 99, 0.8);
+      animation: spin-reverse 6s linear infinite;
+    }
+    
+    .fortune-triangle {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 30px solid transparent;
+      border-right: 30px solid transparent;
+      border-bottom: 52px solid rgba(103, 58, 183, 0.5);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    
+    .fortune-star {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      color: rgba(156, 39, 176, 0.7);
+      animation: spin 4s linear infinite;
+    }
+    
+    .loading-message {
+      margin-top: 16px;
+      color: var(--primary-main);
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+    
+    /* 豆知識表示 */
+    .tip-icon {
+      font-size: 40px;
+      color: var(--primary-main);
+      margin-bottom: 16px;
+    }
+    
+    .tip-title {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+    
+    .tip-content {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      animation: fadeInOut 4s infinite;
+      max-width: 400px;
+    }
+    
+    /* 今日の一言 */
+    .quote-icon {
+      font-size: 40px;
+      color: var(--primary-main);
+      margin-bottom: 16px;
+    }
+    
+    .quote-title {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+    
+    .quote-content {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      font-style: italic;
+      animation: fadeInOut 4s infinite;
+      max-width: 400px;
+    }
+    
+    /* インタラクティブ */
+    .interactive-title {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+    
+    .interactive-area {
+      width: 100%;
+      height: 200px;
+      background-color: rgba(106, 27, 154, 0.05);
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    
+    .star {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      color: var(--primary-main);
+      animation: pulse 2s infinite;
+      transition: opacity 1s ease-out;
+    }
+    
+    .interactive-help {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    /* プログレスバー */
+    .progress-container {
+      width: 90%;
+      height: 5px;
+      background-color: rgba(106, 27, 154, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary-main);
+      border-radius: 10px;
+      transition: width 0.3s ease-in-out;
+    }
+    
+    .progress-text {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    /* アニメーション */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes spin-reverse {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(-360deg); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.7; }
+    }
+    
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(10px); }
+      10% { opacity: 1; transform: translateY(0); }
+      90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-10px); }
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .loading-container {
+        padding: 16px;
+        min-height: 350px;
+      }
+      
+      .fortune-animation-container {
+        width: 150px;
+        height: 150px;
+      }
+      
+      .fortune-circle {
+        width: 120px;
+        height: 120px;
+      }
+      
+      .fortune-square {
+        width: 80px;
+        height: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>運勢ローディング画面デモ</h1>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-tab="animation">
+        <span class="material-icons">auto_awesome</span>アニメーション
+      </button>
+      <button class="tab-button" data-tab="tips">
+        <span class="material-icons">lightbulb</span>豆知識
+      </button>
+      <button class="tab-button" data-tab="quotes">
+        <span class="material-icons">star</span>今日の一言
+      </button>
+      <button class="tab-button" data-tab="interactive">
+        <span class="material-icons">touch_app</span>インタラクティブ
+      </button>
+    </div>
+    
+    <div class="loading-container">
+      <!-- アニメーション表示 -->
+      <div class="tab-content active" id="animation">
+        <div class="fortune-animation-container">
+          <div class="fortune-circle"></div>
+          <div class="fortune-square"></div>
+          <div class="fortune-triangle"></div>
+          <div class="fortune-star material-icons">star</div>
+        </div>
+        <div class="loading-message">運勢情報を生成中...</div>
+      </div>
+      
+      <!-- 豆知識表示 -->
+      <div class="tab-content" id="tips">
+        <span class="material-icons tip-icon">lightbulb</span>
+        <div class="tip-title">四柱推命の豆知識</div>
+        <div class="tip-content" id="tip-text">四柱推命では、生年月日時から「天干」と「地支」を導き出します。</div>
+      </div>
+      
+      <!-- 今日の一言 -->
+      <div class="tab-content" id="quotes">
+        <span class="material-icons quote-icon">star</span>
+        <div class="quote-title">今日の一言</div>
+        <div class="quote-content" id="quote-text">『思いがけない出会いが、新しい道を開くこともあります。』</div>
+      </div>
+      
+      <!-- インタラクティブ要素 -->
+      <div class="tab-content" id="interactive">
+        <div class="interactive-title">タップして星を描いてみましょう</div>
+        <div class="interactive-area" id="star-area">
+          <div class="interactive-help">ここをタップしてみてください</div>
+        </div>
+      </div>
+      
+      <!-- 共通プログレスバー -->
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0% 完了</div>
+    </div>
+  </div>
+
+  <script>
+    // タブ切り替え
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        // タブボタンのアクティブ状態を切り替え
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // タブコンテンツの表示を切り替え
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+    
+    // 豆知識の切り替え
+    const tips = [
+      // 基本概念
+      "四柱推命では、生年月日時から「天干」と「地支」を導き出します。",
+      "五行説では、「木・火・土・金・水」の五つの要素でバランスを考えます。",
+      "「運勢」という言葉は、「運」と「勢い」の組み合わせに由来します。",
+      "日本の占いは、中国から伝わった陰陽五行説を元にしています。",
+      "運命の流れを表す「大運」は、人生全体を方向づける重要な要素です。",
+      "「日柱」は、あなたの性格や運勢の中心となる重要な柱です。",
+      "金の陰は、真実を見極める力に優れています。",
+      "水の陽は、優れた知性と柔軟性を持つ特徴があります。",
+      "命式のバランスは、健康や人間関係にも影響を与えます。",
+      "縁の深い人同士は、命式の相性にも特徴が現れます。",
+      
+      // 易経と古典からの知恵
+      "易経では「変化の中に不変の法則がある」という考え方が基本です。",
+      "「天人合一」の思想は、人間と自然の調和を重視する東洋哲学の根幹です。",
+      "四柱推命の「四柱」とは、年・月・日・時の四つの柱を意味します。",
+      "『滴天髓』は命理学の古典で、八字（四柱）理論を体系化した書物です。",
+      "命理学では「吉凶禍福は天に在り、功名富貴は人に在り」と考えます。",
+      "十二運星は人生の運気の流れを示し、「沐浴」から始まり「墓」で終わります。",
+      "五行の相生関係は「木生火、火生土、土生金、金生水、水生木」の循環です。",
+      "「通変之道」とは、変化の法則を理解し、適応する道を表しています。",
+      "「通根源流住法」は八字の本質を見極めるための重要な考え方です。",
+      
+      // 十干（天干）の知恵
+      "甲（きのえ）は、若木のように真っ直ぐに伸びる生命力を象徴します。",
+      "乙（きのと）は、曲がりくねった若木のように柔軟さを持ちます。",
+      "丙（ひのえ）は、太陽の光のように明るく輝く性質を持ちます。",
+      "丁（ひのと）は、ろうそくの火のように繊細で温かい光を表します。",
+      "戊（つちのえ）は、大地のように安定し、包容力がある性質です。",
+      "己（つちのと）は、耕された田畑のように実りをもたらす土を表します。",
+      "庚（かのえ）は、鋭い刃物のような金属の性質を持ちます。",
+      "辛（かのと）は、装飾品のような洗練された金属を象徴します。",
+      "壬（みずのえ）は、大海や川のような強い水の流れを表します。",
+      "癸（みずのと）は、雨や露のような優しい水の性質を持ちます。",
+      
+      // 十二支（地支）の知識
+      "子（ね）は、北の方角と真夜中、そして水の性質を持ちます。",
+      "丑（うし）は、土の性質で、忍耐強く安定した特徴があります。",
+      "寅（とら）は、木の性質で、勇敢で活動的な特徴を持ちます。",
+      "卯（う）は、木の性質で、温和で平和を好む特徴があります。",
+      "辰（たつ）は、土の性質で、変化と発展を象徴します。",
+      "巳（み）は、火の性質で、知恵と洞察力に優れています。",
+      "午（うま）は、火の性質で、情熱的で活発な特徴を持ちます。",
+      "未（ひつじ）は、土の性質で、優しさと温和さを象徴します。",
+      "申（さる）は、金の性質で、機知に富み活動的です。",
+      "酉（とり）は、金の性質で、繊細で美を追求する傾向があります。",
+      "戌（いぬ）は、土の性質で、忠実で信頼感がある特徴です。",
+      "亥（い）は、水の性質で、深い知恵と直感力を持ちます。",
+      
+      // 日本的な四柱推命の解釈
+      "日本の四柱推命は、江戸時代に中国から伝わり独自の発展を遂げました。",
+      "日本では「宿命」と「運命」を区別し、努力によって運命は変えられると考えます。",
+      "「木火士金水」の五行は日本語では「もくかどごんすい」と読みます。",
+      "日本の暦では、明治5年までは旧暦（太陰太陽暦）を使用していました。",
+      "「蔵干」は地支に隠れている天干のことで、人の内面的な性質を表します。",
+      
+      // 現代的な解釈
+      "現代の四柱推命は、自己理解や人間関係の参考として活用されています。",
+      "命式は「制約」ではなく「才能や傾向」を示すものとして捉えられています。",
+      "「通変」の思想は、現代では「変化への適応力」として重要視されています。",
+      "四柱推命は心理学的な側面からも研究され、性格分析に応用されています。",
+      "運気の流れを知ることで、最適なタイミングでの行動が可能になります。"
+    ];
+    
+    let tipIndex = 0;
+    const tipText = document.getElementById('tip-text');
+    
+    setInterval(() => {
+      tipIndex = (tipIndex + 1) % tips.length;
+      tipText.style.opacity = 0;
+      
+      setTimeout(() => {
+        tipText.textContent = tips[tipIndex];
+        tipText.style.opacity = 1;
+      }, 500);
+    }, 4000);
+    
+    // 今日の一言の切り替え
+    const quotes = [
+      // ポジティブな姿勢
+      "思いがけない出会いが、新しい道を開くこともあります。",
+      "小さな一歩が、大きな変化の始まりになります。",
+      "自分を信じることが、困難を乗り越える力になります。",
+      "周りの人への感謝を忘れないことが、幸せへの近道です。",
+      "目標を持ち続けることで、道は自然と開けます。",
+      "柔軟な心が、新しい可能性を引き寄せます。",
+      "困難な時こそ、内なる強さが育まれます。",
+      "他者を思いやる心が、自分自身も豊かにします。",
+      "日々の小さな喜びに気づけることが、幸せの秘訣です。",
+      "変化を恐れずに受け入れることで、成長できます。",
+      
+      // 東洋の知恵
+      "水は低きに流れ、人は謙虚なところに集まる。",
+      "千里の道も一歩から始まる。",
+      "風が吹けば桶屋が儲かる。世の中は意外なつながりで成り立っている。",
+      "明日は明日の風が吹く。一日一日を大切に生きよう。",
+      "急がば回れ。時には遠回りが最短の道となる。",
+      "七転び八起き。失敗しても諦めずに立ち上がることが大切。",
+      "雨降って地固まる。困難を乗り越えると、より強くなれる。",
+      "石の上にも三年。忍耐強く続けることで、成功への道が開ける。",
+      "一期一会。出会いを大切にし、今この瞬間を生きる。",
+      "類は友を呼ぶ。心に描くものに自分は近づいていく。",
+      
+      // 易経の知恵
+      "天行健，君子以自強不息。（天の運行は絶えず、君子はたゆまず努力する）",
+      "地勢坤，君子以厚德載物。（大地は万物を包み込み、君子は徳をもって人を包容する）",
+      "時中の義を見るは易にあり。（時と場所に合った行動を選ぶ知恵が易にある）",
+      "天地の大徳を生という。（天地の最も大きな徳は、生命を生み出すこと）",
+      "善を積むこと山の如く、人知れず。（良い行いは山のように積み重ねるもの）",
+      "君子は豹変す。（賢者は状況に応じて柔軟に変化できる）",
+      "危きに臨みて懼れず。（危機に直面しても恐れず立ち向かう）",
+      "和して同ぜず。（調和しつつも個性を失わない）",
+      "天の時は地の利に如かず。地の利は人の和に如かず。（人の和が最も重要）",
+      "君子の交わりは淡きこと水の如し。（賢者の交わりは清らかで自然体）",
+      
+      // 前向きな生き方
+      "今日という日は、残りの人生の最初の日。",
+      "道は開かれるのを待っているのではなく、歩むことで開かれていく。",
+      "人生は自分の思いどおりにならないからこそ、美しい。",
+      "できないと思うことが、あなたの可能性を制限している。",
+      "本当の強さとは、困難に直面してもなお優しさを失わないこと。",
+      "すべての出来事には意味がある。今は理解できなくても。",
+      "人生の質は、あなたが不確かさに対してどれだけ心地よくいられるかで決まる。",
+      "過去は変えられないが、未来は変えられる。",
+      "あなたの心が変われば、あなたの世界も変わる。",
+      "最も輝かしい未来は、今を大切に生きている人にもたらされる。"
+    ];
+    
+    let quoteIndex = 0;
+    const quoteText = document.getElementById('quote-text');
+    
+    setInterval(() => {
+      quoteIndex = (quoteIndex + 1) % quotes.length;
+      quoteText.style.opacity = 0;
+      
+      setTimeout(() => {
+        quoteText.textContent = `『${quotes[quoteIndex]}』`;
+        quoteText.style.opacity = 1;
+      }, 500);
+    }, 4000);
+    
+    // インタラクティブな星
+    const starArea = document.getElementById('star-area');
+    let nextStarId = 0;
+    
+    starArea.addEventListener('click', (event) => {
+      const help = document.querySelector('.interactive-help');
+      if (help) {
+        help.style.display = 'none';
+      }
+      
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      
+      const star = document.createElement('div');
+      star.classList.add('star');
+      star.id = `star-${nextStarId++}`;
+      star.style.left = `${x}px`;
+      star.style.top = `${y}px`;
+      star.style.fontSize = `${Math.random() * 20 + 15}px`;
+      
+      const starIcon = document.createElement('span');
+      starIcon.classList.add('material-icons');
+      starIcon.textContent = 'star';
+      
+      star.appendChild(starIcon);
+      starArea.appendChild(star);
+      
+      // 3秒後に星を消す
+      setTimeout(() => {
+        star.style.opacity = 0;
+        setTimeout(() => star.remove(), 1000);
+      }, 3000);
+    });
+    
+    // プログレスバー
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    let progress = 0;
+    
+    const progressInterval = setInterval(() => {
+      progress += 1;
+      progressBar.style.width = `${progress}%`;
+      progressText.textContent = `${progress}% 完了`;
+      
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        
+        // 完了したら1秒後にリセット
+        setTimeout(() => {
+          progress = 0;
+          progressBar.style.width = '0%';
+          progressText.textContent = '0% 完了';
+          
+          // 再開
+          setInterval(() => {
+            progress = (progress + 1) % 101;
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${progress}% 完了`;
+          }, 120);
+        }, 1000);
+      }
+    }, 120); // 約12秒で完了
+  </script>
+</body>
+</html>

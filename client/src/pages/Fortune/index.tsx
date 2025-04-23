@@ -330,7 +330,7 @@ const Fortune: React.FC = () => {
         </Alert>
       </Snackbar>
       
-      {/* 日付表示とリフレッシュボタン */}
+      {/* 日付表示のみ（更新アイコンを削除） */}
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 1, mb: 1 }}>
         {currentDate && (
           <Typography 
@@ -345,31 +345,14 @@ const Fortune: React.FC = () => {
             <span style={{ fontWeight: 500 }}>{currentDate}</span>の運勢
           </Typography>
         )}
-        
-        <Tooltip title="運勢情報を更新" placement="top">
-          <IconButton 
-            onClick={handleRefreshFortune}
-            disabled={refreshing || loading}
-            size="small"
-            sx={{ ml: 1 }}
-            color="primary"
-          >
-            {refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
-          </IconButton>
-        </Tooltip>
       </Box>
       
       
       {/* タブ切り替えを削除 */}
       
       {loading ? (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          minHeight: '70vh'
-        }}>
-          <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 250px)' }}>
+          <CircularProgress size={50} />
         </Box>
       ) : error ? (
         <>

@@ -112,19 +112,27 @@ const Layout = () => {
           zIndex: (theme) => theme.zIndex.drawer + 1,
           background: 'linear-gradient(120deg, #9c27b0, #7b1fa2)',
           boxShadow: '0 2px 15px rgba(0,0,0,0.15)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          // セーフエリア対応 - よりコンパクトに
+          paddingTop: 'env(safe-area-inset-top, 0px)'
         }}
       >
-        <Toolbar>
+        <Toolbar
+          sx={{
+            minHeight: { xs: '48px', sm: '56px' }, // 高さを縮小
+            paddingTop: { xs: '4px', sm: '0px' }, // 上部余白を縮小
+            paddingBottom: { xs: '4px', sm: '0px' }, // 下部余白も縮小
+          }}
+        >
           {showBackButton ? (
             <IconButton
               color="inherit"
               aria-label="back"
               edge="start"
               onClick={goBack}
-              sx={{ mr: 2 }}
+              sx={{ mr: 1.5, p: 1 }} // パディングを小さく
             >
-              <ArrowBackIcon />
+              <ArrowBackIcon fontSize="small" /> {/* アイコンサイズを小さく */}
             </IconButton>
           ) : (
             <IconButton
@@ -132,12 +140,20 @@ const Layout = () => {
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'block' } }}
+              sx={{ mr: 1.5, p: 1, display: { md: 'block' } }} // パディングを小さく
             >
-              <MenuIcon />
+              <MenuIcon fontSize="small" /> {/* アイコンサイズを小さく */}
             </IconButton>
           )}
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 400 }}>
+          <Typography 
+            variant="subtitle1" 
+            component="div" 
+            sx={{ 
+              flexGrow: 1, 
+              fontWeight: 400,
+              fontSize: { xs: '0.95rem', sm: '1.1rem' } // フォントサイズを調整
+            }}
+          >
             {pageTitle}
           </Typography>
           <UserMenu />
@@ -158,7 +174,13 @@ const Layout = () => {
       
       <Box sx={{ display: 'flex', flex: 1 }}>
         <Main>
-          <Toolbar /> {/* アプリバーの高さ分のスペーサー */}
+          {/* スペーサーの高さを縮小してコンテンツをより上に表示 */}
+          <Box sx={{ 
+            height: { 
+              xs: 'calc(48px + 4px + env(safe-area-inset-top, 0px))', // 縮小: コンパクトなツールバー + 最小余白 + セーフエリア
+              sm: '56px' // デスクトップも縮小
+            } 
+          }} />
           <Outlet />
           {/* 下部スペースは Main コンポーネントの paddingBottom で対応するため削除 */}
         </Main>

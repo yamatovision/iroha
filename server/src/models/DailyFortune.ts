@@ -11,8 +11,7 @@ export interface IDailyFortune {
   teamGoalId?: mongoose.Types.ObjectId; // オプショナル - チーム目標参照用
   fortuneScore: number;
   advice: string;
-  teamAdvice?: string; // チーム特化アドバイス（オプショナル）
-  collaborationTips?: string[]; // チーム協力ヒント（オプショナル）
+  dailyWisdom?: string; // 今日の名言（オプショナル）
   luckyItems: {
     color: string;
     item: string;

@@ -861,14 +861,27 @@ export class FortuneService {
     // 既存の運勢データがあるか確認（日付に関係なく、ユーザーIDのみで最新のものを取得）
     let existingFortune = null;
     
-    // 常に上書き動作を行う
+    // 上書き操作を行う
     if (forceOverwrite) {
-      // 強制上書きの場合は既存データをすべて削除
-      console.log(`🔧 強制上書きモード: ${userId} のすべての運勢データを削除します`);
-      const deleteResult = await DailyFortune.deleteMany({
-        userId: userId
+      // 強制上書きの場合は特定の日付のデータを検索して更新、ない場合は新規作成
+      const dateStart = new Date(targetDate);
+      dateStart.setHours(0, 0, 0, 0);
+      const dateEnd = new Date(dateStart);
+      dateEnd.setDate(dateEnd.getDate() + 1);
+      
+      console.log(`🔧 強制上書きモード: ${userId} の ${dateStart.toISOString().split('T')[0]} の運勢データを検索します`);
+      existingFortune = await DailyFortune.findOne({
+        userId: userId,
+        date: {
+          $gte: dateStart,
+          $lt: dateEnd
+        }
       });
-      console.log(`🔧 削除結果: ${deleteResult.deletedCount}件のデータを削除しました`);
+      
+      console.log(`🔧 検索結果: ${existingFortune ? '既存データが見つかりました' : '該当日の運勢データは見つかりません。新規作成します'}`);
+      if (existingFortune) {
+        console.log(`🔧 既存データ詳細: ID=${existingFortune._id}, 日付=${existingFortune.date}`);
+      }
     } else {
       // 通常の上書きでは最新のものを取得して更新
       console.log(`🔧 通常更新モード: ${userId} の最新運勢データを検索します`);
@@ -1256,12 +1269,18 @@ export class FortuneService {
 - 目標期限: ${teamGoal?.deadline ? new Date(teamGoal.deadline).toLocaleDateString() : '未設定'}
 - 進捗状況: ${teamGoal?.progress || 0}%
 
-以下の3セクションからなるマークダウン形式のアドバイスを作成してください：
+以下の2セクションからなるマークダウン形式のアドバイスを作成してください：
 1. 「今日のあなたの運気」- 本日の日柱と用神・喜神・忌神との相性や、五行バランスを考慮した運気の分析
 2. 「個人目標へのアドバイス」- 格局と用神を考慮したうえで、目標達成のための具体的なアドバイス
-3. 「チーム目標へのアドバイス」- チーム目標「${teamGoal?.content || '未設定'}」の達成に向けたアドバイス。五行特性を活かした対人関係や協力について具体的に言及してください。
 
-それぞれのセクションは200-300文字程度にしてください。四柱推命の知識に基づいた具体的で実用的なアドバイスを提供してください。セクション内では、用神や喜神を活かす時間帯、注意すべき時間帯なども含めると良いでしょう。特にチーム目標に関しては、具体的な目標内容を参照した上で、達成のための具体的な行動や注意点を提案してください。
+それぞれのセクションは200-300文字程度にしてください。四柱推命の知識に基づいた具体的で実用的なアドバイスを提供してください。セクション内では、用神や喜神を活かす時間帯、注意すべき時間帯なども含めると良いでしょう。
+
+また、別途「今日の名言」として以下の条件を満たす名言を生成してください：
+- [${userElement}]の五行属性と[${dayPillar.heavenlyStem}${dayPillar.earthlyBranch}]日柱の相性を考慮した内容
+- 主に東洋の古典（易経、老子、孔子など）からの引用を基本とするが、必要に応じて世界の名言も取り入れる
+- 原文が難解な場合は、現代的な言い換えをメインにし、必要に応じて原文を添える
+- 名言の長さは30文字以内を目安とし、2〜3行の簡潔な解説を付ける
+- 運勢スコアが高い日（70以上）は前向きで活力のある名言、低い日（30以下）は内省的で慎重さを促す名言を選ぶ
       `;
       
       // Claude 3.7 Sonnetモデルを使用
@@ -1280,15 +1299,19 @@ export class FortuneService {
       const contentBlock = message.content[0];
       
       // 型チェックを行い安全に値を取り出す
+      let responseText = "";
       if (contentBlock && typeof contentBlock === 'object' && 'text' in contentBlock) {
-        return contentBlock.text;
+        responseText = contentBlock.text;
       } else if (contentBlock && typeof contentBlock === 'object' && 'type' in contentBlock) {
         // APIの応答形式が変わった場合の対応（どのような型であっても対応）
-        return (contentBlock as any).value || '';
+        responseText = (contentBlock as any).value || '';
+      } else {
+        // どちらにも当てはまらない場合はデフォルトメッセージを返す
+        responseText = "今日は自分の直感を信じて行動してみましょう。新しい発見があるかもしれません。";
       }
-      
-      // どちらにも当てはまらない場合はデフォルトメッセージを返す
-      return "今日は自分の直感を信じて行動してみましょう。新しい発見があるかもしれません。";
+
+      // 結果が生成された全テキストを返す（今日の名言セクションも含む）
+      return responseText.trim();
       
     } catch (error) {
       console.error('Claude API呼び出しエラー:', error);
@@ -1347,6 +1370,25 @@ export class FortuneService {
       user.teamRole
     );
 
+    // 今日の名言を生成
+    let dailyWisdom = '';
+    try {
+      // シンプルな名言テンプレート
+      const wisdomTemplates = [
+        '「行動こそが最も雄弁な言葉である」\n自分の意図を示すには、言葉よりも具体的な行動が重要です。',
+        '「天行健，君子以自強不息」（易経）\n「天は絶えず動き、君子も休まず努力する」。継続的な成長を目指しましょう。',
+        '「千里の道も一歩から始まる」\n大きな目標も小さな一歩の積み重ねで達成できます。今日も一歩前進しましょう。',
+        '「和して同ぜず」\n調和を保ちながらも、自分らしさを失わないことが大切です。',
+        '「水は方円の器に随う」\n状況に柔軟に適応することで、どんな環境でも成長できます。'
+      ];
+      
+      // ランダムに選択
+      dailyWisdom = wisdomTemplates[Math.floor(Math.random() * wisdomTemplates.length)];
+    } catch (error) {
+      console.error('今日の名言生成エラー:', error);
+      dailyWisdom = '「小さな一歩が、大きな変化を生む」\n日々の積み重ねが未来を作ります。';
+    }
+
     // マークダウン形式で結合
     return `# 今日のあなたの運気
 
@@ -1356,9 +1398,9 @@ ${dayDescription}
 
 ${personalGoalAdvice}
 
-# チーム目標へのアドバイス
+## 今日の名言
 
-${teamGoalAdvice}`;
+${dailyWisdom}`;
   }
 
   /**

@@ -106,16 +106,12 @@ async function buildPersonalContext(user: any): Promise<Record<string, any>> {
     // 運勢情報を取得
     const DailyFortune = require('../../models/DailyFortune').DailyFortune;
     const DayPillar = require('../../models/DayPillar').DayPillar;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
+    // 最新の運勢データを取得するように変更
+    console.log(`🔍 ユーザー ${user._id} の最新運勢データを検索します`);
     const fortune = await DailyFortune.findOne({
-      userId: user._id,
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
-    });
+      userId: user._id
+    }).sort({ date: -1 }); // 日付の降順で並べ、最新のデータを取得
     
     // 日柱情報を取得して運勢情報に結合
     let dayPillarData = null;
@@ -125,8 +121,15 @@ async function buildPersonalContext(user: any): Promise<Record<string, any>> {
     }
     
     if (fortune) {
+      // UTCから日本時間への変換
+      const utcDate = new Date(fortune.date);
+      // 日本時間に変換（+9時間）
+      const jstDate = new Date(utcDate.getTime() + (9 * 60 * 60 * 1000));
+      
       console.log('🔍 日運情報DB取得結果:', JSON.stringify({
         date: fortune.date,
+        dateUTC: utcDate.toISOString().split('T')[0],
+        dateJST: jstDate.toISOString().split('T')[0],
         score: fortune.fortuneScore,
         dayPillarId: fortune.dayPillarId,
         luckyItemsKeys: fortune.luckyItems ? Object.keys(fortune.luckyItems) : []
@@ -134,6 +137,7 @@ async function buildPersonalContext(user: any): Promise<Record<string, any>> {
       
       // 詳細なデバッグ情報
       console.log('🔎 日運情報の詳細診断:');
+      console.log('  - 日付(JST):', jstDate.toISOString().split('T')[0]);
       console.log('  - スコア情報:', fortune.fortuneScore === undefined ? '未設定' : fortune.fortuneScore);
       
       if (dayPillarData) {
@@ -197,7 +201,7 @@ async function buildPersonalContext(user: any): Promise<Record<string, any>> {
         elementProfile: user.elementProfile || null
       },
       dailyFortune: fortune ? {
-        date: fortune.date.toISOString().split('T')[0],
+        date: new Date(fortune.date.getTime() + (9 * 60 * 60 * 1000)).toISOString().split('T')[0], // JST変換
         dayPillar: dayPillarData ? {
           heavenlyStem: dayPillarData.heavenlyStem,
           earthlyBranch: dayPillarData.earthlyBranch,
@@ -257,15 +261,10 @@ async function buildTeamMemberContext(user: any, memberId: string): Promise<Reco
 
     // 日柱情報を取得
     const DayPillar = require('../../models/DayPillar').DayPillar;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    const dayPillar = await DayPillar.findOne({
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
-    });
+    // 最新の日柱データを取得するように変更
+    console.log(`🔍 チームメンバーモード: 最新の日柱データを検索します`);
+    const dayPillar = await DayPillar.findOne({}).sort({ date: -1 });
     
     console.log('🔍 日柱情報の取得結果:', dayPillar ? 'あり' : 'なし');
 
@@ -351,15 +350,10 @@ async function buildTeamGoalContext(user: any, teamGoalId: string): Promise<Reco
 
     // 日柱情報を取得
     const DayPillar = require('../../models/DayPillar').DayPillar;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    const dayPillar = await DayPillar.findOne({
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
-    });
+    // 最新の日柱データを取得するように変更
+    console.log(`🔍 チームメンバーモード: 最新の日柱データを検索します`);
+    const dayPillar = await DayPillar.findOne({}).sort({ date: -1 });
     
     console.log('🔍 日柱情報の取得結果:', dayPillar ? 'あり' : 'なし');
 
@@ -423,15 +417,10 @@ async function buildTeamContext(user: any): Promise<Record<string, any>> {
 
     // 日柱情報を取得
     const DayPillar = require('../../models/DayPillar').DayPillar;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    const dayPillar = await DayPillar.findOne({
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
-    });
+    // 最新の日柱データを取得するように変更
+    console.log(`🔍 チームメンバーモード: 最新の日柱データを検索します`);
+    const dayPillar = await DayPillar.findOne({}).sort({ date: -1 });
     
     console.log('🔍 日柱情報の取得結果:', dayPillar ? 'あり' : 'なし');
 

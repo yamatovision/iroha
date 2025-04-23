@@ -27,6 +27,8 @@ class SessionManagerService {
   private lastTokenRefresh: number = 0;
   // トークン更新の最小間隔 (1分)
   private readonly MIN_REFRESH_INTERVAL = 60 * 1000;
+  // トークン更新中フラグ（競合防止用）
+  private isRefreshingToken = false;
   // バックボタン履歴
   private backButtonPressTimestamp = 0;
   // 二重バックボタン検出期間 (ミリ秒)
@@ -310,11 +312,19 @@ class SessionManagerService {
       return;
     }
     
+    // 既に更新中なら処理しない（競合防止）
+    if (this.isRefreshingToken) {
+      console.log('セッションマネージャー：すでにトークン更新処理が進行中です');
+      return;
+    }
+    
     try {
+      this.isRefreshingToken = true;
       const currentTime = Date.now();
       
       // 最小更新間隔をチェック（トークン更新のスロットリング）
       if (!force && currentTime - this.lastTokenRefresh < this.MIN_REFRESH_INTERVAL) {
+        this.isRefreshingToken = false;
         return;
       }
       
@@ -323,14 +333,15 @@ class SessionManagerService {
       
       if (remainingTime === null) {
         // トークンが存在しない場合
+        this.isRefreshingToken = false;
         return;
       }
       
       if (force || remainingTime < this.TOKEN_REFRESH_THRESHOLD) {
         console.log(`セッションマネージャー：トークンを更新します（残り ${Math.floor(remainingTime / 1000)} 秒）`);
-        const success = await jwtAuthService.refreshToken();
+        const result = await jwtAuthService.refreshToken();
         
-        if (success) {
+        if (result.success) {
           this.lastTokenRefresh = currentTime;
           console.log('セッションマネージャー：トークン更新成功');
         } else {
@@ -339,6 +350,9 @@ class SessionManagerService {
       }
     } catch (error) {
       console.error('セッションマネージャー：トークン更新エラー', error);
+    } finally {
+      // 処理完了後、必ずフラグをリセット
+      this.isRefreshingToken = false;
     }
   }
 
