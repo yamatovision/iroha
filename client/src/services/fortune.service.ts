@@ -340,7 +340,7 @@ class FortuneService {
   getElementColors(element: string): { main: string, light: string, bg: string, dark: string, textColor: string } {
     if (element.includes('木') || element === '甲' || element === '乙') {
       return {
-        main: '#000000',
+        main: '#94b8eb', // 木の色（青/緑系）
         light: '#4d4dff',
         bg: '#94b8eb',
         dark: '#0000b3',
@@ -348,7 +348,7 @@ class FortuneService {
       };
     } else if (element.includes('火') || element === '丙' || element === '丁') {
       return {
-        main: '#000000',
+        main: '#e67373', // 火の色（赤系）
         light: '#ff4d4d',
         bg: '#e67373',
         dark: '#b30000',
@@ -356,7 +356,7 @@ class FortuneService {
       };
     } else if (element.includes('土') || element === '戊' || element === '己') {
       return {
-        main: '#000000',
+        main: '#f2d06b', // 土の色（黄系）
         light: '#ffff66',
         bg: '#f2d06b',
         dark: '#b3b300',
@@ -364,15 +364,15 @@ class FortuneService {
       };
     } else if (element.includes('金') || element === '庚' || element === '辛') {
       return {
-        main: '#000000',
+        main: '#9c27b0', // 紫色に変更（アプリの主要色）
         light: '#ffffff',
         bg: '#ffffff',
-        dark: '#e6e6e6',
+        dark: '#7b1fa2',
         textColor: '#000000'
       };
     } else if (element.includes('水') || element === '壬' || element === '癸') {
       return {
-        main: '#ffffff', // 水の場合は文字色を白に
+        main: '#7d94a6', // 水の色（紺系）
         light: '#333333',
         bg: '#7d94a6',
         dark: '#000000',
@@ -380,9 +380,9 @@ class FortuneService {
       };
     }
     
-    // デフォルト値（水）
+    // デフォルト値
     return {
-      main: '#ffffff',
+      main: '#94b8eb',
       light: '#333333',
       bg: '#7d94a6',
       dark: '#000000',

@@ -4,36 +4,65 @@ import ReactMarkdown from 'react-markdown';
 import { IFortune } from '../../../../shared';
 import fortuneService from '../../services/fortune.service';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface FortuneDetailsProps {
   fortune: IFortune;
 }
 
 const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
+  // 認証コンテキストからユーザー情報を取得
+  const { userProfile } = useAuth();
+  
   // 五行に基づいた色を取得
   const elementColors = fortuneService.getElementColors(fortune.dayPillar.heavenlyStem);
   
-  // advice から「今日の名言」セクションを探して切り出すヘルパー関数
-  const extractWisdomSection = (advice: string) => {
-    const wisdomSectionRegex = /## 今日の名言\s*\n([\s\S]*?)(?=\n##|$)/;
-    const match = advice.match(wisdomSectionRegex);
+  // 四柱推命占いタイトル用の情報を生成
+  const element = fortuneService.getStemElement(fortune.dayPillar.heavenlyStem);
+  const polarity = fortuneService.getStemPolarity(fortune.dayPillar.heavenlyStem);
+  const dayPillarText = `${fortune.dayPillar.heavenlyStem}${fortune.dayPillar.earthlyBranch}日`;
+  
+  // ユーザー名を取得（認証情報から取得、なければ「ゲスト」）
+  const userName = userProfile?.displayName || "ゲスト";
+  
+  // 各セクションを抽出するヘルパー関数
+  const extractSections = (advice: string) => {
+    // 各セクションを正規表現で抽出
+    const todayFortuneRegex = /## 今日のあなたの運気\s*\n([\s\S]*?)(?=\n##|$)/;
+    const personalGoalRegex = /## 個人目標へのアドバイス\s*\n([\s\S]*?)(?=\n##|$)/;
+    const wisdomRegex = /## 今日の名言\s*\n([\s\S]*?)(?=\n##|$)/;
+    const otherSectionsRegex = /## (?!今日のあなたの運気|個人目標へのアドバイス|今日の名言)(.*?)\s*\n([\s\S]*?)(?=\n##|$)/g;
     
-    if (match && match[1]) {
-      // 名言セクションが見つかった場合、その内容を返す
-      return match[1].trim();
+    // 各セクションのコンテンツを取得
+    const todayFortuneMatch = advice.match(todayFortuneRegex);
+    const personalGoalMatch = advice.match(personalGoalRegex);
+    const wisdomMatch = advice.match(wisdomRegex);
+    
+    // 結果オブジェクト
+    const sections = {
+      todayFortune: todayFortuneMatch ? todayFortuneMatch[1].trim() : '',
+      personalGoal: personalGoalMatch ? personalGoalMatch[1].trim() : '',
+      wisdom: wisdomMatch ? wisdomMatch[1].trim() : '',
+      otherSections: [] as {title: string, content: string}[]
+    };
+    
+    // その他のセクションを取得
+    let otherMatch;
+    while ((otherMatch = otherSectionsRegex.exec(advice)) !== null) {
+      sections.otherSections.push({
+        title: otherMatch[1].trim(),
+        content: otherMatch[2].trim()
+      });
     }
     
-    return null;
+    return sections;
   };
   
-  // 名言セクションを切り出し、残りのアドバイスを取得
-  const wisdomSection = extractWisdomSection(fortune.advice);
-  let mainAdvice = fortune.advice;
+  // すべてのセクションを抽出
+  const sections = extractSections(fortune.advice);
   
-  if (wisdomSection) {
-    // 名言セクションをアドバイスから削除
-    mainAdvice = fortune.advice.replace(/## 今日の名言[\s\S]*?(?=\n##|$)/, '');
-  }
+  // メインのアドバイスセクションを準備（表示順を変更）
+  let mainAdvice = fortune.advice;
   
   return (
     <Paper
@@ -45,150 +74,164 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
         boxShadow: '0 3px 8px rgba(156, 39, 176, 0.1)'
       }}
     >
-      {/* 今日の名言セクションがあれば特別なスタイルで表示 */}
-      {wisdomSection && (
-        <Box
-          sx={{
-            mb: 3,
-            pb: 3,
-            borderBottom: '1px dashed',
-            borderColor: 'divider',
-            position: 'relative',
-          }}
-        >
-          <Typography
-            variant="h6"
-            component="h2"
+      {/* 四柱推命占いタイトル */}
+      <Typography
+        variant="h6"
+        component="h1"
+        sx={{
+          fontWeight: 600,
+          color: 'primary.main', // 紫色
+          mb: 3,
+          pb: 1,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          textAlign: 'center'
+        }}
+      >
+        四柱推命占い - {userName}さんの運勢 ({dayPillarText})
+      </Typography>
+    
+      {/* セクションを順序通りに表示 */}
+      <Box className="markdown-content">
+        {/* 今日のあなたの運気 - 最初に表示 */}
+        {sections.todayFortune && (
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              component="h2" 
+              sx={{ 
+                fontWeight: 600, 
+                color: elementColors.main,
+                mb: 2
+              }}
+            >
+              今日のあなたの運気
+            </Typography>
+            <Typography 
+              variant="body1" 
+              component="p" 
+              sx={{ 
+                mb: 2,
+                lineHeight: 1.7,
+                fontSize: '1.05rem'
+              }}
+            >
+              {sections.todayFortune}
+            </Typography>
+          </Box>
+        )}
+
+        {/* 個人目標へのアドバイス - 2番目に表示 */}
+        {sections.personalGoal && (
+          <Box sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              component="h2" 
+              sx={{ 
+                fontWeight: 600, 
+                color: elementColors.main,
+                mb: 2
+              }}
+            >
+              個人目標へのアドバイス
+            </Typography>
+            <Typography 
+              variant="body1" 
+              component="p" 
+              sx={{ 
+                mb: 2,
+                lineHeight: 1.7,
+                fontSize: '1.05rem'
+              }}
+            >
+              {sections.personalGoal}
+            </Typography>
+          </Box>
+        )}
+
+        {/* 今日の名言 - 3番目に表示 */}
+        {sections.wisdom && (
+          <Box
             sx={{
-              fontWeight: 600,
-              color: elementColors.main,
-              mb: 2,
-              display: 'flex',
-              alignItems: 'center'
+              mb: 3,
+              pb: 3,
+              borderBottom: '1px dashed',
+              borderColor: 'divider',
+              position: 'relative',
             }}
           >
-            今日の名言
-          </Typography>
-          
-          <Box sx={{ display: 'flex', position: 'relative' }}>
-            <FormatQuoteIcon 
-              sx={{ 
-                color: elementColors.light,
-                fontSize: '2rem',
-                position: 'absolute',
-                left: -5,
-                top: -10,
-                opacity: 0.7,
-                transform: 'rotate(180deg)'
-              }} 
-            />
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                fontWeight: 600,
+                color: elementColors.main,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              今日の名言
+            </Typography>
             
-            <Box sx={{ ml: 4 }}>
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => (
-                    <Typography 
-                      variant="body1" 
-                      component="p" 
-                      sx={{ 
-                        fontWeight: 500,
-                        lineHeight: 1.7,
-                        fontSize: '1.05rem',
-                        fontStyle: 'italic'
-                      }}
-                    >
-                      {children}
-                    </Typography>
-                  ),
-                }}
-              >
-                {wisdomSection}
-              </ReactMarkdown>
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {/* メインの運勢アドバイス */}
-      <Box className="markdown-content">
-        <ReactMarkdown
-          components={{
-            h1: ({ children }) => (
-              <Typography 
-                variant="h5" 
-                component="h1" 
+            <Box sx={{ display: 'flex', position: 'relative' }}>
+              <FormatQuoteIcon 
                 sx={{ 
-                  fontWeight: 600, 
-                  color: 'primary.dark',
-                  mt: 3, 
-                  mb: 2,
-                  pb: 0.5,
-                  borderBottom: '1px solid',
-                  borderColor: 'divider'
-                }}
-              >
-                {children}
-              </Typography>
-            ),
-            h2: ({ children }) => {
-              // 「今日の名言」というh2は既に別の場所で表示するためスキップ
-              if (children === '今日の名言') {
-                return null;
-              }
-              return (
+                  color: elementColors.light,
+                  fontSize: '2rem',
+                  position: 'absolute',
+                  left: -5,
+                  top: -10,
+                  opacity: 0.7,
+                  transform: 'rotate(180deg)'
+                }} 
+              />
+              
+              <Box sx={{ ml: 4 }}>
                 <Typography 
-                  variant="h6" 
-                  component="h2" 
+                  variant="body1" 
+                  component="p" 
                   sx={{ 
-                    fontWeight: 600, 
-                    color: elementColors.main,
-                    mt: 2.5, 
-                    mb: 1.5 
+                    fontWeight: 500,
+                    lineHeight: 1.7,
+                    fontSize: '1.05rem',
+                    fontStyle: 'italic'
                   }}
                 >
-                  {children}
+                  {sections.wisdom}
                 </Typography>
-              );
-            },
-            p: ({ children }) => (
-              <Typography 
-                variant="body1" 
-                component="p" 
-                sx={{ 
-                  mb: 2,
-                  lineHeight: 1.7,
-                  fontSize: '1.05rem'
-                }}
-              >
-                {children}
-              </Typography>
-            ),
-            ul: ({ children }) => (
-              <Box 
-                component="ul" 
-                sx={{ 
-                  pl: 4,
-                  mb: 2 
-                }}
-              >
-                {children}
               </Box>
-            ),
-            li: ({ children }) => (
-              <Typography 
-                component="li" 
-                sx={{ 
-                  mb: 1,
-                  fontSize: '1.05rem'
-                }}
-              >
-                {children}
-              </Typography>
-            ),
-          }}
-        >
-          {mainAdvice}
-        </ReactMarkdown>
+            </Box>
+          </Box>
+        )}
+
+        {/* その他のセクション - 最後に表示 */}
+        {sections.otherSections.map((section, index) => (
+          <Box key={index} sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              component="h2" 
+              sx={{ 
+                fontWeight: 600, 
+                color: elementColors.main,
+                mb: 2
+              }}
+            >
+              {section.title}
+            </Typography>
+            <Typography 
+              variant="body1" 
+              component="p" 
+              sx={{ 
+                mb: 2,
+                lineHeight: 1.7,
+                fontSize: '1.05rem'
+              }}
+            >
+              {section.content}
+            </Typography>
+          </Box>
+        ))}
       </Box>
     </Paper>
   );

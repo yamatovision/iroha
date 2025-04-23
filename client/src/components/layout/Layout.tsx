@@ -31,7 +31,7 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
       padding: theme.spacing(3), // デスクトップでは余白を大きく
     },
     // iOSのセーフエリア対応と下部ナビゲーション用の余白
-    paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+    paddingBottom: 'calc(68px + env(safe-area-inset-bottom, 8px))',
   }),
 )
 
@@ -57,12 +57,12 @@ const BottomNavigation = styled(Box)(({ theme }) => ({
   justifyContent: 'space-around',
   backgroundColor: theme.palette.background.paper,
   borderTop: `1px solid ${theme.palette.divider}`,
-  padding: theme.spacing(0.5, 0), // パディングを縮小してアイテムをタップしやすく
+  paddingTop: theme.spacing(0.5), // 上部パディング
+  paddingBottom: 'calc(env(safe-area-inset-bottom, 8px) + 4px)', // セーフエリア + 追加パディング
   zIndex: theme.zIndex.appBar,
   boxShadow: '0 -2px 5px rgba(0,0,0,0.05)', // 軽い影を追加
-  height: '60px', // 高さを固定
-  // iOSのセーフエリア対応
-  paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+  // 高さを固定からセーフエリアを考慮した可変に変更
+  minHeight: '60px', // 最小高さを保証
   // デスクトップでも表示するために以下のメディアクエリを削除
   // [theme.breakpoints.up('md')]: {
   //   display: 'none',

@@ -255,7 +255,8 @@ const Fortune: React.FC = () => {
         severity: 'success'
       });
       
-      // ローディング状態を解除
+      // 重要：refreshingをfalseにしてからloadingをfalseにする
+      setRefreshing(false);
       setLoading(false);
       
       // アニメーションのトリガー
@@ -303,7 +304,10 @@ const Fortune: React.FC = () => {
         severity: 'error'
       });
     } finally {
-      setRefreshing(false);
+      // 成功時はすでにrefreshingをfalseにしているため、エラー時のみここで実行される
+      if (refreshing) {
+        setRefreshing(false);
+      }
       // loadingはエラーハンドリング内で管理するため、ここではクリアしない
     }
   };

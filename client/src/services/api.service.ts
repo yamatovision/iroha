@@ -12,7 +12,11 @@ const generateTraceId = (): string => {
 
 // モバイルアプリかどうかを判定
 const isNativeApp = (): boolean => {
-  return import.meta.env.VITE_APP_MODE === 'production';
+  // production, debug, developmentのいずれでも有効にする
+  return import.meta.env.VITE_APP_MODE === 'production' 
+      || import.meta.env.VITE_APP_MODE === 'debug'
+      || import.meta.env.VITE_APP_MODE === 'development'
+      || import.meta.env.VITE_API_TYPE === 'NATIVE_APP';
 };
 
 // キャッシュ用のインターフェース

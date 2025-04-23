@@ -77,11 +77,40 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
             datasets: [{
               data: [fortune.score, 100 - fortune.score],
               backgroundColor: [
-                isMetalElement ? theme.palette.primary.main : textColor,
-                isMetalElement ? '#f5f5f5' : '#ffffff'
+                // スコア部分の色
+                isMetalElement ? theme.palette.primary.main : // 金の日はそのまま紫
+                element === '木' ? '#4f77c3' : // 木の日は濃い青/緑系
+                element === '火' ? '#c73434' : // 火の日は濃い赤系
+                element === '土' ? '#d4a92a' : // 土の日は濃い黄系
+                element === '水' ? '#4a5d71' : // 水の日は濃い紺系
+                textColor, // デフォルト
+                
+                // 未使用部分の色（背景とのコントラストを強くする）
+                isMetalElement ? '#f5f5f5' : 
+                element === '木' ? '#e6eefa' : // 木の日はとても明るい青系
+                element === '火' ? '#ffe9e9' : // 火の日はとても明るい赤系
+                element === '土' ? '#fff8e0' : // 土の日はとても明るい黄系
+                element === '水' ? '#dfe7f0' : // 水の日はとても明るい紺系
+                '#f0f0f0' // 明るい灰色
               ],
               borderWidth: isMetalElement ? 0 : 1,
-              borderColor: [isMetalElement ? theme.palette.primary.main : textColor, '#eeeeee'],
+              borderColor: [
+                // スコア部分の境界線
+                isMetalElement ? theme.palette.primary.main : // 金の日はそのまま紫
+                element === '木' ? '#4f77c3' : // 木の日
+                element === '火' ? '#c73434' : // 火の日
+                element === '土' ? '#d4a92a' : // 土の日
+                element === '水' ? '#4a5d71' : // 水の日
+                textColor, // デフォルト
+                
+                // 未使用部分の境界線
+                isMetalElement ? '#dedede' : 
+                element === '木' ? '#b0c5e8' : // 木の日
+                element === '火' ? '#e8b0b0' : // 火の日
+                element === '土' ? '#e8d4b0' : // 土の日
+                element === '水' ? '#b0c5d4' : // 水の日
+                '#dedede' // 灰色
+              ],
               borderRadius: 0,
             }]
           },
@@ -95,6 +124,19 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
               },
               tooltip: {
                 enabled: false
+              }
+            },
+            // ホバー効果を完全に無効化
+            hover: {
+              mode: null
+            },
+            // アーク要素のスタイルをカスタマイズ
+            elements: {
+              arc: {
+                borderWidth: 2,
+                borderColor: 'rgba(255,255,255,0.4)', // より明確な境界線
+                hoverBorderColor: 'rgba(255,255,255,0.4)', // ホバー時も同じ
+                hoverBackgroundColor: undefined, // ホバー時も背景色を変えない
               }
             },
             animation: {
@@ -153,7 +195,7 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
             zIndex: 1
           }}
         >
-          今日の運勢
+          今日の運気
         </Typography>
         
         <Box
@@ -187,7 +229,12 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
           display: 'flex',
           justifyContent: 'center',
           padding: 2.5,
-          backgroundColor: isMetalElement ? '#ffffff' : bgColor,
+          backgroundColor: isMetalElement ? '#ffffff' : 
+                           element === '木' ? '#c0d5f7' : // 木の日は明るい青色に変更
+                           element === '火' ? '#ffdada' : // 火の日は明るい赤色に変更
+                           element === '土' ? '#fff3cd' : // 土の日は明るい黄色に変更
+                           element === '水' ? '#a5b9c9' : // 水の日は明るい青灰色に変更
+                           '#f0f0f0', // デフォルトは明るい灰色
           borderBottomLeftRadius: 3,
           borderBottomRightRadius: 3,
           borderTopLeftRadius: 0,

@@ -18,6 +18,7 @@ import {
   DialogActions,
   Alert
 } from '@mui/material';
+import LoadingOverlay from '../../components/common/LoadingOverlay';
 import { useAuth } from '../../contexts/AuthContext';
 import teamService from '../../services/team.service';
 import friendService from '../../services/friend.service';
@@ -291,9 +292,20 @@ const AisyouPage: React.FC = () => {
   if (loading) {
     return (
       <Container maxWidth="md">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
+        <LoadingOverlay 
+          isLoading={loading}
+          variant="transparent"
+          contentType="tips"
+          message="チーム相性情報を読み込み中..."
+          category="compatibility"
+          opacity={0.7}
+          showProgress={true}
+          estimatedTime={8}
+        >
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+            <CircularProgress />
+          </Box>
+        </LoadingOverlay>
       </Container>
     );
   }
@@ -509,9 +521,29 @@ const AisyouPage: React.FC = () => {
         
         <DialogContent dividers>
           {dialogLoading ? (
-            <Box display="flex" justifyContent="center" p={3}>
-              <CircularProgress />
-            </Box>
+            <LoadingOverlay 
+              isLoading={dialogLoading}
+              variant="transparent"
+              contentType="tips"
+              message="相性分析を実行中..."
+              category="compatibility"
+              opacity={0.7}
+              showProgress={true}
+              estimatedTime={8}
+            >
+              {compatibility && (
+                <Box component="div" sx={{ opacity: 0.3 }}>
+                  {/* 透かし表示用に相性内容を表示 */}
+                  <Box display="flex" alignItems="center" mb={3}>
+                    <Box ml={2}>
+                      <Typography variant="body1" sx={{ mt: 1 }}>
+                        相性分析中...
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </LoadingOverlay>
           ) : compatibility ? (
             <Box component="div">
               {/* 相性スコアと概要 */}

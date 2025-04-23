@@ -10,6 +10,7 @@ import {
   Divider,
   Button 
 } from '@mui/material';
+import LoadingOverlay from '../common/LoadingOverlay';
 import { useAuth } from '../../contexts/AuthContext';
 import friendService from '../../services/friend.service';
 
@@ -201,9 +202,20 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
         </Typography>
         
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
+          <LoadingOverlay 
+            isLoading={loading}
+            variant="transparent"
+            contentType="tips"
+            message="相性情報を分析中..."
+            category="compatibility"
+            opacity={0.7}
+            showProgress={true}
+            estimatedTime={8}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4, opacity: 0.3 }}>
+              <CircularProgress />
+            </Box>
+          </LoadingOverlay>
         ) : error ? (
           <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
             <Typography>{error}</Typography>
