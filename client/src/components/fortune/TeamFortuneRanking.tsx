@@ -54,14 +54,16 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
       case 'fire': return '#e67373'; // 火（赤系）
       case 'wood': return '#94b8eb'; // 木（青/緑系）
       case 'earth': return '#f2d06b'; // 土（黄系）
-      case 'metal': return '#ffffff'; // 金（白系）
+      case 'metal': return '#f5f5f5'; // 金（薄いグレー系に変更）
       default: return '#7d94a6';
     }
   };
 
   // 五行属性のテキスト色を取得
   const getElementTextColor = (element?: string): string => {
-    return element === 'water' ? '#ffffff' : '#000000';
+    if (element === 'water') return '#ffffff';
+    if (element === 'metal') return '#673ab7';
+    return '#000000';
   };
 
   // 五行属性のアイコンを取得
@@ -262,8 +264,9 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
               <Avatar
                 sx={{
                   bgcolor: elementColor,
-                  color: '#fff',
-                  mr: 2
+                  color: getElementTextColor(member.elementAttribute),
+                  mr: 2,
+                  border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.1)' : 'none'
                 }}
               >
                 {member.displayName?.charAt(0) || '?'}
@@ -297,7 +300,11 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
                         border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.2)' : 'none',
                         '& .MuiChip-icon': { 
                           color: member.elementAttribute === 'water' ? '#ffffff' : 
-                                 member.elementAttribute === 'metal' ? '#b3b3b3' : '#000000' 
+                                 member.elementAttribute === 'metal' ? '#673ab7' : '#000000' 
+                        },
+                        '& .MuiChip-label': {
+                          color: member.elementAttribute === 'water' ? '#ffffff' : 
+                                 member.elementAttribute === 'metal' ? '#673ab7' : '#000000'
                         }
                       }}
                     />
