@@ -68,13 +68,35 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // ストレージキャッシュも選択的にクリア
       teamService.invalidateTeamCache('userTeams');
       
-      const userTeams = await teamService.getUserTeams();
+      let userTeams = await teamService.getUserTeams();
+      
+      // ユーザーが管理者のチームを優先順位付け
+      if (userTeams.length > 0 && auth.userProfile?.id) {
+        // 管理者/クリエイターのチームを優先
+        userTeams = userTeams.sort((a, b) => {
+          // 1. ユーザーが管理者(adminId)のチームを最優先
+          const userIsAdminOfA = a.adminId === auth.userProfile?.id;
+          const userIsAdminOfB = b.adminId === auth.userProfile?.id;
+          
+          if (userIsAdminOfA && !userIsAdminOfB) return -1;
+          if (!userIsAdminOfA && userIsAdminOfB) return 1;
+          
+          // 2. 次に作成日の新しいチームを優先 (最近作成したチームを先に)
+          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+        
+        console.log('[TeamContext] チーム一覧をユーザー管理者優先で並べ替え');
+      }
+      
       setTeams(userTeams);
       
-      // アクティブチームが未設定か、所属チームに存在しない場合は最初のチームをアクティブに
+      // アクティブチームが未設定か、所属チームに存在しない場合は優先順位付けされた最初のチームをアクティブに
       if (!activeTeamId || !userTeams.some(team => team.id === activeTeamId)) {
         const defaultTeamId = userTeams.length > 0 ? userTeams[0].id : null;
         if (defaultTeamId) {
+          console.log(`[TeamContext] ユーザー管理者優先のデフォルトチーム選択: ${defaultTeamId}`);
           await setActiveTeamId(defaultTeamId);
         }
       }

@@ -65,13 +65,15 @@ interface CompatibilityModalProps {
   onClose: () => void;
   friendId?: string;
   friendData?: any;
+  useEnhancedAlgorithm?: boolean; // 拡張アルゴリズムを使用するかどうか
 }
 
 const CompatibilityModal: React.FC<CompatibilityModalProps> = ({ 
   open, 
   onClose, 
   friendId, 
-  friendData 
+  friendData,
+  useEnhancedAlgorithm = false // デフォルトは基本診断
 }) => {
   const { userProfile } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
@@ -100,8 +102,9 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
         // 友達IDを決定
         const targetFriendId = friendId || friendData?.userId;
         
-        // 相性データを取得
-        const data = await friendService.getCompatibilityScore(targetFriendId);
+        // 相性データを取得（常に拡張アルゴリズムを使用）
+        console.log('拡張相性診断アルゴリズムを使用します');
+        const data = await friendService.getEnhancedCompatibility(targetFriendId);
         console.log('取得した相性データ:', data);
         
         // データを整形（APIレスポンス構造に合わせて）
@@ -302,6 +305,194 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       ))}
                     </ul>
                   </Box>
+                </>
+              )}
+              
+              {/* 拡張相性診断結果の詳細表示 */}
+              {compatibility.enhancedDetails && (
+                <>
+                  <Divider sx={{ my: 3, borderColor: 'primary.light' }} />
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
+                    【拡張相性診断の詳細】
+                  </Typography>
+                  
+                  {/* 相性タイプ */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                      関係性タイプ: 
+                      <Chip 
+                        label={compatibility.enhancedDetails.relationshipType || '一般的な関係'}
+                        sx={{
+                          ml: 1,
+                          backgroundColor: 
+                            compatibility.enhancedDetails.relationshipType === '理想的パートナー' || 
+                            compatibility.enhancedDetails.relationshipType === '良好な協力関係' ? '#4CAF50' :
+                            compatibility.enhancedDetails.relationshipType === '安定した関係' ? '#8BC34A' :
+                            compatibility.enhancedDetails.relationshipType === '刺激的な関係' ? '#FFC107' :
+                            compatibility.enhancedDetails.relationshipType === '要注意の関係' ? '#F44336' :
+                            '#9E9E9E',
+                          color: 'white',
+                          fontWeight: 'bold',
+                        }}
+                      />
+                    </Typography>
+                  </Box>
+                  
+                  {/* 詳細スコア */}
+                  <Paper elevation={0} sx={{ p: 2, mb: 3, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                      診断の詳細評価
+                    </Typography>
+                    
+                    {/* 陰陽バランス */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" sx={{ width: '180px' }}>
+                        陰陽バランス:
+                      </Typography>
+                      <Box sx={{ 
+                        height: '12px', 
+                        width: '100%', 
+                        bgcolor: '#e0e0e0', 
+                        borderRadius: '6px',
+                        position: 'relative' 
+                      }}>
+                        <Box sx={{ 
+                          height: '100%',
+                          width: `${compatibility.enhancedDetails.yinYangBalance}%`,
+                          bgcolor: 
+                            compatibility.enhancedDetails.yinYangBalance >= 80 ? '#4CAF50' :
+                            compatibility.enhancedDetails.yinYangBalance >= 60 ? '#8BC34A' :
+                            compatibility.enhancedDetails.yinYangBalance >= 40 ? '#FFC107' :
+                            compatibility.enhancedDetails.yinYangBalance >= 20 ? '#FF9800' :
+                            '#F44336',
+                          borderRadius: '6px',
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
+                        {compatibility.enhancedDetails.yinYangBalance}点
+                      </Typography>
+                    </Box>
+                    
+                    {/* 身強弱バランス */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" sx={{ width: '180px' }}>
+                        身強弱バランス:
+                      </Typography>
+                      <Box sx={{ 
+                        height: '12px', 
+                        width: '100%', 
+                        bgcolor: '#e0e0e0', 
+                        borderRadius: '6px',
+                        position: 'relative' 
+                      }}>
+                        <Box sx={{ 
+                          height: '100%',
+                          width: `${compatibility.enhancedDetails.strengthBalance}%`,
+                          bgcolor: 
+                            compatibility.enhancedDetails.strengthBalance >= 80 ? '#4CAF50' :
+                            compatibility.enhancedDetails.strengthBalance >= 60 ? '#8BC34A' :
+                            compatibility.enhancedDetails.strengthBalance >= 40 ? '#FFC107' :
+                            compatibility.enhancedDetails.strengthBalance >= 20 ? '#FF9800' :
+                            '#F44336',
+                          borderRadius: '6px',
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
+                        {compatibility.enhancedDetails.strengthBalance}点
+                      </Typography>
+                    </Box>
+                    
+                    {/* 日支の関係 */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" sx={{ width: '180px' }}>
+                        日支の関係 ({compatibility.enhancedDetails.dayBranchRelationship?.relationship || '通常'}):
+                      </Typography>
+                      <Box sx={{ 
+                        height: '12px', 
+                        width: '100%', 
+                        bgcolor: '#e0e0e0', 
+                        borderRadius: '6px',
+                        position: 'relative' 
+                      }}>
+                        <Box sx={{ 
+                          height: '100%',
+                          width: `${compatibility.enhancedDetails.dayBranchRelationship?.score || 0}%`,
+                          bgcolor: 
+                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 20 ? '#FF9800' :
+                            '#F44336',
+                          borderRadius: '6px',
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
+                        {compatibility.enhancedDetails.dayBranchRelationship?.score || 0}点
+                      </Typography>
+                    </Box>
+                    
+                    {/* 用神・喜神 */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" sx={{ width: '180px' }}>
+                        用神・喜神の相性:
+                      </Typography>
+                      <Box sx={{ 
+                        height: '12px', 
+                        width: '100%', 
+                        bgcolor: '#e0e0e0', 
+                        borderRadius: '6px',
+                        position: 'relative' 
+                      }}>
+                        <Box sx={{ 
+                          height: '100%',
+                          width: `${compatibility.enhancedDetails.usefulGods}%`,
+                          bgcolor: 
+                            compatibility.enhancedDetails.usefulGods >= 80 ? '#4CAF50' :
+                            compatibility.enhancedDetails.usefulGods >= 60 ? '#8BC34A' :
+                            compatibility.enhancedDetails.usefulGods >= 40 ? '#FFC107' :
+                            compatibility.enhancedDetails.usefulGods >= 20 ? '#FF9800' :
+                            '#F44336',
+                          borderRadius: '6px',
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
+                        {compatibility.enhancedDetails.usefulGods}点
+                      </Typography>
+                    </Box>
+                    
+                    {/* 日干の干合 */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="body2" sx={{ width: '180px' }}>
+                        日干の干合:
+                      </Typography>
+                      <Box sx={{ 
+                        height: '12px', 
+                        width: '100%', 
+                        bgcolor: '#e0e0e0', 
+                        borderRadius: '6px',
+                        position: 'relative' 
+                      }}>
+                        <Box sx={{ 
+                          height: '100%',
+                          width: `${compatibility.enhancedDetails.dayGanCombination?.score || 0}%`,
+                          bgcolor: 
+                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 20 ? '#FF9800' :
+                            '#F44336',
+                          borderRadius: '6px',
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
+                        {compatibility.enhancedDetails.dayGanCombination?.score || 0}点
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                      この詳細情報は「陰陽・身強弱のバランス」「日支の関係」「用神・喜神の一致度」
+                      「日干の干合」といった四柱推命の高度な要素に基づいて算出されています。
+                    </Typography>
+                  </Paper>
                 </>
               )}
               

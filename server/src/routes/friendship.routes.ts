@@ -34,8 +34,11 @@ router.post('/requests/:id/reject', authenticate, friendshipController.rejectFri
 // 友達削除API
 router.delete('/:id', authenticate, friendshipController.removeFriend);
 
-// 友達相性診断API
+// 友達相性診断API - 基本診断
 router.get('/:id/compatibility', authenticate, friendshipController.getCompatibility);
+
+// 友達相性診断API - 拡張診断（aisyouyouken.mdの詳細アルゴリズムを使用）
+router.get('/:id/enhanced-compatibility', authenticate, friendshipController.getEnhancedCompatibility);
 
 // 友達プロフィール取得API
 router.get('/:id/profile', authenticate, friendshipController.getFriendProfile);

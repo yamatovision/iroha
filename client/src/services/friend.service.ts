@@ -311,9 +311,10 @@ class FriendService {
   }
 
   /**
-   * 相性スコアを取得する
+   * 基本的な相性スコアを取得する（レガシー機能）
    * @param friendId 友達のユーザーID
-   * @returns 相性スコアデータ
+   * @returns 基本的な相性スコアデータ
+   * @deprecated 拡張相性診断機能が推奨されます
    */
   async getCompatibilityScore(friendId: string) {
     try {
@@ -322,6 +323,30 @@ class FriendService {
     } catch (error) {
       console.error('相性スコアの取得に失敗しました:', error);
       throw error;
+    }
+  }
+
+  /**
+   * 拡張相性診断を取得する（aisyouyouken.mdの詳細アルゴリズムを使用）
+   * @param friendId 友達のユーザーID
+   * @returns 拡張相性診断データ
+   */
+  async getEnhancedCompatibility(friendId: string) {
+    try {
+      console.log('拡張相性診断を取得しています...');
+      const response = await apiService.get(FRIENDS.ENHANCED_COMPATIBILITY(friendId));
+      console.log('拡張相性診断レスポンス:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('拡張相性診断の取得に失敗しました:', error);
+      // エラー時は基本相性診断にフォールバック
+      try {
+        console.log('基本相性診断にフォールバックします...');
+        return await this.getCompatibilityScore(friendId);
+      } catch (fallbackError) {
+        console.error('フォールバック処理にも失敗しました:', fallbackError);
+        throw error; // 元のエラーをスロー
+      }
     }
   }
 }

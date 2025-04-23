@@ -175,7 +175,8 @@ export const FRIENDS = {
   ACCEPT_REQUEST: (id: string) => `${API_BASE_PATH}/friends/requests/${id}/accept`, // リクエスト承認
   REJECT_REQUEST: (id: string) => `${API_BASE_PATH}/friends/requests/${id}/reject`, // リクエスト拒否
   REMOVE: (id: string) => `${API_BASE_PATH}/friends/${id}`, // 友達関係削除
-  COMPATIBILITY: (id: string) => `${API_BASE_PATH}/friends/${id}/compatibility`, // 相性スコア
+  COMPATIBILITY: (id: string) => `${API_BASE_PATH}/friends/${id}/compatibility`, // 基本相性スコア
+  ENHANCED_COMPATIBILITY: (id: string) => `${API_BASE_PATH}/friends/${id}/enhanced-compatibility`, // 拡張相性スコア（詳細アルゴリズム）
   GET_PROFILE: (id: string) => `${API_BASE_PATH}/friends/${id}/profile`, // 友達プロフィール取得
 };
 

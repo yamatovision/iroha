@@ -22,7 +22,8 @@ import {
   LocalFireDepartment as LocalFireDepartmentIcon,
   Landscape as LandscapeIcon,
   Star as StarIcon,
-  WaterDrop as WaterDropIcon
+  WaterDrop as WaterDropIcon,
+  AutoGraph as AutoGraphIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import friendService from '../../services/friend.service';
@@ -312,7 +313,7 @@ const FriendList: React.FC = () => {
     }
   };
 
-  // 相性診断モーダルを開く
+  // 相性診断モーダルを開く（拡張相性診断モードのみ使用）
   const handleOpenCompatibilityModal = (friend: any) => {
     setSelectedFriend(friend);
     setShowCompatibilityModal(true);
@@ -660,13 +661,13 @@ const FriendList: React.FC = () => {
                             flexDirection: 'column',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            color: '#e91e63', // ピンク色に変更（相性・恋愛のイメージに合わせて）
+                            color: '#9c27b0', // 紫色に変更（高度な分析のイメージに合わせて）
                             '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
                           }}
                           onClick={() => handleOpenCompatibilityModal(friend)}
                         >
-                          <FavoriteIcon sx={{ mb: 0.5 }} />
-                          <Typography variant="caption">相性を見る</Typography>
+                          <AutoGraphIcon sx={{ mb: 0.5 }} />
+                          <Typography variant="caption">詳細相性</Typography>
                         </Box>
                       </Box>
                     </Box>
@@ -1174,6 +1175,7 @@ const FriendList: React.FC = () => {
             onClose={() => setShowCompatibilityModal(false)}
             friendId={selectedFriend.userId}
             friendData={selectedFriend}
+            useEnhancedAlgorithm={true}
           />
         )}
       </Box>

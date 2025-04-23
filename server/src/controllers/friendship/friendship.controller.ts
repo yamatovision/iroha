@@ -202,7 +202,7 @@ export const removeFriend = async (req: AuthRequest, res: Response, next: NextFu
 };
 
 /**
- * 友達相性診断API
+ * 友達相性診断API - 基本バージョン
  * @route GET /api/v1/friends/:id/compatibility
  */
 export const getCompatibility = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -214,7 +214,31 @@ export const getCompatibility = async (req: AuthRequest, res: Response, next: Ne
     }
     const userId = req.user._id;
 
-    const compatibilityData = await friendshipService.getCompatibilityScore(userId, id);
+    const compatibilityData = await friendshipService.getCompatibilityScore(userId, id, false);
+    res.status(200).json({
+      success: true,
+      data: compatibilityData
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 友達拡張相性診断API - 高度なアルゴリズムを利用
+ * @route GET /api/v1/friends/:id/enhanced-compatibility
+ */
+export const getEnhancedCompatibility = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const userId = req.user._id;
+
+    // 拡張アルゴリズムを使用して相性情報を取得
+    const compatibilityData = await friendshipService.getCompatibilityScore(userId, id, true);
     res.status(200).json({
       success: true,
       data: compatibilityData
