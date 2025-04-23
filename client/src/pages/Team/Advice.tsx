@@ -5,6 +5,7 @@ import {
   Card, IconButton, Tooltip, Chip, CardContent, CardActions, 
   ButtonGroup, useTheme, Modal, TextField
 } from '@mui/material';
+import LoadingOverlay from '../../components/common/LoadingOverlay';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
@@ -618,9 +619,18 @@ const TeamAdvice: React.FC = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingOverlay 
+        isLoading={loading}
+        variant="transparent"
+        contentType="tips"
+        message="チーム運勢を分析中..."
+        category="team"
+        opacity={0.75}
+        showProgress={true}
+        estimatedTime={12}
+      >
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" />
+      </LoadingOverlay>
     );
   }
 
@@ -1323,7 +1333,17 @@ const TeamGoalDisplay: React.FC<{ teamId: string }> = ({ teamId }) => {
   }, [teamId]);
   
   if (loading) {
-    return <CircularProgress size={24} />;
+    return (
+      <LoadingOverlay 
+        isLoading={loading}
+        variant="transparent"
+        contentType="simple"
+        message="チーム目標を読み込み中..."
+        opacity={0.6}
+      >
+        <Box sx={{ height: '24px' }} />
+      </LoadingOverlay>
+    );
   }
   
   if (error || !goal) {

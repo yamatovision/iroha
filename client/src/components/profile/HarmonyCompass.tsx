@@ -1,9 +1,10 @@
-import React from 'react';
-import { Box, Typography, Paper, Tabs, Tab, Divider, Icon, useTheme, useMediaQuery } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, Paper, Tabs, Tab, Divider, Icon, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import BalanceIcon from '@mui/icons-material/Balance';
 import PeopleIcon from '@mui/icons-material/People';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import LoadingOverlay from '../common/LoadingOverlay';
 
 // 調和のコンパスのインターフェース
 export interface IHarmonyCompass {
@@ -25,7 +26,8 @@ interface HarmonyCompassProps {
 }
 
 const HarmonyCompass: React.FC<HarmonyCompassProps> = ({ data }) => {
-  const [activeTab, setActiveTab] = React.useState(0);
+  const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -39,6 +41,7 @@ const HarmonyCompass: React.FC<HarmonyCompassProps> = ({ data }) => {
   let markdownContent = "";
   
   try {
+    setLoading(true);
     // データがJSONならパース、そうでなければそのままテキストとして扱う
     if (typeof data === 'string' && data.trim().startsWith('{') && data.trim().endsWith('}')) {
       const parsed = JSON.parse(data);
@@ -77,6 +80,9 @@ const HarmonyCompass: React.FC<HarmonyCompassProps> = ({ data }) => {
     }
   } catch (e) {
     console.warn('調和のコンパスデータのパースに失敗しました。従来形式として表示します。', e);
+  } finally {
+    // 解析が完了したらローディング状態を解除
+    setLoading(false);
   }
 
   // マークダウンからセクションを抽出する関数
@@ -113,6 +119,32 @@ const HarmonyCompass: React.FC<HarmonyCompassProps> = ({ data }) => {
     }
     
     return sections;
+  }
+
+  // ローディング中の表示
+  if (loading) {
+    return (
+      <LoadingOverlay 
+        isLoading={loading}
+        variant="transparent"
+        contentType="simple"
+        message="調和コンパスを読み込み中..."
+        opacity={0.6}
+        blurEffect={true}
+      >
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 3, 
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            backgroundColor: 'rgba(250, 245, 255, 0.5)',
+            minHeight: '200px'
+          }}
+        />
+      </LoadingOverlay>
+    );
   }
 
   // 従来形式の場合はそのまま表示

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Alert, Paper, Button, Tooltip, IconButton, Snackbar } from '@mui/material';
+import { Box, Typography, Alert, Paper, Button, Tooltip, IconButton, Snackbar, CircularProgress } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FortuneCard from '../../components/fortune/FortuneCard';
 import LuckyItems from '../../components/fortune/LuckyItems';
 import FortuneDetails from '../../components/fortune/FortuneDetails';
 import TeamFortuneRanking from '../../components/fortune/TeamFortuneRanking';
 import AiConsultButton from '../../components/fortune/AiConsultButton';
+import LoadingOverlay from '../../components/common/LoadingOverlay';
 import fortuneService from '../../services/fortune.service';
 import { IFortune, IFortuneDashboardResponse } from '../../../../shared';
 import { useAuth } from '../../contexts/AuthContext';
@@ -351,9 +352,22 @@ const Fortune: React.FC = () => {
       {/* タブ切り替えを削除 */}
       
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 250px)' }}>
-          <CircularProgress size={50} />
-        </Box>
+        <LoadingOverlay 
+          isLoading={loading}
+          variant="transparent"
+          contentType={refreshing ? "tips" : "simple"}
+          message={refreshing ? "運勢情報を生成中..." : "運勢データを読み込み中..."}
+          category="fortune"
+          showProgress={refreshing}
+          estimatedTime={refreshing ? 15 : 8}
+        >
+          {fortune && (
+            <Box sx={{ opacity: 0.5 }}>
+              <FortuneCard fortune={fortune} />
+              <LuckyItems fortune={fortune} />
+            </Box>
+          )}
+        </LoadingOverlay>
       ) : error ? (
         <>
           {error === 'FORTUNE_NOT_FOUND' ? (

@@ -12,6 +12,7 @@ import {
   DialogTitle,
   IconButton
 } from '@mui/material';
+import LoadingOverlay from '../common/LoadingOverlay';
 import { Close as CloseIcon, WaterDrop, Whatshot, Park, Public, Diamond } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import teamService from '../../services/team.service';
@@ -128,22 +129,34 @@ const MemberCardView: React.FC<MemberCardViewProps> = ({ teamId, userId, onClose
   const renderContent = () => {
     if (loading && !generating) {
       return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingOverlay 
+          isLoading={loading}
+          variant="transparent"
+          contentType="simple"
+          message="カルテ情報を読み込み中..."
+          opacity={0.7}
+        >
+          {cardData && (
+            <Box sx={{ opacity: 0.5, p: 4 }}>
+              <Typography>カルテ情報をロード中...</Typography>
+            </Box>
+          )}
+        </LoadingOverlay>
       );
     }
     
     if (generating) {
       return (
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography variant="h6">カルテを生成中です</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            AIが四柱推命データに基づいてカルテを生成しています。
-            このプロセスには数分かかることがあります。
-          </Typography>
-        </Box>
+        <LoadingOverlay 
+          isLoading={true}
+          variant="opaque"
+          contentType="tips"
+          message="カルテを生成中です"
+          category="membercard"
+          showProgress={true}
+          estimatedTime={20}
+          simulateProgress={false}
+        />
       );
     }
 
