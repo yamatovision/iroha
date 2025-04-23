@@ -3,6 +3,14 @@ import teamService from '../../services/team.service';
 import MemberCardView from './MemberCardView';
 import TeamMemberAddModal from './TeamMemberAddModal';
 import { useTeam } from '../../contexts/TeamContext';
+import { Box } from '@mui/material';
+import { 
+  Park as ParkIcon,
+  LocalFireDepartment as LocalFireDepartmentIcon,
+  Landscape as LandscapeIcon,
+  Star as StarIcon,
+  WaterDrop as WaterDropIcon
+} from '@mui/icons-material';
 
 type TeamMembersListProps = {
   teamId: string;
@@ -319,15 +327,30 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
                       <td style={{ padding: '16px' }}>{member.role || '-'}</td>
                       <td style={{ padding: '16px' }}>
                         {member.elementAttribute && (
-                          <span style={{ 
-                            padding: '4px 12px', 
-                            backgroundColor: elementLabels[member.elementAttribute]?.bg || 'var(--element-water-bg)', 
-                            color: elementLabels[member.elementAttribute]?.color || 'var(--element-water-dark)', 
-                            borderRadius: '12px', 
-                            fontSize: '0.85rem' 
+                          <Box component="span" sx={{ 
+                            px: 1.5, 
+                            py: 0.5, 
+                            borderRadius: 10,
+                            bgcolor: member.elementAttribute === 'water' ? '#7d94a6' : 
+                                    member.elementAttribute === 'fire' ? '#e67373' : 
+                                    member.elementAttribute === 'wood' ? '#94b8eb' : 
+                                    member.elementAttribute === 'earth' ? '#f2d06b' : 
+                                    member.elementAttribute === 'metal' ? '#f5f5f5' : '#e0e0e0',
+                            color: member.elementAttribute === 'water' ? '#ffffff' : '#000000',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            mr: 1,
+                            border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.1)' : 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center'
                           }}>
+                            {member.elementAttribute === 'wood' && <ParkIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                            {member.elementAttribute === 'fire' && <LocalFireDepartmentIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                            {member.elementAttribute === 'earth' && <LandscapeIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                            {member.elementAttribute === 'metal' && <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                            {member.elementAttribute === 'water' && <WaterDropIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
                             {elementLabels[member.elementAttribute]?.name || '水'}
-                          </span>
+                          </Box>
                         )}
                       </td>
                       <td style={{ padding: '16px' }}>{member.email}</td>
@@ -458,16 +481,29 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
                         <div style={{ fontWeight: '500', minWidth: '90px' }}>五行属性:</div>
                         <div>
                           {member.elementAttribute && (
-                            <span style={{ 
-                              padding: '3px 8px', 
-                              backgroundColor: elementLabels[member.elementAttribute]?.bg || 'var(--element-water-bg)', 
-                              color: elementLabels[member.elementAttribute]?.color || 'var(--element-water-dark)', 
-                              borderRadius: '8px', 
-                              fontSize: '0.8rem',
-                              display: 'inline-block'
+                            <Box component="span" sx={{ 
+                              px: 1.5, 
+                              py: 0.5, 
+                              borderRadius: 10,
+                              bgcolor: member.elementAttribute === 'water' ? '#7d94a6' : 
+                                      member.elementAttribute === 'fire' ? '#e67373' : 
+                                      member.elementAttribute === 'wood' ? '#94b8eb' : 
+                                      member.elementAttribute === 'earth' ? '#f2d06b' : 
+                                      member.elementAttribute === 'metal' ? '#f5f5f5' : '#e0e0e0',
+                              color: member.elementAttribute === 'water' ? '#ffffff' : '#000000',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.1)' : 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center'
                             }}>
+                              {member.elementAttribute === 'wood' && <ParkIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                              {member.elementAttribute === 'fire' && <LocalFireDepartmentIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                              {member.elementAttribute === 'earth' && <LandscapeIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                              {member.elementAttribute === 'metal' && <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
+                              {member.elementAttribute === 'water' && <WaterDropIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem' }} />}
                               {elementLabels[member.elementAttribute]?.name || '水'}
-                            </span>
+                            </Box>
                           )}
                         </div>
                       </div>

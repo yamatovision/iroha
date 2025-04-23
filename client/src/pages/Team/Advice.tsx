@@ -31,7 +31,7 @@ import { TEAM } from '../../../../shared';
 // 管理アクションバーコンポーネント
 // 管理者アクションバーは削除 - Material-UI コンポーネントで実装した新しいバージョンを使用
 
-// ヘッダーのチーム選択ドロップダウンコンポーネント
+// ヘッダーのチーム選択ドロップダウンコンポーネント (シンプル化版)
 const TeamSelectorHeader: React.FC<{
   activeTeam: ITeam | null;
   teams: ITeam[];
@@ -39,7 +39,7 @@ const TeamSelectorHeader: React.FC<{
   isAdmin: boolean;
   onOpenManagement: () => void;
   onCreateTeam: () => void; // 新規チーム作成モーダルを開く関数
-}> = ({ activeTeam, teams, onTeamSelect, isAdmin, onOpenManagement, onCreateTeam }) => {
+}> = ({ activeTeam, teams, onTeamSelect, onCreateTeam }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   
   // ドロップダウンの表示切り替え
@@ -54,163 +54,166 @@ const TeamSelectorHeader: React.FC<{
   };
   
   return (
-    <div className="header" style={{
-      // 単色の濃い紫に変更
+    <Box sx={{
       backgroundColor: '#5e35b1',
       color: 'white',
-      padding: '16px 24px',
+      padding: { xs: '12px 16px', sm: '16px 24px' },
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+      justifyContent: 'center', // 中央揃え
+      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
       position: 'sticky',
       top: 0,
       zIndex: 100,
       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        {/* チーム選択表示を改善 */}
-        <div style={{ 
-          marginRight: '12px', 
-          fontWeight: 'bold', 
-          fontSize: '1rem',
-          color: 'white',
-          textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-        }}>
+      {/* チーム選択コンテナ (中央寄せ) */}
+      <Box sx={{
+        display: 'flex', 
+        alignItems: 'center',
+        justifyContent: 'center',
+        maxWidth: '300px',
+        width: '100%'
+      }}>
+        {/* チーム名ラベル (完全に非表示) */}
+        <Typography 
+          sx={{ 
+            fontWeight: 'bold', 
+            fontSize: '1rem',
+            color: 'white',
+            textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            display: 'none',
+            mr: 1.5
+          }}
+        >
           チーム:
-        </div>
-        <div 
+        </Typography>
+        
+        {/* チーム選択ドロップダウン */}
+        <Box 
           className="team-selector" 
-          style={{
+          sx={{
             display: 'flex',
             alignItems: 'center',
-            background: 'rgba(103, 58, 183, 0.9)', // 濃い紫色の背景
+            background: 'rgba(103, 58, 183, 0.9)', 
             borderRadius: '10px',
-            padding: '8px 16px',
+            padding: { xs: '10px 16px', sm: '10px 20px' },
             cursor: 'pointer',
-            transition: 'background-color 0.2s ease',
+            transition: 'all 0.2s ease',
             border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 3px 10px rgba(0,0,0,0.25)', // より強いシャドウ
+            boxShadow: '0 3px 10px rgba(0,0,0,0.25)',
+            '&:hover': {
+              background: 'rgba(103, 58, 183, 1)',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            }
           }}
           onClick={toggleMenu}
         >
-          <div style={{
-            width: '24px',
-            height: '24px',
+          <Box sx={{
+            width: '28px',
+            height: '28px',
             borderRadius: '6px',
             backgroundColor: 'rgba(255, 255, 255, 0.25)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '8px',
-            fontSize: '14px',
+            marginRight: '10px',
+            fontSize: '15px',
             fontWeight: 'bold',
           }}>
             {activeTeam?.iconInitial || activeTeam?.name?.charAt(0) || 'T'}
-          </div>
-          <span style={{
-            margin: '0 8px',
-            maxWidth: '150px',
+          </Box>
+          <Typography sx={{
+            maxWidth: { xs: '180px', sm: '220px' },
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: '1rem',
+            fontSize: { xs: '0.95rem', sm: '1.05rem' },
             fontWeight: '600',
-            color: 'white', // テキストを白色に
+            color: 'white',
           }}>
             {activeTeam?.name || 'チームを選択'}
-          </span>
-          <span className="material-icons" style={{ fontSize: '20px', color: 'white' }}>arrow_drop_down</span>
-        </div>
-        
-        {/* 管理ボタンを常に表示（デバッグ用） */}
-        {true && (
-          <button 
-            style={{
-              backgroundColor: 'rgba(103, 58, 183, 0.9)', // 紫色の背景
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              borderRadius: '10px',
-              padding: '6px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
-              marginLeft: '12px',
-              boxShadow: '0 3px 10px rgba(0,0,0,0.25)',
-              fontSize: '14px',
-              fontWeight: 500,
+          </Typography>
+          <Box 
+            component="span" 
+            className="material-icons" 
+            sx={{ 
+              ml: 1,
+              fontSize: '24px', 
+              color: 'white' 
             }}
-            title="チーム管理"
-            onClick={onOpenManagement}
           >
-            <SettingsIcon style={{ fontSize: '18px', marginRight: '6px' }} />
-            管理
-          </button>
-        )}
-      </div>
+            arrow_drop_down
+          </Box>
+        </Box>
+      </Box>
       
       {/* チーム選択メニュー - 視認性向上版 */}
       {menuOpen && (
-        <div 
-          style={{
+        <Box 
+          sx={{
             position: 'absolute',
-            top: '70px',
-            left: '24px',
+            top: { xs: '55px', sm: '65px' },
+            left: '50%',
+            transform: 'translateX(-50%)',
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-            width: '290px',
+            width: { xs: '90%', sm: '320px' },
+            maxWidth: '400px',
             zIndex: 110,
             overflow: 'hidden',
             animation: 'fadeInDown 0.3s ease forwards',
             border: '1px solid rgba(0,0,0,0.1)',
           }}
         >
-          <div style={{ 
-            padding: '12px 16px',
+          <Box sx={{ 
+            padding: '14px 18px',
             borderBottom: '1px solid #e0e0e0',
-            backgroundColor: '#673ab7', // 紫色の背景
-            fontSize: '14px',
+            backgroundColor: '#673ab7',
+            fontSize: '15px',
             fontWeight: 'bold',
-            color: 'white' // 白色のテキスト
+            color: 'white'
           }}>
             チームを選択
-          </div>
+          </Box>
           
           {teams.map(team => (
-            <div 
+            <Box 
               key={team.id}
-              style={{
+              sx={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '14px 16px',
+                padding: '16px',
                 borderBottom: '1px solid #e0e0e0',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 backgroundColor: activeTeam?.id === team.id ? 'rgba(103, 58, 183, 0.08)' : 'transparent',
                 position: 'relative',
                 overflow: 'hidden',
+                '&:hover': {
+                  backgroundColor: 'rgba(103, 58, 183, 0.05)'
+                }
               }}
               onClick={() => handleTeamSelect(team.id)}
             >
               {/* アクティブなチームのマーカー */}
               {activeTeam?.id === team.id && (
-                <div style={{
+                <Box sx={{
                   position: 'absolute',
                   left: 0,
                   top: 0,
                   bottom: 0,
                   width: '4px',
                   backgroundColor: '#673ab7',
-                }}></div>
+                }}></Box>
               )}
               
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
+              <Box
+                sx={{
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '8px',
                   backgroundColor: team.iconColor ? `var(--${team.iconColor})` : 'var(--primary)',
                   color: 'white',
@@ -218,66 +221,74 @@ const TeamSelectorHeader: React.FC<{
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold',
-                  marginRight: '14px',
+                  marginRight: '16px',
                   boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                  fontSize: '16px',
+                  fontSize: '18px',
                 }}
               >
                 {team.iconInitial || team.name.charAt(0)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ 
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography sx={{ 
                   fontWeight: activeTeam?.id === team.id ? 'bold' : '500', 
-                  fontSize: '0.95rem', 
-                  marginBottom: '4px', 
-                  color: activeTeam?.id === team.id ? '#673ab7' : 'var(--text-primary)' 
+                  fontSize: '1rem', 
+                  mb: 0.5, 
+                  color: activeTeam?.id === team.id ? '#673ab7' : 'text.primary'
                 }}>
                   {team.name}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
-                  <span className="material-icons" style={{ fontSize: '14px', marginRight: '4px' }}>people</span>
+                </Typography>
+                <Box sx={{ 
+                  fontSize: '0.8rem', 
+                  color: 'text.secondary', 
+                  display: 'flex', 
+                  alignItems: 'center' 
+                }}>
+                  <Box component="span" className="material-icons" sx={{ fontSize: '14px', mr: 0.5 }}>people</Box>
                   メンバー
-                </div>
-              </div>
+                </Box>
+              </Box>
               
               {/* 現在選択中の表示 */}
               {activeTeam?.id === team.id && (
-                <div style={{
+                <Box sx={{
                   backgroundColor: 'rgba(103, 58, 183, 0.1)',
                   color: '#673ab7',
                   padding: '4px 8px',
                   borderRadius: '12px',
                   fontSize: '11px',
                   fontWeight: 'bold',
-                  marginLeft: '8px',
+                  ml: 1,
                 }}>
                   選択中
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           ))}
           
           {/* 新規チーム作成ボタン */}
-          <div 
-            style={{
+          <Box 
+            sx={{
               display: 'flex',
               alignItems: 'center',
-              padding: '14px 16px',
+              padding: '16px',
               backgroundColor: 'rgba(103, 58, 183, 0.05)',
               cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
+              transition: 'all 0.2s ease',
               borderTop: '1px solid #eee',
               borderBottom: '1px solid #eee',
+              '&:hover': {
+                backgroundColor: 'rgba(103, 58, 183, 0.1)'
+              }
             }}
             onClick={() => {
               setMenuOpen(false);
-              onCreateTeam(); // 親から渡された関数を呼び出す
+              onCreateTeam();
             }}
           >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
+            <Box
+              sx={{
+                width: '40px',
+                height: '40px',
                 borderRadius: '8px',
                 background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%)',
                 color: 'white',
@@ -285,40 +296,43 @@ const TeamSelectorHeader: React.FC<{
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                marginRight: '14px',
+                mr: 2,
                 boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
               }}
             >
-              <span className="material-icons">add</span>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '500', fontSize: '0.95rem', color: 'var(--primary)' }}>
+              <Box component="span" className="material-icons">add</Box>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ fontWeight: '500', fontSize: '0.95rem', color: 'primary.main' }}>
                 新規チームを作成
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              </Typography>
+              <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                 新しいチームを作成します
-              </div>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
           {/* 閉じるボタン */}
-          <div 
-            style={{
+          <Box 
+            sx={{
               display: 'flex',
               alignItems: 'center',
-              padding: '14px 16px',
+              padding: '16px',
               backgroundColor: '#fafafa',
               cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f0f0f0'
+              }
             }}
             onClick={() => {
               setMenuOpen(false);
             }}
           >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
+            <Box
+              sx={{
+                width: '40px',
+                height: '40px',
                 borderRadius: '8px',
                 backgroundColor: '#f0f0f0',
                 color: '#666',
@@ -326,45 +340,24 @@ const TeamSelectorHeader: React.FC<{
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                marginRight: '14px',
+                mr: 2,
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               }}
             >
-              <span className="material-icons">close</span>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '500', fontSize: '0.95rem', color: '#666' }}>
+              <Box component="span" className="material-icons">close</Box>
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ fontWeight: '500', fontSize: '0.95rem', color: '#666' }}>
                 閉じる
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              </Typography>
+              <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                 チーム選択を閉じます
-              </div>
-            </div>
-          </div>
-        </div>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       )}
-      
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center',
-        backgroundColor: 'rgba(103, 58, 183, 0.3)',
-        padding: '8px 12px',
-        borderRadius: '10px',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-      }}>
-        <span className="material-icons" style={{ 
-          marginRight: '20px', 
-          fontSize: '1.4rem',
-          color: 'white',
-          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-        }}>notifications</span>
-        <span className="material-icons" style={{ 
-          fontSize: '1.4rem',
-          color: 'white',
-          textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-        }}>account_circle</span>
-      </div>
-    </div>
+    </Box>
   );
 };
 
@@ -635,103 +628,26 @@ const TeamAdvice: React.FC = () => {
   }
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* ヘッダー */}
+    <Box className="app-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* ヘッダー - シンプル化してチーム選択のみに */}
       <TeamSelectorHeader
         activeTeam={activeTeam}
         teams={teams}
         onTeamSelect={handleTeamSelect}
         isAdmin={isTeamAdmin}
         onOpenManagement={handleOpenManagement}
-        onCreateTeam={() => setCreateTeamModalOpen(true)} // 新規チーム作成モーダルを開く関数を渡す
+        onCreateTeam={() => setCreateTeamModalOpen(true)}
       />
 
-      {/* 管理者アクションバー - 権限のあるユーザーのみ表示（視認性向上のため上部に配置） */}
-      {teamId && isTeamAdmin && (
-        <Box
-          sx={{
-            backgroundColor: '#f0eafb', // 明確な紫色の背景
-            padding: '16px',
-            marginBottom: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            borderRadius: '0 0 12px 12px'
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: { xs: 'wrap', sm: 'nowrap' },
-              gap: 2
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 1, sm: 0 } }}>
-              <Box
-                sx={{
-                  bgcolor: 'rgba(103, 58, 183, 0.1)',
-                  color: '#673ab7',
-                  p: 1,
-                  borderRadius: '50%'
-                }}
-              >
-                <SettingsIcon />
-              </Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#333' }}>
-                  チーム管理
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  チームの設定や管理を行えます
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<SettingsIcon />}
-                onClick={handleOpenManagement}
-                sx={{ bgcolor: '#673ab7', color: 'white' }}
-              >
-                設定
-              </Button>
-              
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<PersonAddIcon />}
-                onClick={handleAddMember}
-                sx={{ bgcolor: '#673ab7', color: 'white' }}
-              >
-                招待
-              </Button>
-              
-              <Button
-                variant="contained"
-                color={hasTeamGoal ? "primary" : "success"}
-                startIcon={hasTeamGoal ? <EditIcon /> : <FlagIcon />}
-                onClick={handleSetGoal}
-                sx={{ 
-                  bgcolor: hasTeamGoal ? '#673ab7' : '#2e7d32', 
-                  color: 'white' 
-                }}
-              >
-                {hasTeamGoal ? "目標編集" : "目標設定"}
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      )}
+      {/* 管理者アクションバーは削除 - 他の場所に同じ機能があるため */}
 
       {/* メインコンテンツ */}
-      <div className="main-content" style={{ 
+      <Box className="main-content" sx={{ 
         flex: 1, 
-        padding: '32px 24px', 
+        padding: { xs: '16px 12px', sm: '24px 20px', md: '32px 24px' }, 
         display: 'flex', 
         flexDirection: 'column', 
-        gap: '32px'
+        gap: { xs: '24px', sm: '28px', md: '32px' }
       }}>
         {error && (
           <Paper elevation={3} sx={{ p: 3, mb: 2 }}>
@@ -748,59 +664,71 @@ const TeamAdvice: React.FC = () => {
         )}
 
         {/* チーム目標セクション - 常に表示（編集は権限に応じて） */}
-        <div className="section" style={{
+        <Box className="section" sx={{
           backgroundColor: 'white',
           borderRadius: '16px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-          padding: '24px',
+          padding: { xs: '16px', sm: '20px', md: '24px' },
           overflow: 'hidden',
           position: 'relative',
           transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          marginBottom: '32px'
+          marginBottom: { xs: '24px', sm: '28px', md: '32px' }
         }}>
-          <div className="section-title" style={{
-            fontSize: '1.3rem',
-            fontWeight: 600,
-            marginBottom: '16px',
-            color: 'var(--primary)',
+          <Box sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            letterSpacing: '0.01em'
+            mb: '16px'
           }}>
-            <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
-              flag
-            </span>
-            チーム目標
-          </div>
+            <Box className="section-title" sx={{
+              fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' },
+              fontWeight: 600,
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              letterSpacing: '0.01em'
+            }}>
+              <Box 
+                component="span" 
+                className="material-icons" 
+                sx={{ 
+                  mr: { xs: 1, sm: 1.5 }, 
+                  color: 'var(--primary-light)', 
+                  fontSize: { xs: '1.3rem', sm: '1.5rem' } 
+                }}
+              >
+                flag
+              </Box>
+              チーム目標
+            </Box>
+            
+            {/* 管理者のみ編集ボタン表示 - 見出しの右側に配置 */}
+            {isTeamAdmin && hasTeamGoal && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={handleSetGoal}
+                sx={{ 
+                  color: '#673ab7',
+                  borderColor: '#673ab7',
+                  '&:hover': {
+                    borderColor: '#5e35b1',
+                    backgroundColor: 'rgba(94, 53, 177, 0.04)'
+                  }
+                }}
+              >
+                編集
+              </Button>
+            )}
+          </Box>
           
           <Divider sx={{ mb: 3 }} />
           
           {teamId && hasTeamGoal && (
-            <Box sx={{ mb: 4, position: 'relative' }}>
+            <Box sx={{ mb: 4 }}>
               {/* 目標表示エリア */}
               <TeamGoalDisplay teamId={teamId} />
-              
-              {/* 管理者のみ編集ボタン表示 */}
-              {isTeamAdmin && (
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={handleSetGoal}
-                  sx={{ 
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    color: '#673ab7',
-                    borderColor: '#673ab7',
-                    '&:hover': {
-                      borderColor: '#5e35b1',
-                      backgroundColor: 'rgba(94, 53, 177, 0.04)'
-                    }
-                  }}
-                >
-                  編集
-                </Button>
-              )}
             </Box>
           )}
           
@@ -838,22 +766,22 @@ const TeamAdvice: React.FC = () => {
               )}
             </Box>
           )}
-        </div>
+        </Box>
         
         {/* チーム目標達成アドバイス */}
         {activeTeam && (
-          <div className="section" style={{
+          <Box className="section" sx={{
             backgroundColor: 'white',
             borderRadius: '16px',
             boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-            padding: '24px',
+            padding: { xs: '16px', sm: '20px', md: '24px' },
             overflow: 'hidden',
             position: 'relative',
             transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            marginBottom: '32px'
+            marginBottom: { xs: '24px', sm: '28px', md: '32px' }
           }}>
-            <div className="section-title" style={{
-              fontSize: '1.3rem',
+            <Box className="section-title" sx={{
+              fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' },
               fontWeight: 600,
               marginBottom: '16px',
               color: 'var(--primary)',
@@ -861,11 +789,19 @@ const TeamAdvice: React.FC = () => {
               alignItems: 'center',
               letterSpacing: '0.01em'
             }}>
-              <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
+              <Box 
+                component="span" 
+                className="material-icons" 
+                sx={{ 
+                  mr: { xs: 1, sm: 1.5 }, 
+                  color: 'var(--primary-light)', 
+                  fontSize: { xs: '1.3rem', sm: '1.5rem' } 
+                }}
+              >
                 insights
-              </span>
+              </Box>
               チームコンテキスト運勢
-            </div>
+            </Box>
             
             <Divider sx={{ mb: 3 }} />
             
@@ -879,65 +815,75 @@ const TeamAdvice: React.FC = () => {
                   />
                 )}
                 {/* 超シンプルな直接表示（通常カードは非表示） */}
-                <div style={{
+                <Box sx={{
                   backgroundColor: 'white',
                   borderRadius: '16px',
                   boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
                   padding: '0',
                   overflow: 'hidden',
-                  margin: '8px 0 24px 0'
+                  margin: '8px 0 24px 0',
+                  width: '100%'
                 }}>
-                  <div style={{
-                    padding: '16px',
+                  <Box sx={{
+                    padding: { xs: '12px', sm: '16px' },
                     backgroundImage: 'linear-gradient(135deg, #673ab7 0%, #9c27b0 100%)',
                     color: 'white',
                     fontWeight: 'bold',
-                    fontSize: '18px',
+                    fontSize: { xs: '16px', sm: '18px' },
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    gap: { xs: 1, sm: 0 }
                   }}>
-                    <span>チームコンテキスト運勢</span>
-                    <span style={{
+                    <Typography fontWeight="bold">チームコンテキスト運勢</Typography>
+                    <Box sx={{
                       backgroundColor: 'rgba(255,255,255,0.2)',
-                      padding: '4px 12px',
+                      padding: { xs: '2px 8px', sm: '4px 12px' },
                       borderRadius: '20px',
-                      fontSize: '16px'
-                    }}>スコア: {teamContextFortune.score}</span>
-                  </div>
+                      fontSize: { xs: '14px', sm: '16px' },
+                      ml: { xs: 'auto', sm: 0 }
+                    }}>スコア: {teamContextFortune.score}</Box>
+                  </Box>
                 
-                  <div style={{
-                    padding: '24px',
+                  <Box sx={{
+                    padding: { xs: '16px', sm: '20px', md: '24px' },
                     whiteSpace: 'pre-wrap',
                     lineHeight: '1.6'
                   }}>
-                    <h2 style={{
-                      color: '#673ab7', 
-                      fontSize: '20px', 
-                      marginTop: '0',
-                      marginBottom: '20px',
-                      borderBottom: '2px solid #f0f0f0',
-                      paddingBottom: '10px'
-                    }}>
+                    <Typography
+                      sx={{
+                        color: '#673ab7', 
+                        fontSize: { xs: '18px', sm: '20px' }, 
+                        mt: 0,
+                        mb: { xs: 2, sm: 2.5 },
+                        borderBottom: '2px solid #f0f0f0',
+                        pb: { xs: 1, sm: 1.5 },
+                        fontWeight: 'bold'
+                      }}
+                      component="h2"
+                    >
                       本日のチーム運勢 - {activeTeam?.name || 'チーム'}
-                    </h2>
+                    </Typography>
                     
-                    <p style={{
-                      color: '#666',
-                      fontSize: '14px',
-                      marginBottom: '20px'
-                    }}>
+                    <Typography
+                      sx={{
+                        color: '#666',
+                        fontSize: { xs: '12px', sm: '14px' },
+                        mb: { xs: 1.5, sm: 2.5 }
+                      }}
+                    >
                       {new Date(teamContextFortune.date).toLocaleDateString('ja-JP', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
                         weekday: 'long'
                       })}
-                    </p>
+                    </Typography>
                     
                     {/* チームコンテキスト運勢とチーム目標達成アドバイスの表示 */}
                     {teamContextFortune.teamContextAdvice && (
-                      <div style={{marginBottom: '24px'}}>
+                      <Box sx={{marginBottom: '24px'}}>
                         {/* セクション1: チームコンテキストにおける運勢 */}
                         {(() => {
                           const text = teamContextFortune.teamContextAdvice;
@@ -946,12 +892,23 @@ const TeamAdvice: React.FC = () => {
                             const contextContent = contextSection[1].split('##')[0].trim();
                             if (contextContent) {
                               return (
-                                <div style={{marginBottom: '20px'}}>
-                                  <h3 style={{color: '#673ab7', fontSize: '16px', marginBottom: '12px'}}>
+                                <Box sx={{marginBottom: '20px'}}>
+                                  <Typography 
+                                    component="h3" 
+                                    sx={{
+                                      color: '#673ab7', 
+                                      fontSize: { xs: '14px', sm: '16px' }, 
+                                      marginBottom: '12px',
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
                                     チームコンテキストにおける運勢:
-                                  </h3>
-                                  <div style={{lineHeight: '1.7'}}>{contextContent}</div>
-                                </div>
+                                  </Typography>
+                                  <Box sx={{
+                                    lineHeight: '1.7',
+                                    fontSize: { xs: '13px', sm: '14px', md: '16px' }
+                                  }}>{contextContent}</Box>
+                                </Box>
                               );
                             }
                           }
@@ -966,38 +923,53 @@ const TeamAdvice: React.FC = () => {
                             const goalContent = goalSection[1].split('##')[0].trim();
                             if (goalContent) {
                               return (
-                                <div style={{marginBottom: '20px'}}>
-                                  <h3 style={{color: '#673ab7', fontSize: '16px', marginBottom: '12px'}}>
+                                <Box sx={{marginBottom: '20px'}}>
+                                  <Typography 
+                                    component="h3" 
+                                    sx={{
+                                      color: '#673ab7', 
+                                      fontSize: { xs: '14px', sm: '16px' }, 
+                                      marginBottom: '12px',
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
                                     チーム目標達成のためのアドバイス:
-                                  </h3>
-                                  <div style={{lineHeight: '1.7'}}>{goalContent}</div>
-                                </div>
+                                  </Typography>
+                                  <Box sx={{
+                                    lineHeight: '1.7',
+                                    fontSize: { xs: '13px', sm: '14px', md: '16px' }
+                                  }}>{goalContent}</Box>
+                                </Box>
                               );
                             }
                           }
                           return null;
                         })()}
-                      </div>
+                      </Box>
                     )}
                     
                     {/* チーム内での役割発揮のポイントを表示（MarkDownから抽出） */}
                     {teamContextFortune.teamContextAdvice && (
-                      <div style={{
-                        marginTop: '8px', 
-                        padding: '16px', 
+                      <Box sx={{
+                        mt: { xs: 1, sm: 2 }, 
+                        p: { xs: 2, sm: 2.5 }, 
                         backgroundColor: '#f5f0ff', 
                         borderRadius: '8px',
                         border: '1px solid #e9e3f5'
                       }}>
-                        <h3 style={{
-                          color: '#673ab7', 
-                          fontSize: '16px', 
-                          marginTop: '0',
-                          marginBottom: '12px'
-                        }}>
+                        <Typography
+                          component="h3"
+                          sx={{
+                            color: '#673ab7', 
+                            fontSize: { xs: '14px', sm: '16px' }, 
+                            mt: 0,
+                            mb: { xs: 1, sm: 1.5 },
+                            fontWeight: 'bold'
+                          }}
+                        >
                           今日のチーム協力アドバイス:
-                        </h3>
-                        <div style={{lineHeight: '1.7'}}>
+                        </Typography>
+                        <Box sx={{ lineHeight: '1.7', fontSize: { xs: '13px', sm: '14px', md: '16px' } }}>
                           {/* マークダウンから「チーム内での役割発揮のポイント」セクションを抽出して表示 */}
                           {(() => {
                             const text = teamContextFortune.teamContextAdvice;
@@ -1011,11 +983,11 @@ const TeamAdvice: React.FC = () => {
                               return text;
                             }
                           })()}
-                        </div>
-                      </div>
+                        </Box>
+                      </Box>
                     )}
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               </>
             ) : (
               <Box sx={{ 
@@ -1033,7 +1005,7 @@ const TeamAdvice: React.FC = () => {
                 </Typography>
               </Box>
             )}
-          </div>
+          </Box>
         )}
 
         {/* チームメンバー運勢ランキング */}
@@ -1042,17 +1014,17 @@ const TeamAdvice: React.FC = () => {
         )}
 
         {/* チームメンバーリスト */}
-        <div className="section" style={{
+        <Box className="section" sx={{
           backgroundColor: 'white',
           borderRadius: '16px',
           boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-          padding: '24px',
+          padding: { xs: '16px', sm: '20px', md: '24px' },
           overflow: 'hidden',
           position: 'relative',
           transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          <div className="section-title" style={{
-            fontSize: '1.3rem',
+          <Box className="section-title" sx={{
+            fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' },
             fontWeight: 600,
             marginBottom: '16px',
             color: 'var(--primary)',
@@ -1060,28 +1032,36 @@ const TeamAdvice: React.FC = () => {
             alignItems: 'center',
             letterSpacing: '0.01em'
           }}>
-            <span className="material-icons" style={{ marginRight: '12px', color: 'var(--primary-light)', fontSize: '1.5rem' }}>
+            <Box 
+              component="span" 
+              className="material-icons" 
+              sx={{ 
+                mr: { xs: 1, sm: 1.5 }, 
+                color: 'var(--primary-light)', 
+                fontSize: { xs: '1.3rem', sm: '1.5rem' } 
+              }}
+            >
               group
-            </span>
+            </Box>
             チームメンバー
-          </div>
+          </Box>
           
           <Divider sx={{ mb: 3 }} />
           
           {teamId && (
             <TeamMembersList teamId={teamId} />
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* フローティングアクションボタン */}
-      <div 
-        style={{
+      <Box 
+        sx={{
           position: 'fixed',
-          bottom: '80px',
-          right: '24px',
-          width: '56px',
-          height: '56px',
+          bottom: { xs: '70px', sm: '80px' },
+          right: { xs: '16px', sm: '24px' },
+          width: { xs: '48px', sm: '56px' },
+          height: { xs: '48px', sm: '56px' },
           borderRadius: '50%',
           background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
           color: 'white',
@@ -1096,10 +1076,10 @@ const TeamAdvice: React.FC = () => {
         onClick={() => navigate('/chat')}
       >
         <span className="material-icons">chat</span>
-      </div>
+      </Box>
 
       {/* ナビゲーションバー用の余白 */}
-      <div style={{ paddingBottom: '100px' }}></div>
+      <Box sx={{ paddingBottom: { xs: '80px', sm: '100px' } }}></Box>
       
       {/* 新規チーム作成モーダル */}
       <Modal
@@ -1296,7 +1276,7 @@ const TeamAdvice: React.FC = () => {
           </Box>
         </Box>
       </Modal>
-    </div>
+    </Box>
   );
 };
 

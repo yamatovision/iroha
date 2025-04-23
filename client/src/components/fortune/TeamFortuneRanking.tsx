@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, Box, Typography, Avatar, LinearProgress, Chip, Divider, Skeleton, useTheme } from '@mui/material';
-import { WaterDrop, Whatshot, Park, Public, Diamond, EmojiEvents } from '@mui/icons-material';
+import { WaterDrop, Whatshot, Park, Public, Diamond, EmojiEvents, Star as StarIcon } from '@mui/icons-material';
 import fortuneService from '../../services/fortune.service';
 import { useAuth } from '../../contexts/AuthContext';
 import './styles.css';
@@ -62,7 +62,6 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
   // 五行属性のテキスト色を取得
   const getElementTextColor = (element?: string): string => {
     if (element === 'water') return '#ffffff';
-    if (element === 'metal') return '#673ab7';
     return '#000000';
   };
 
@@ -287,24 +286,40 @@ const TeamFortuneRanking: React.FC<TeamFortuneRankingProps> = ({ teamId, date })
                 
                 {/* 属性表示 */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  {member.elementAttribute && (
+                  {member.elementAttribute && member.elementAttribute === 'metal' ? (
+                    <Box component="span" sx={{ 
+                      px: 1.5, 
+                      py: 0.5, 
+                      borderRadius: 10,
+                      bgcolor: '#f5f5f5',
+                      color: '#000000',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      mr: 1,
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}>
+                      <StarIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.95rem', color: '#000000' }} />
+                      金
+                    </Box>
+                  ) : (
                     <Chip
                       icon={getElementIcon(member.elementAttribute) as React.ReactElement}
-                      label={member.elementAttribute.toUpperCase()}
+                      label={member.elementAttribute === 'water' ? '水' : 
+                              member.elementAttribute === 'fire' ? '火' : 
+                              member.elementAttribute === 'wood' ? '木' : 
+                              member.elementAttribute === 'earth' ? '土' : 
+                              member.elementAttribute.toUpperCase()}
                       size="small"
                       sx={{
                         bgcolor: getElementColor(member.elementAttribute),
                         color: getElementTextColor(member.elementAttribute),
                         mr: 1,
                         height: 24,
-                        border: member.elementAttribute === 'metal' ? '1px solid rgba(0, 0, 0, 0.2)' : 'none',
+                        border: 'none',
                         '& .MuiChip-icon': { 
-                          color: member.elementAttribute === 'water' ? '#ffffff' : 
-                                 member.elementAttribute === 'metal' ? '#673ab7' : '#000000' 
-                        },
-                        '& .MuiChip-label': {
-                          color: member.elementAttribute === 'water' ? '#ffffff' : 
-                                 member.elementAttribute === 'metal' ? '#673ab7' : '#000000'
+                          color: member.elementAttribute === 'water' ? '#ffffff' : '#000000' 
                         }
                       }}
                     />

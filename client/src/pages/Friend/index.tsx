@@ -613,56 +613,61 @@ const FriendList: React.FC = () => {
                       />
                     </ListItem>
                     <Divider />
-                    <Box sx={{ display: 'flex', p: 0 }}>
+                    <Box sx={{ position: 'relative' }}>
+                      {/* 削除ボタンを右上に配置 */}
                       <Box
-                        sx={{ 
-                          flex: 1, 
-                          py: 1.5,
+                        sx={{
+                          position: 'absolute',
+                          top: -50,
+                          right: 10,
                           display: 'flex',
-                          flexDirection: 'column',
                           alignItems: 'center',
                           cursor: 'pointer',
                           color: 'text.secondary',
-                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
-                        }}
-                        onClick={() => handleViewProfile(friend.userId)}
-                      >
-                        <PersonIcon sx={{ mb: 0.5, color: 'info.main' }} />
-                        <Typography variant="caption">プロフィール</Typography>
-                      </Box>
-                      <Divider orientation="vertical" flexItem />
-                      <Box
-                        sx={{ 
-                          flex: 1, 
-                          py: 1.5,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          color: 'primary.main',
-                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
-                        }}
-                        onClick={() => handleOpenCompatibilityModal(friend)}
-                      >
-                        <FavoriteIcon sx={{ mb: 0.5 }} />
-                        <Typography variant="caption">相性を見る</Typography>
-                      </Box>
-                      <Divider orientation="vertical" flexItem />
-                      <Box
-                        sx={{ 
-                          flex: 1, 
-                          py: 1.5,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          color: 'error.main',
-                          '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                          p: 0.5,
+                          zIndex: 1,
+                          '&:hover': { color: 'error.light' }
                         }}
                         onClick={() => handleRemoveFriend(friend.friendship)}
                       >
-                        <DeleteIcon sx={{ mb: 0.5 }} />
-                        <Typography variant="caption">削除</Typography>
+                        <DeleteIcon fontSize="small" />
+                      </Box>
+                      
+                      {/* メインの2つのボタン */}
+                      <Box sx={{ display: 'flex', p: 0 }}>
+                        <Box
+                          sx={{ 
+                            flex: 1, 
+                            py: 1.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            color: 'text.secondary',
+                            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                          }}
+                          onClick={() => handleViewProfile(friend.userId)}
+                        >
+                          <PersonIcon sx={{ mb: 0.5, color: 'info.main' }} />
+                          <Typography variant="caption">プロフィール</Typography>
+                        </Box>
+                        <Divider orientation="vertical" flexItem />
+                        <Box
+                          sx={{ 
+                            flex: 1, 
+                            py: 1.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            color: '#e91e63', // ピンク色に変更（相性・恋愛のイメージに合わせて）
+                            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.03)' }
+                          }}
+                          onClick={() => handleOpenCompatibilityModal(friend)}
+                        >
+                          <FavoriteIcon sx={{ mb: 0.5 }} />
+                          <Typography variant="caption">相性を見る</Typography>
+                        </Box>
                       </Box>
                     </Box>
                   </Paper>
