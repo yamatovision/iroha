@@ -158,6 +158,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
       if (isRecording) {
         stopRecording();
       }
+      
+      // 確実にリスナーをクリーンアップ
+      if (isNative) {
+        SpeechRecognition.removeAllListeners();
+      }
     };
   }, []);
   
@@ -196,36 +201,29 @@ const ChatInput: React.FC<ChatInputProps> = ({
         return;
       }
       
+      // 開始前に既存のリスナーをクリア
+      SpeechRecognition.removeAllListeners();
+      
       setIsRecording(true);
       setInterimTranscript('(聞き取り中...)');
       
-      // 認識開始
-      await SpeechRecognition.start({
-        language: 'ja-JP',
-        maxResults: 3,
-        prompt: '何かお話しください...',
-        partialResults: true,
-        popup: false,
-      });
-      
+      // 先にリスナーを追加してから認識開始
       // 部分的な結果のリスナー
-      SpeechRecognition.addListener('partialResults', (data: { matches: string[] }) => {
+      await SpeechRecognition.addListener('partialResults', (data: { matches: string[] }) => {
         if (data.matches && data.matches.length > 0) {
           setInterimTranscript(data.matches[0]);
         }
       });
       
-      // 最終結果のリスナー - 注：Capacitorプラグインでは結果はstart()のレスポンスで返される
       // リスニング状態の監視
-      SpeechRecognition.addListener('listeningState', (data) => {
+      await SpeechRecognition.addListener('listeningState', (data) => {
         if (data.status === 'stopped') {
-          // 停止したらresultを確認する必要がある
           setIsRecording(false);
-          // 結果は既にstartメソッドのコールバックで取得されています
+          setInterimTranscript('');
         }
       });
       
-      // 音声認識の結果を直接取得
+      // 認識開始（1回だけ実行）
       const result = await SpeechRecognition.start({
         language: 'ja-JP',
         maxResults: 3,
@@ -239,7 +237,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
         const matches = result.matches as string[];
         if (matches && matches.length > 0) {
           setMessage(prev => prev + matches[0]);
-          setInterimTranscript('');
         }
       }
     } catch (error) {
@@ -247,6 +244,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
       setIsRecording(false);
       setInterimTranscript('');
       setErrorMessage('音声認識の開始に失敗しました');
+      
+      // エラー時にもリスナーをクリア
+      SpeechRecognition.removeAllListeners();
     }
   };
   
@@ -268,21 +268,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const stopRecording = async () => {
     if (isNative) {
       try {
+        // 停止処理
         await SpeechRecognition.stop();
+        // リスナークリア
         SpeechRecognition.removeAllListeners();
       } catch (error) {
         console.error('Error stopping native recording:', error);
+      } finally {
+        // 状態をリセット（エラー時にも確実に実行）
+        setIsRecording(false);
+        setInterimTranscript('');
       }
     } else if (webSpeechRef.current) {
       try {
         webSpeechRef.current.stop();
       } catch (error) {
         console.error('Error stopping web recording:', error);
+      } finally {
+        // 状態をリセット（エラー時にも確実に実行）
+        setIsRecording(false);
+        setInterimTranscript('');
       }
+    } else {
+      // 念のための状態リセット
+      setIsRecording(false);
+      setInterimTranscript('');
     }
-    
-    setIsRecording(false);
-    setInterimTranscript('');
   };
   
   // 音声認識の開始・停止トグル

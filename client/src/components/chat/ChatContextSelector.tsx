@@ -172,8 +172,8 @@ const ChatContextSelector: React.FC<ChatContextSelectorProps> = ({
         <ContextTab label="チーム" />
       </Tabs>
 
-      <TabPanel>
-        <CustomTabPanel value={tabValue} index={tabValue}>
+      <CustomTabPanel value={tabValue} index={tabValue}>
+        <TabPanel>
           {loading ? (
             <Box display="flex" justifyContent="center" p={2}>
               <CircularProgress size={24} />
@@ -201,7 +201,7 @@ const ChatContextSelector: React.FC<ChatContextSelectorProps> = ({
                     <ListItemIcon>
                       <Avatar
                         sx={{
-                          bgcolor: getColorByType(context.type),
+                          bgcolor: context.color || getColorByType(context.type),
                           width: 36,
                           height: 36,
                         }}
@@ -222,8 +222,8 @@ const ChatContextSelector: React.FC<ChatContextSelectorProps> = ({
               )}
             </List>
           )}
-        </CustomTabPanel>
-      </TabPanel>
+        </TabPanel>
+      </CustomTabPanel>
     </SelectorContainer>
   );
 };

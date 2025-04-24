@@ -29,6 +29,10 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>DailyFortuneアプリでは、プライバシー保護のためにFace IDを使用してアプリのロックを解除します。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>DailyFortuneアプリでは、音声入力機能のためにマイクを使用します。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>DailyFortuneアプリでは、音声認識機能を使ってメッセージを入力できるようにします。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DailyFortuneアプリで画像を選択して設定するために使用します。</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

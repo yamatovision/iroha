@@ -213,6 +213,21 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       // ストリーミングが完了したら、コールバックをクリア
       chatService.clearStreamChunkCallback();
       
+      // 非ストリーミングモードで返ってきた場合（フォールバック時）は、レスポンスの内容を直接設定
+      if (response.aiMessage && streamContentRef.current === '') {
+        console.log('非ストリーミングレスポンスを表示します', response.aiMessage.length, 'バイト');
+        // 最新のメッセージを更新
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            lastMessage.content = response.aiMessage;
+            lastMessage.timestamp = response.timestamp;
+          }
+          return newMessages;
+        });
+      }
+      
       if (!chatId) {
         setChatId(response.chatHistory.id);
       }
