@@ -130,8 +130,6 @@ export enum ContextType {
   SELF = 'self',         // 自分の情報
   FRIEND = 'friend',     // 友達の情報
   FORTUNE = 'fortune',   // 運勢情報
-  TEAM = 'team',         // チーム情報
-  TEAM_GOAL = 'team_goal', // チーム目標情報
 }
 
 // コンテキスト情報アイテムの基本型

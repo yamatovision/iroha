@@ -1,20 +1,26 @@
 import { Types } from 'mongoose';
 import { User } from '../../models/User';
-// 列挙型を直接定義（型インポートでの問題を回避）
+// 列挙型の代わりに直接文字列を使用（バンドル問題を回避）
 const ChatModeEnum = {
   PERSONAL: 'personal',
   TEAM_MEMBER: 'team_member',
   TEAM_GOAL: 'team_goal'
 };
-// コンテキストタイプを直接定義
+
+// コンテキストタイプを直接定義（他のファイルと一致するように文字列値を使用）
 export const ContextTypeEnum = {
   SELF: 'self',
   FRIEND: 'friend',
-  FORTUNE: 'fortune',
-  TEAM: 'team',
-  TEAM_GOAL: 'team_goal'
+  FORTUNE: 'fortune'
 };
-import { ChatMode, IContextItem } from '../../types';
+
+// 実際に使用する文字列値
+const CONTEXT_TYPE = {
+  self: 'self',        
+  friend: 'friend',
+  fortune: 'fortune'
+};
+import { ChatMode, IContextItem, ContextType } from '../../types';
 import logger from '../../utils/logger';
 // ContextTypeを型として使わず、値としてのみ使用
 import { Friendship } from '../../models/Friendship';
@@ -174,109 +180,27 @@ export const contextBuilderService = {
   },
 
   /**
-   * 利用可能なチームコンテキスト情報を構築
+   * 利用可能なチームコンテキスト情報を構築 (削除予定)
    */
   async buildAvailableTeamContexts(userId: string): Promise<any[]> {
-    try {
-      console.log(`buildAvailableTeamContexts - ユーザーID: ${userId} のチームコンテキストを構築します`);
-      
-      if (!userId) {
-        throw new Error('無効なユーザーID: 空またはnullのIDが指定されました');
-      }
-
-      // ObjectIDへの変換を試みる
-      let objectId;
-      try {
-        objectId = new Types.ObjectId(userId);
-        console.log(`有効なObjectID形式: ${objectId}`);
-      } catch (error) {
-        throw new Error(`無効なObjectID形式: ${userId} - ${error instanceof Error ? error.message : String(error)}`);
-      }
-    
-      // ユーザーのチームメンバーシップ情報を取得
-      const memberships = await TeamMembership.find({ userId: objectId });
-      console.log(`チームメンバーシップ取得完了 - ${memberships.length}件見つかりました`);
-      
-      const teamContexts: IContextItem[] = [];
-      const teamGoalsContexts: IContextItem[] = [];
-      
-      for (const membership of memberships) {
-        try {
-          const team = await Team.findById(membership.teamId);
-          if (!team) {
-            console.log(`チームID ${membership.teamId} に対応するチームが見つかりません`);
-            continue;
-          }
-          
-          console.log(`チームデータ取得完了 - 名前: ${team.name || '未設定'}`);
-          
-          // チーム情報をコンテキストに追加
-          teamContexts.push({
-            id: safeIdToString(team._id),
-            type: ContextTypeEnum.TEAM,
-            name: team.name || `チームID: ${safeIdToString(team._id).substring(0, 8)}`,
-            iconType: 'group',
-            color: '#4caf50',
-            removable: true,
-            payload: {
-              id: safeIdToString(team._id),
-              name: team.name || `チームID: ${safeIdToString(team._id).substring(0, 8)}`,
-              role: membership.role || 'メンバー',
-              isAdmin: membership.isAdmin
-            }
-          });
-          
-          // チーム目標情報を取得してコンテキストに追加
-          try {
-            const teamGoals = await TeamGoal.find({ teamId: team._id });
-            console.log(`チーム目標取得完了 - ${teamGoals.length}件見つかりました`);
-            
-            for (const goal of teamGoals) {
-              try {
-                teamGoalsContexts.push({
-                  id: safeIdToString(goal._id),
-                  type: ContextTypeEnum.TEAM_GOAL,
-                  name: `${team.name || 'チーム'}の目標`,
-                  iconType: 'flag',
-                  color: '#795548',
-                  removable: true,
-                  payload: {
-                    id: safeIdToString(goal._id),
-                    teamId: safeIdToString(team._id),
-                    teamName: team.name || `チームID: ${safeIdToString(team._id).substring(0, 8)}`,
-                    content: goal.content || '(目標内容なし)',
-                    deadline: goal.deadline?.toISOString().split('T')[0] || null
-                  }
-                });
-              } catch (goalError) {
-                console.error(`チーム目標処理エラー: ${goalError instanceof Error ? goalError.message : String(goalError)}`);
-                continue;
-              }
-            }
-          } catch (goalsError) {
-            console.error(`チーム目標一覧取得エラー: ${goalsError instanceof Error ? goalsError.message : String(goalsError)}`);
-          }
-        } catch (teamError) {
-          console.error(`チーム処理エラー: ${teamError instanceof Error ? teamError.message : String(teamError)}`);
-          continue;
-        }
-      }
-      
-      console.log(`チームコンテキスト構築完了 - チーム: ${teamContexts.length}件, 目標: ${teamGoalsContexts.length}件`);
-      return [...teamContexts, ...teamGoalsContexts];
-    } catch (error) {
-      console.error(`buildAvailableTeamContexts エラー - ${error instanceof Error ? error.message : String(error)}`);
-      throw error; // 呼び出し元でもエラーをキャッチできるよう再スロー
-    }
+    // チーム関連コンテキスト削除のため、空の配列を返す
+    console.log(`buildAvailableTeamContexts - チーム関連コンテキストは削除されました`);
+    return [];
   },
 
   /**
    * コンテキスト詳細情報を取得
    */
   async getContextDetail(userId: string, contextType: string, contextId: string): Promise<any> {
+    const traceId = Math.random().toString(36).substring(2, 15);
     try {
-      switch (contextType) {
-        case ContextTypeEnum.SELF: {
+      // コンテキストタイプを小文字に変換して正規化
+      const type = String(contextType).toLowerCase();
+      console.log(`[${traceId}] getContextDetail - type: ${type}, id: ${contextId || 'なし'}`);
+      
+      // 文字列比較を使用したswitch文
+      switch (type) {
+        case CONTEXT_TYPE.self: {
           // selfタイプの場合、IDに関わらずユーザー自身の情報を返す
           // current_userやundefined、null、userId自体など、いかなる値でも対応
           const user = await User.findById(userId);
@@ -286,31 +210,32 @@ export const contextBuilderService = {
           const fortune = await DailyFortune.findOne({ userId: user._id }).sort({ date: -1 });
           
           // ユーザーの目標情報を取得
+          const UserGoal = require('../../models/UserGoal').UserGoal;
           const goals = await UserGoal.find({ userId: user._id });
           
           return {
             id: safeIdToString(user._id),
-            type: ContextTypeEnum.SELF,
-            name: user.displayName,
+            type: CONTEXT_TYPE.self,
+            name: user.displayName || 'あなた',
             details: {
-              displayName: user.displayName,
-              elementAttribute: user.elementAttribute,
-              dayMaster: user.dayMaster,
+              displayName: user.displayName || 'あなた',
+              elementAttribute: user.elementAttribute || '',
+              dayMaster: user.dayMaster || '',
               fortune: fortune ? {
                 date: fortune.date,
                 score: fortune.fortuneScore,
                 luckyItems: fortune.luckyItems
               } : null,
-              goals: goals.map(goal => ({
+              goals: goals && goals.length > 0 ? goals.map((goal: any) => ({
                 type: goal.type,
                 content: goal.content,
                 deadline: goal.deadline
-              }))
+              })) : []
             }
           };
         }
         
-        case ContextTypeEnum.FRIEND: {
+        case CONTEXT_TYPE.friend: {
           const friend = await User.findById(contextId);
           if (!friend) throw new Error('友達が見つかりません');
           
@@ -326,12 +251,12 @@ export const contextBuilderService = {
           
           return {
             id: safeIdToString(friend._id),
-            type: ContextTypeEnum.FRIEND,
-            name: friend.displayName,
+            type: CONTEXT_TYPE.friend,
+            name: friend.displayName || '友達',
             details: {
-              displayName: friend.displayName,
-              elementAttribute: friend.elementAttribute,
-              dayMaster: friend.dayMaster,
+              displayName: friend.displayName || '友達',
+              elementAttribute: friend.elementAttribute || '',
+              dayMaster: friend.dayMaster || '',
               compatibility: compatibility ? {
                 score: compatibility.score,
                 relationship: compatibility.relationType,
@@ -345,7 +270,7 @@ export const contextBuilderService = {
           };
         }
         
-        case ContextTypeEnum.FORTUNE: {
+        case CONTEXT_TYPE.fortune: {
           // 今日か明日の運勢情報を取得
           if (contextId === 'today' || contextId === 'tomorrow') {
             const user = await User.findById(userId);
@@ -373,7 +298,7 @@ export const contextBuilderService = {
             
             return {
               id: contextId,
-              type: ContextTypeEnum.FORTUNE,
+              type: CONTEXT_TYPE.fortune,
               name: contextId === 'today' ? '今日の運勢' : '明日の運勢',
               details: {
                 date: targetDate.toISOString().split('T')[0],
@@ -392,67 +317,12 @@ export const contextBuilderService = {
           throw new Error('無効な運勢コンテキストIDです');
         }
         
-        case ContextTypeEnum.TEAM: {
-          const team = await Team.findById(contextId);
-          if (!team) throw new Error('チームが見つかりません');
-          
-          // チームメンバー情報を取得
-          const memberships = await TeamMembership.find({ teamId: team._id });
-          const memberIds = memberships.map(m => m.userId);
-          
-          const members = await User.find({ _id: { $in: memberIds } });
-          
-          // チーム目標情報を取得
-          const goals = await TeamGoal.find({ teamId: team._id });
-          
-          return {
-            id: safeIdToString(team._id),
-            type: ContextTypeEnum.TEAM,
-            name: team.name,
-            details: {
-              name: team.name,
-              description: team.description,
-              members: members.map(member => ({
-                id: safeIdToString(member._id),
-                name: member.displayName,
-                role: memberships.find(m => safeIdToString(m.userId) === safeIdToString(member._id))?.role || '',
-                elementAttribute: member.elementAttribute,
-                dayMaster: member.dayMaster
-              })),
-              goals: goals.map(goal => ({
-                id: safeIdToString(goal._id),
-                content: goal.content,
-                deadline: goal.deadline?.toISOString().split('T')[0] || null
-              }))
-            }
-          };
-        }
-        
-        case ContextTypeEnum.TEAM_GOAL: {
-          const goal = await TeamGoal.findById(contextId);
-          if (!goal) throw new Error('チーム目標が見つかりません');
-          
-          const team = await Team.findById(goal.teamId);
-          if (!team) throw new Error('チームが見つかりません');
-          
-          return {
-            id: safeIdToString(goal._id),
-            type: ContextTypeEnum.TEAM_GOAL,
-            name: `${team.name}の目標`,
-            details: {
-              teamId: safeIdToString(team._id),
-              teamName: team.name,
-              content: goal.content,
-              deadline: goal.deadline?.toISOString().split('T')[0] || null
-            }
-          };
-        }
-        
         default:
-          throw new Error('サポートされていないコンテキストタイプです');
+          console.log(`[${traceId}] 未知または削除されたコンテキストタイプ: ${type}`);
+          throw new Error(`サポートされていないコンテキストタイプです: ${type}`);
       }
     } catch (error) {
-      console.error('コンテキスト詳細取得エラー:', error);
+      console.error(`[${traceId}] コンテキスト詳細取得エラー:`, error);
       return null;
     }
   },
@@ -464,127 +334,140 @@ export const contextBuilderService = {
     userId: string,
     contextItems: { type: string; id?: string; additionalInfo?: any }[]
   ): Promise<Record<string, any>> {
-    console.log(`processMessageWithContexts - ユーザーID: ${userId}, コンテキストアイテム数: ${contextItems.length}`);
-    console.log(`コンテキストタイプ: ${contextItems.map(item => item.type).join(', ')}`);
+    const traceId = Math.random().toString(36).substring(2, 15);
+    console.log(`[${traceId}] processMessageWithContexts - ユーザーID: ${userId}, コンテキストアイテム数: ${contextItems.length}`);
+    console.log(`[${traceId}] コンテキストタイプ: ${contextItems.map(item => item.type).join(', ')}`);
 
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new Error('ユーザーが見つかりません');
-    }
-
+    // 基本コンテキスト情報を最初に初期化して外部スコープでも利用可能にする
     const context: Record<string, any> = {
       user: {
-        displayName: user.displayName,
-        elementAttribute: user.elementAttribute,
-        dayMaster: user.dayMaster
+        displayName: 'ユーザー',
+        elementAttribute: '',
+        dayMaster: ''
       }
     };
+      
+    try {
+      // ユーザーの検証と取得
+      if (!userId) {
+        throw new Error('無効なユーザーID: 空またはnullのIDが指定されました');
+      }
 
-    // 各コンテキストアイテムを処理
-    for (const item of contextItems) {
-      try {
-        console.log(`コンテキストアイテム処理 - タイプ: ${item.type}, ID: ${item.id || '未指定'}`);
-        
-        // 一部のコンテキストタイプではIDが不要な場合がある
-        let detailContext = null;
-        
-        if (item.id) {
-          // IDがある場合は詳細情報を取得
-          detailContext = await this.getContextDetail(userId, item.type, item.id);
-        } else if (item.type === ContextTypeEnum.SELF) {
-          // 自分自身の場合はIDがなくても問題ない
-          detailContext = await this.getContextDetail(userId, item.type, 'current_user');
-        }
-        
-        if (!detailContext && item.type !== ContextTypeEnum.SELF) {
-          console.log(`コンテキスト情報が見つかりません - タイプ: ${item.type}, ID: ${item.id || '未指定'}`);
-          continue;
-        }
-        
-        switch (item.type) {
-          case ContextTypeEnum.SELF:
-            // 常に自分自身の詳細情報を拡張
-            context.user = {
-              ...context.user,
-              pillars: user.fourPillars || {},
-              kakukyoku: user.kakukyoku || null,
-              yojin: user.yojin || null,
-              elementProfile: user.elementProfile || null
-            };
-            
-            if (detailContext?.details?.fortune) {
-              context.dailyFortune = detailContext.details.fortune;
-            }
-            
-            if (detailContext?.details?.goals && detailContext.details.goals.length > 0) {
-              context.userGoals = detailContext.details.goals;
-            }
-            
-            console.log(`自分自身のコンテキスト情報構築完了 - 名前: ${context.user.displayName}`);
-            break;
-            
-          case ContextTypeEnum.FRIEND:
-            if (!context.friends) context.friends = [];
-            if (detailContext?.details) {
-              context.friends.push({
-                displayName: detailContext.details.displayName,
-                elementAttribute: detailContext.details.elementAttribute,
-                dayMaster: detailContext.details.dayMaster,
-                compatibility: detailContext.details.compatibility
-              });
-              console.log(`友達コンテキスト情報追加 - 名前: ${detailContext.details.displayName}`);
-            }
-            break;
-            
-          case ContextTypeEnum.FORTUNE:
-            if (detailContext?.details) {
-              context.dailyFortune = detailContext.details.fortune;
-              context.dayPillar = detailContext.details.dayPillar;
-              context.fortuneDate = detailContext.details.date;
-              console.log(`運勢コンテキスト情報構築完了 - 日付: ${detailContext.details.date}`);
-            } else {
-              // 今日の日付のデフォルト情報
-              const today = new Date().toISOString().split('T')[0];
-              context.fortuneDate = today;
-              console.log(`運勢コンテキスト情報（デフォルト） - 日付: ${today}`);
-            }
-            break;
-            
-          case ContextTypeEnum.TEAM:
-            if (detailContext?.details) {
-              context.team = {
-                name: detailContext.details.name,
-                description: detailContext.details.description,
-                members: detailContext.details.members
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error(`ユーザーが見つかりません: ${userId}`);
+      }
+
+      console.log(`[${traceId}] ユーザー情報取得成功: ${user.displayName || userId}`);
+
+      // 基本コンテキスト情報を更新
+      context.user = {
+        displayName: user.displayName || 'ユーザー',
+        elementAttribute: user.elementAttribute || '',
+        dayMaster: user.dayMaster || ''
+      };
+
+      // 各コンテキストアイテムを処理
+      for (const item of contextItems) {
+        try {
+          if (!item || typeof item !== 'object') {
+            console.error(`[${traceId}] 無効なコンテキストアイテム:`, item);
+            continue;
+          }
+
+          // 型の検証と正規化
+          const itemType = typeof item.type === 'string' ? item.type.toLowerCase() : '';
+          const itemId = item.id || '';
+          
+          console.log(`[${traceId}] コンテキストアイテム処理 - タイプ: ${itemType}, ID: ${itemId || '未指定'}`);
+          
+          // 一部のコンテキストタイプではIDが不要な場合がある
+          let detailContext = null;
+          
+          // 文字列比較に修正（列挙型との比較ではなく）
+          if (itemId) {
+            // IDがある場合は詳細情報を取得
+            detailContext = await this.getContextDetail(userId, itemType, itemId);
+          } else if (itemType === 'self') {
+            // 自分自身の場合はIDがなくても問題ない
+            detailContext = await this.getContextDetail(userId, 'self', 'current_user');
+          }
+          
+          if (!detailContext && itemType !== 'self') {
+            console.log(`[${traceId}] コンテキスト情報が見つかりません - タイプ: ${itemType}, ID: ${itemId || '未指定'}`);
+            continue;
+          }
+          
+          // 正規化された文字列値を使用してケース分けを行う
+          switch (itemType) {
+            case 'self': // 直接文字列で比較
+              // 常に自分自身の詳細情報を拡張
+              context.user = {
+                ...context.user,
+                pillars: user.fourPillars || {},
+                kakukyoku: user.kakukyoku || null,
+                yojin: user.yojin || null,
+                elementProfile: user.elementProfile || null
               };
               
-              if (detailContext.details.goals && detailContext.details.goals.length > 0) {
-                context.teamGoals = detailContext.details.goals;
+              if (detailContext?.details?.fortune) {
+                context.dailyFortune = detailContext.details.fortune;
               }
               
-              console.log(`チームコンテキスト情報構築完了 - チーム名: ${detailContext.details.name}`);
-            }
-            break;
-            
-          case ContextTypeEnum.TEAM_GOAL:
-            if (detailContext?.details) {
-              if (!context.teamGoals) context.teamGoals = [];
-              context.teamGoals.push({
-                teamName: detailContext.details.teamName,
-                content: detailContext.details.content,
-                deadline: detailContext.details.deadline
-              });
-              console.log(`チーム目標コンテキスト情報追加 - チーム名: ${detailContext.details.teamName}`);
-            }
-            break;
+              if (detailContext?.details?.goals && Array.isArray(detailContext.details.goals) && detailContext.details.goals.length > 0) {
+                context.userGoals = detailContext.details.goals;
+              }
+              
+              console.log(`[${traceId}] 自分自身のコンテキスト情報構築完了 - 名前: ${context.user.displayName}`);
+              break;
+              
+            case 'friend': // 直接文字列で比較
+              if (!context.friends) context.friends = [];
+              if (detailContext?.details) {
+                context.friends.push({
+                  displayName: detailContext.details.displayName,
+                  elementAttribute: detailContext.details.elementAttribute,
+                  dayMaster: detailContext.details.dayMaster,
+                  compatibility: detailContext.details.compatibility
+                });
+                console.log(`[${traceId}] 友達コンテキスト情報追加 - 名前: ${detailContext.details.displayName}`);
+              }
+              break;
+              
+            case 'fortune': // 直接文字列で比較
+              if (detailContext?.details) {
+                context.dailyFortune = detailContext.details.fortune;
+                context.dayPillar = detailContext.details.dayPillar;
+                context.fortuneDate = detailContext.details.date;
+                console.log(`[${traceId}] 運勢コンテキスト情報構築完了 - 日付: ${detailContext.details.date}`);
+              } else {
+                // 今日の日付のデフォルト情報
+                const today = new Date().toISOString().split('T')[0];
+                context.fortuneDate = today;
+                console.log(`[${traceId}] 運勢コンテキスト情報（デフォルト） - 日付: ${today}`);
+              }
+              break;
+              
+            default:
+              console.log(`[${traceId}] 未知のコンテキストタイプ: ${itemType} - スキップします`);
+              break;
+          }
+        } catch (itemError) {
+          console.error(`[${traceId}] コンテキスト処理エラー (${item?.type || '不明'}, ${item?.id || '未指定'}):`, itemError);
+          // コンテキスト一つの処理でエラーが発生しても全体を停止しない
+          continue;
         }
-      } catch (error) {
-        console.error(`コンテキスト処理エラー (${item.type}, ${item.id || '未指定'}):`, error);
       }
-    }
 
-    console.log(`コンテキスト情報構築完了 - キー: ${Object.keys(context).join(', ')}`);
-    return context;
+      console.log(`[${traceId}] コンテキスト情報構築完了 - キー: ${Object.keys(context).join(', ')}`);
+      return context;
+    } catch (error) {
+      console.error(`[${traceId}] コンテキスト構築エラー:`, error);
+      // contextはスコープ外で既に初期化済みなので、エラー時には現在のcontextを返す
+      // これにより、部分的に処理できたデータは保持される
+      console.log(`[${traceId}] エラー復旧: 部分的に構築されたコンテキスト情報を返します`);
+      return context;
+    }
   }
 };
 

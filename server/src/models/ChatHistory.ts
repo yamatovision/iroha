@@ -14,7 +14,7 @@ export interface IChatMessage {
  */
 export interface IChatHistory {
   userId: mongoose.Types.ObjectId; // MongoDBのObjectID
-  chatType: 'personal' | 'team_member' | 'team_goal';
+  chatType: 'personal' | 'team_member' | 'team_goal' | 'context_based';
   relatedInfo?: {
     teamMemberId?: mongoose.Types.ObjectId;
     teamGoalId?: mongoose.Types.ObjectId;
@@ -74,7 +74,7 @@ const chatHistorySchema = new Schema<IChatHistoryDocument>(
     chatType: {
       type: String,
       enum: {
-        values: ['personal', 'team_member', 'team_goal'],
+        values: ['personal', 'team_member', 'team_goal', 'context_based'],
         message: '{VALUE}は有効なチャットタイプではありません'
       },
       required: [true, 'チャットタイプは必須です']

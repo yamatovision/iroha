@@ -1,5 +1,5 @@
 import mongoose, { Types } from 'mongoose';
-import { ChatMode, ContextType, IContextItem } from '../../types';
+import { ChatMode, IContextItem } from '../../types';
 import { ChatHistory, IChatHistoryDocument } from '../../models/ChatHistory';
 import { User } from '../../models/User';
 import { claudeApiClient } from '../claude-api-client';
@@ -597,7 +597,7 @@ export class ChatService {
   public async processMessageWithContexts(
     userId: string,
     message: string,
-    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[]
+    contextItems: { type: string; id?: string; additionalInfo?: any }[]
   ): Promise<{
     aiResponse: string;
     chatHistory: IChatHistoryDocument;
@@ -628,26 +628,44 @@ export class ChatService {
       
       try {
         // 実際のコンテキスト構築前にユーザー自身の基本情報が必ず含まれるようにする
-        let hasCurrentUser = contextItems.some(item => item.type === ContextType.SELF);
+        console.log(`[${traceId}] ⚠️ コンテキストタイプ検査 - ContextType値の確認`);
+        for (const item of contextItems) {
+          console.log(`[${traceId}] コンテキストアイテム: ${JSON.stringify(item)}`);
+        }
+        // コンテキストタイプ定義の問題を回避するため文字列として直接比較
+        let hasCurrentUser = contextItems.some(item => item.type === 'self');
         let updatedContextItems = [...contextItems];
         
         // 自分情報がない場合は追加
         if (!hasCurrentUser) {
           updatedContextItems.unshift({
-            type: ContextType.SELF,
+            type: 'self',
             id: 'current_user'
           });
           console.log(`[${traceId}] 自分の情報が含まれていなかったため追加しました`);
         }
         
         // コンテキストベースのコンテキスト構築
-        const context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
-        
-        console.log(`[${traceId}] processMessageWithContexts: コンテキストデータ確認:`, {
-          contextKeys: Object.keys(context),
-          contextTypes: updatedContextItems.map(item => item.type).join(', '),
-          itemCount: updatedContextItems.length
-        });
+        let context = null;
+        try {
+          context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
+          console.log(`[${traceId}] processMessageWithContexts: コンテキストデータ確認:`, {
+            contextKeys: Object.keys(context),
+            contextTypes: updatedContextItems.map(item => item.type).join(', '),
+            itemCount: updatedContextItems.length
+          });
+        } catch (contextError) {
+          console.error(`[${traceId}] コンテキスト構築エラー:`, contextError);
+          // 最低限のコンテキスト情報を設定（エラー復旧）
+          context = { 
+            user: { 
+              displayName: user.displayName || 'ユーザー',
+              elementAttribute: user.elementAttribute || '',
+              dayMaster: user.dayMaster || '' 
+            } 
+          };
+          console.log(`[${traceId}] エラー復旧: 最低限のコンテキスト情報で続行します`);
+        }
         
         // コンテキストプロンプトの構築
         const contextPrompt = createContextPrompt(context);
@@ -736,7 +754,7 @@ export class ChatService {
   public async *streamMessageWithContexts(
     userId: string,
     message: string,
-    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[]
+    contextItems: { type: string; id?: string; additionalInfo?: any }[]
   ): AsyncGenerator<string, { chatHistory: IChatHistoryDocument }, unknown> {
     const traceId = Math.random().toString(36).substring(2, 15);
     
@@ -763,26 +781,44 @@ export class ChatService {
 
       try {
         // 実際のコンテキスト構築前にユーザー自身の基本情報が必ず含まれるようにする
-        let hasCurrentUser = contextItems.some(item => item.type === ContextType.SELF);
+        console.log(`[${traceId}] ⚠️ コンテキストタイプ検査 - ContextType値の確認`);
+        for (const item of contextItems) {
+          console.log(`[${traceId}] コンテキストアイテム: ${JSON.stringify(item)}`);
+        }
+        // コンテキストタイプ定義の問題を回避するため文字列として直接比較
+        let hasCurrentUser = contextItems.some(item => item.type === 'self');
         let updatedContextItems = [...contextItems];
         
         // 自分情報がない場合は追加
         if (!hasCurrentUser) {
           updatedContextItems.unshift({
-            type: ContextType.SELF,
+            type: 'self',
             id: 'current_user'
           });
           console.log(`[${traceId}] 自分の情報が含まれていなかったため追加しました`);
         }
 
         // コンテキストベースのコンテキスト構築
-        const context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
-        
-        console.log(`[${traceId}] streamMessageWithContexts: コンテキストデータ確認:`, {
-          contextKeys: Object.keys(context),
-          contextTypes: updatedContextItems.map(item => item.type).join(', '),
-          itemCount: updatedContextItems.length
-        });
+        let context = null;
+        try {
+          context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
+          console.log(`[${traceId}] streamMessageWithContexts: コンテキストデータ確認:`, {
+            contextKeys: Object.keys(context),
+            contextTypes: updatedContextItems.map(item => item.type).join(', '),
+            itemCount: updatedContextItems.length
+          });
+        } catch (contextError) {
+          console.error(`[${traceId}] コンテキスト構築エラー:`, contextError);
+          // 最低限のコンテキスト情報を設定（エラー復旧）
+          context = { 
+            user: { 
+              displayName: user.displayName || 'ユーザー',
+              elementAttribute: user.elementAttribute || '',
+              dayMaster: user.dayMaster || '' 
+            } 
+          };
+          console.log(`[${traceId}] エラー復旧: 最低限のコンテキスト情報で続行します`);
+        }
   
         // コンテキストプロンプトの構築
         const contextPrompt = createContextPrompt(context);
@@ -885,7 +921,7 @@ export class ChatService {
    */
   private async getOrCreateContextBasedChatSession(
     userId: string,
-    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[],
+    contextItems: { type: string; id?: string; additionalInfo?: any }[],
     aiModel: 'sonnet' | 'haiku' = 'haiku'
   ): Promise<IChatHistoryDocument> {
     // セッションタイプ（contextが常に最初にあることを想定）

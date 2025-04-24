@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
 import { ChatMessageRequest, ChatModeRequest, IContextItem, ChatMode } from '../types';
 // コンテキストタイプを直接定義（バンドル問題を回避するため）
-export const ContextType = {
+// 注意: 以下の文字列値はcontext-builder.service.ts内の処理でも使用されています
+const CONTEXT_TYPE_STRINGS = {
   SELF: 'self',
   FRIEND: 'friend',
-  FORTUNE: 'fortune',
-  TEAM: 'team',
-  TEAM_GOAL: 'team_goal'
+  FORTUNE: 'fortune'
 };
 import { chatService } from '../services/chat/chat.service';
 import { AuthRequest } from '../types/auth';
@@ -67,9 +66,19 @@ export class ChatController {
       if (contextItems) {
         // 新しいコンテキストベースのリクエスト
         console.log('コンテキストベースのリクエストを処理します');
+        console.log('コンテキストアイテム:', JSON.stringify(contextItems));
+        
+        // コンテキストアイテムの詳細をログに出力
+        const contextDetails = contextItems.map(item => ({
+          type: String(item.type),
+          id: item.id || 'なし',
+          additionalInfo: item.additionalInfo ? 'あり' : 'なし'
+        }));
+        console.log('コンテキスト詳細:', JSON.stringify(contextDetails));
       } else if (mode) {
         // 旧モードベースのリクエスト - コンテキストに変換する（後方互換性）
         console.log('旧モードベースのリクエストをコンテキストに変換します:', mode);
+        console.log('モード関連情報:', JSON.stringify(contextInfo || {}));
         
         // モードの検証
         try {
@@ -173,13 +182,59 @@ export class ChatController {
       // コンテキストベースとモードベースの両方をサポート
       if (contextItems) {
         // 新しいコンテキストベースAPI
-        const result = await chatService.processMessageWithContexts(
-          userId,
-          message,
-          contextItems
-        );
-        aiResponse = result.aiResponse;
-        chatHistory = result.chatHistory;
+        const traceId = Math.random().toString(36).substring(2, 15);
+        console.log(`[${traceId}] コンテキストベースのメッセージ処理を開始: ユーザーID=${userId}`);
+        
+        try {
+          // コンテキストタイプを文字列として標準化
+          const normalizedContextItems = contextItems.map(item => {
+            // nullやundefinedでなく、typeが存在することを確認
+            if (!item || typeof item !== 'object' || !item.type) {
+              console.error(`[${traceId}] 無効なコンテキストアイテム:`, item);
+              return { type: 'self', id: 'current_user' }; // デフォルト値
+            }
+            
+            // 文字列として標準化
+            return {
+              type: String(item.type).toLowerCase(), 
+              id: item.id || undefined,
+              additionalInfo: item.additionalInfo || undefined
+            };
+          });
+          
+          console.log(`[${traceId}] 正規化されたコンテキストアイテム:`, JSON.stringify(normalizedContextItems));
+          
+          const result = await chatService.processMessageWithContexts(
+            userId,
+            message,
+            normalizedContextItems
+          );
+          
+          console.log(`[${traceId}] コンテキストベースの処理が成功しました`);
+          aiResponse = result.aiResponse;
+          chatHistory = result.chatHistory;
+        } catch (error) {
+          console.error('[ERROR] コンテキストベースの処理でエラー発生:', error);
+          // スタックトレースがあれば出力
+          if (error instanceof Error) {
+            console.error('[ERROR] スタックトレース:', error.stack);
+          }
+          
+          // フォールバック: モードベースで再試行
+          console.log('[RECOVERY] モードベースのメッセージ処理にフォールバックします');
+          try {
+            const result = await chatService.processMessage(
+              userId,
+              message,
+              'personal' as ChatMode
+            );
+            aiResponse = result.aiResponse;
+            chatHistory = result.chatHistory;
+          } catch (fallbackError) {
+            console.error('[ERROR] フォールバック処理でもエラー発生:', fallbackError);
+            throw fallbackError;
+          }
+        }
       } else {
         // 従来のモードベースAPI（後方互換性）
         const result = await chatService.processMessage(
@@ -493,7 +548,7 @@ export class ChatController {
         const fortuneContexts = [
           {
             id: 'today',
-            type: ContextType.FORTUNE,
+            type: 'fortune',
             name: '今日の運勢',
             iconType: 'today',
             color: '#ff9800',
@@ -501,7 +556,7 @@ export class ChatController {
           },
           {
             id: 'tomorrow',
-            type: ContextType.FORTUNE,
+            type: 'fortune',
             name: '明日の運勢',
             iconType: 'event',
             color: '#ff9800',
@@ -550,7 +605,7 @@ export class ChatController {
             fortune: [
               {
                 id: 'today',
-                type: ContextType.FORTUNE,
+                type: 'fortune',
                 name: '今日の運勢',
                 iconType: 'today',
                 color: '#ff9800',
@@ -610,7 +665,7 @@ export class ChatController {
       }
 
       // SELFタイプの場合はidパラメータは省略可能（現在のユーザー情報を返す）
-      if (type !== ContextType.SELF && !id) {
+      if (type !== 'self' && !id) {
         res.status(400).json({
           success: false,
           error: {
@@ -623,7 +678,7 @@ export class ChatController {
 
       // コンテキストタイプを検証
       const contextType = type as string;
-      const validContextTypes = ['self', 'friend', 'fortune', 'team', 'team_goal'];
+      const validContextTypes = ['self', 'friend', 'fortune'];
       if (!validContextTypes.includes(contextType)) {
         res.status(400).json({
           success: false,
@@ -640,7 +695,7 @@ export class ChatController {
       const contextDetail = await contextBuilderService.getContextDetail(
         userId, 
         contextType, 
-        contextType === ContextType.SELF ? 'current_user' : id
+        contextType === 'self' ? 'current_user' : id
       );
       
       if (!contextDetail) {
