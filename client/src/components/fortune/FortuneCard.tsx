@@ -128,7 +128,7 @@ const FortuneCard: React.FC<FortuneCardProps> = ({ fortune }) => {
             },
             // ホバー効果を完全に無効化
             hover: {
-              mode: null
+              mode: undefined
             },
             // アーク要素のスタイルをカスタマイズ
             elements: {

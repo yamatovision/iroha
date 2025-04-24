@@ -87,6 +87,62 @@ export const CONTEXT_TEMPLATES = {
 期限: {teamGoal.deadline || '未設定'}
 
 このコンテキスト情報を参考に、ユーザーの質問に対して、チーム全体の目標達成に向けたアドバイスを提供してください。
+`,
+
+  // 新しいコンテキストベースのテンプレート
+  self: `
+【個人情報コンテキスト】
+
+私は四柱推命の専門家として、あなたの命式と個人情報に基づいたアドバイスを提供します。
+
+クライアント情報:
+- 名前: {user.displayName}
+- 五行属性: {user.elementAttribute}
+- 日主: {user.dayMaster}
+- 格局: {user.kakukyoku.type}（{user.kakukyoku.strength}）
+- 用神: {user.yojin.element}（{user.yojin.tenGod}）
+- 五行バランス: 木{user.elementProfile.wood} 火{user.elementProfile.fire} 土{user.elementProfile.earth} 金{user.elementProfile.metal} 水{user.elementProfile.water}
+
+このコンテキスト情報を参考にしながら、四柱推命の専門家としての観点からクライアントの相談に応じてください。特に格局・用神の特性を考慮して、実践的なアドバイスを提供してください。
+`,
+
+  fortune: `
+【運勢情報コンテキスト】
+
+私は四柱推命の専門家として、今日の運勢に基づいたアドバイスを提供します。
+
+本日の運勢:
+- 日付: {fortuneDate}
+- 日柱情報: {dayPillar.heavenlyStem}{dayPillar.earthlyBranch}
+- ラッキーアイテム: 色/{dailyFortune.luckyItems.color}、食べ物/{dailyFortune.luckyItems.item}、飲み物/{dailyFortune.luckyItems.drink}
+
+このコンテキスト情報を参考にしながら、今日の運勢に関するアドバイスを提供してください。
+`,
+
+  friend: `
+【友人関係コンテキスト】
+
+私は四柱推命の専門家として、あなたと友人の相性に基づいたアドバイスを提供します。
+
+相談者: {user.displayName}（{user.elementAttribute}の持ち主）
+友人情報: 
+{friends}
+
+このコンテキスト情報を参考にしながら、お互いの相性や関係性についてのアドバイスを提供してください。
+`,
+
+  team: `
+【チーム情報コンテキスト】
+
+私は四柱推命の専門家として、チームの相性や協力関係に基づいたアドバイスを提供します。
+
+相談者: {user.displayName}（{user.elementAttribute}の持ち主）
+チーム情報:
+- 名前: {team.name}
+- メンバー数: {team.members.length}名
+- メンバー: {team.members}
+
+このコンテキスト情報を参考にしながら、チーム内の協力関係や相性についてのアドバイスを提供してください。
 `
 };
 
@@ -105,48 +161,80 @@ export function createContextPrompt(context: Record<string, any>): string {
       hasPersonal: CONTEXT_TEMPLATES.personal !== undefined,
       hasTeamMember: CONTEXT_TEMPLATES.team_member !== undefined,
       hasTeamGoal: CONTEXT_TEMPLATES.team_goal !== undefined,
-      hasPERSONAL: CONTEXT_TEMPLATES.PERSONAL !== undefined,
-      hasTEAM_MEMBER: CONTEXT_TEMPLATES.TEAM_MEMBER !== undefined,
-      hasTEAM_GOAL: CONTEXT_TEMPLATES.TEAM_GOAL !== undefined
+      hasSelf: CONTEXT_TEMPLATES.self !== undefined,
+      hasFortune: CONTEXT_TEMPLATES.fortune !== undefined,
+      hasFriend: CONTEXT_TEMPLATES.friend !== undefined,
+      hasTeam: CONTEXT_TEMPLATES.team !== undefined
     });
     
-    // コンテキスト情報から適切なテンプレートを選択
-    let template = '';
-    let mode = '';
+    console.log(`[${traceId}] 受信したコンテキスト情報キー:`, Object.keys(context));
     
+    // コンテキスト情報から適切なテンプレートを選択
+    let templates: string[] = [];
+    let contextTypes: string[] = [];
+    
+    // 旧モードベースの判定（後方互換性）
     if (context.targetMember) {
-      // チームメンバー相性モード - 小文字キーを優先
-      template = CONTEXT_TEMPLATES.team_member || CONTEXT_TEMPLATES.TEAM_MEMBER || '';
-      mode = 'チームメンバー相性';
-      console.log(`[${traceId}] チームメンバーモードテンプレート選択:`, {
-        source: 'chat-contexts.ts',
-        length: template.length,
-        preview: template.substring(0, 20) + '...'
-      });
+      // チームメンバー相性モード
+      templates.push(CONTEXT_TEMPLATES.team_member || '');
+      contextTypes.push('team_member');
     } else if (context.teamGoal) {
-      // チーム目標モード - 小文字キーを優先
-      template = CONTEXT_TEMPLATES.team_goal || CONTEXT_TEMPLATES.TEAM_GOAL || '';
-      mode = 'チーム目標';
-      console.log(`[${traceId}] チーム目標モードテンプレート選択:`, {
-        source: 'chat-contexts.ts',
-        length: template.length,
-        preview: template.substring(0, 20) + '...'
-      });
-    } else {
-      // 個人運勢モード（デフォルト） - 小文字キーを優先
-      template = CONTEXT_TEMPLATES.personal || CONTEXT_TEMPLATES.PERSONAL || '';
-      mode = '個人運勢';
-      console.log(`[${traceId}] 個人運勢モードテンプレート選択:`, {
-        source: 'chat-contexts.ts',
-        length: template.length,
-        preview: template.substring(0, 20) + '...'
-      });
+      // チーム目標モード
+      templates.push(CONTEXT_TEMPLATES.team_goal || '');
+      contextTypes.push('team_goal');
+    } else if (context.team && context.team.name) {
+      // チームモード
+      templates.push(CONTEXT_TEMPLATES.team || '');
+      contextTypes.push('team');
     }
     
-    console.log(`[${traceId}] 📋 プロンプトテンプレート選択: ${mode}モード`);
+    // 新しいコンテキストベースの判定
+    if (context.user && (context.user.kakukyoku || context.user.yojin)) {
+      // 自分自身の詳細情報がある場合
+      templates.push(CONTEXT_TEMPLATES.self || '');
+      contextTypes.push('self');
+    }
+    
+    if (context.dailyFortune) {
+      // 運勢情報がある場合
+      templates.push(CONTEXT_TEMPLATES.fortune || '');
+      contextTypes.push('fortune');
+    }
+    
+    if (context.friends && context.friends.length > 0) {
+      // 友達情報がある場合
+      templates.push(CONTEXT_TEMPLATES.friend || '');
+      contextTypes.push('friend');
+    }
+    
+    // テンプレートが選択されなかった場合はデフォルトの個人モード
+    if (templates.length === 0) {
+      templates.push(CONTEXT_TEMPLATES.personal || '');
+      contextTypes.push('personal');
+    }
+    
+    console.log(`[${traceId}] 📋 選択されたコンテキストタイプ: ${contextTypes.join(', ')}`);
+    
+    // 複数のテンプレートを結合
+    let combinedTemplate = '';
+    for (let i = 0; i < templates.length; i++) {
+      if (templates[i] && templates[i].trim().length > 0) {
+        combinedTemplate += `\n\n${templates[i]}`;
+      }
+    }
+    
+    // テンプレートがなければデフォルトのコンテキスト情報を提供
+    if (!combinedTemplate.trim()) {
+      combinedTemplate = `
+【基本コンテキスト情報】
+四柱推命の専門家として、以下の情報に基づいてアドバイスを提供します。
+ユーザー: ${context.user?.displayName || '不明'}
+本日の日付: ${new Date().toISOString().split('T')[0]}
+      `;
+    }
     
     // テンプレートの変数をコンテキスト情報で置換
-    let prompt = template;
+    let prompt = combinedTemplate;
     
     // 複雑なオブジェクトパスを処理するヘルパー関数
     const getNestedValue = (obj: any, path: string) => {
@@ -156,7 +244,7 @@ export function createContextPrompt(context: Record<string, any>): string {
     };
     
     // プレースホルダーを探して置換
-    const placeholders = template.match(/\{([^}]+)\}/g) || [];
+    const placeholders = combinedTemplate.match(/\{([^}]+)\}/g) || [];
     const missingPlaceholders: string[] = [];
     
     for (const placeholder of placeholders) {
@@ -166,7 +254,14 @@ export function createContextPrompt(context: Record<string, any>): string {
       if (value !== undefined) {
         // 配列の場合は箇条書きに変換
         if (Array.isArray(value)) {
-          const formattedValue = value.map(item => `- ${JSON.stringify(item)}`).join('\n');
+          const formattedValue = value.map(item => {
+            if (typeof item === 'object') {
+              // オブジェクトの場合は簡易JSONに変換
+              return `- ${Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(', ')}`;
+            } else {
+              return `- ${item}`;
+            }
+          }).join('\n');
           prompt = prompt.replace(placeholder, formattedValue);
         } else {
           prompt = prompt.replace(placeholder, String(value));

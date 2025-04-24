@@ -23,7 +23,7 @@ import {
   ExpandMore
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { ChatMode } from '../../../../shared';
+import { ChatMode } from '../../services/chat.service';
 
 // スタイル設定
 const ModeContainer = styled(Box)(({ theme }) => ({

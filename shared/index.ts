@@ -50,6 +50,7 @@
  * - 2025/04/07: Expressルーティング実装ルールを追加 (Claude)
  * - 2025/04/08: SajuProfileの削除とUserモデルへの統合 (Claude)
  * - 2025/04/12: HarmonyCompassインターフェースを追加 (Claude)
+ * - 2025/04/24: チャットコンテキスト管理システム用の型定義を追加 (Claude)
  */
 
 // API基本パス
@@ -162,7 +163,10 @@ export const CHAT = {
   SEND_MESSAGE: `${API_BASE_PATH}/chat/message`,
   GET_HISTORY: `${API_BASE_PATH}/chat/history`,
   CLEAR_HISTORY: `${API_BASE_PATH}/chat/clear`,
-  SET_CHAT_MODE: `${API_BASE_PATH}/chat/mode`,
+  
+  // 新しいコンテキスト管理APIエンドポイント
+  GET_AVAILABLE_CONTEXTS: `${API_BASE_PATH}/chat/contexts/available`,
+  GET_CONTEXT_DETAIL: `${API_BASE_PATH}/chat/contexts/detail`,
 };
 
 // ========== 友達関連 ==========
@@ -318,11 +322,13 @@ export enum GoalType {
   PERSONAL = 'personal',
 }
 
-// チャットモード
-export enum ChatMode {
-  PERSONAL = 'personal',
-  TEAM_MEMBER = 'team_member',
-  TEAM_GOAL = 'team_goal',
+// チャットコンテキストタイプ
+export enum ContextType {
+  SELF = 'self',         // 自分の情報
+  FRIEND = 'friend',     // 友達の情報
+  FORTUNE = 'fortune',   // 運勢情報
+  TEAM = 'team',         // チーム情報
+  TEAM_GOAL = 'team_goal', // チーム目標情報
 }
 
 // 五行属性
@@ -645,16 +651,15 @@ export interface ICompatibility {
   updatedAt: Date;
 }
 
-// チャットデータ
-export interface IChat {
-  id: string;
-  userId: string;
-  mode: ChatMode;
-  relatedUserId?: string; // チームメイトモード時の対象ユーザーID
-  messages: IChatMessage[];
-  contextData: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+// チャットコンテキスト情報のインターフェース
+export interface IContextItem {
+  id: string;         // 一意のID
+  type: ContextType;  // 情報の種類
+  name: string;       // 表示名
+  iconType: string;   // アイコン種類
+  color: string;      // 表示色
+  removable: boolean; // 削除可能かどうか
+  payload: any;       // 実際のデータペイロード
 }
 
 // チャットメッセージ
@@ -662,6 +667,21 @@ export interface IChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  contextItems?: {   // メッセージごとのコンテキスト情報
+    type: string;    // コンテキストの種類
+    refId?: string;  // 参照ID（友達ID、運勢タイプなど）
+    data?: any;      // 追加データ
+  }[];
+}
+
+// チャット履歴データ
+export interface IChat {
+  id: string;
+  userId: string;
+  messages: IChatMessage[];
+  lastMessageAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // 友達関係
@@ -802,19 +822,58 @@ export interface AddTeamMemberRequest {
   displayName?: string;
 }
 
-// チャットメッセージ送信リクエスト
+// チャットメッセージ送信リクエスト（コンテキストベース）
 export interface ChatMessageRequest {
   message: string;
-  mode: ChatMode;
-  relatedUserId?: string; // チームメイトモード時の対象ユーザーID
-  contextInfo?: Record<string, any>; // 追加コンテキスト情報
+  contextItems: {
+    type: ContextType;
+    id?: string;        // 友達ID、運勢タイプ（today/tomorrow）など
+    additionalInfo?: any; // 追加情報（必要に応じて）
+  }[];
 }
 
-// チャットモード設定リクエスト
-export interface ChatModeRequest {
-  mode: ChatMode;
-  relatedUserId?: string;
-  contextInfo?: Record<string, any>; // 追加コンテキスト情報
+// 利用可能なコンテキスト情報レスポンス
+export interface AvailableContextsResponse {
+  success: boolean;
+  availableContexts: {
+    self: {
+      id: string;
+      name: string;
+      iconType: string;
+      color: string;
+    };
+    fortune: {
+      id: string;
+      name: string;
+      iconType: string;
+      color: string;
+    }[];
+    friends: {
+      id: string;
+      name: string;
+      iconType: string;
+      color: string;
+      elementAttribute?: string;
+    }[];
+    teams?: {
+      id: string;
+      name: string;
+      iconType: string;
+      color: string;
+    }[];
+  };
+}
+
+// コンテキスト詳細取得リクエスト
+export interface ContextDetailRequest {
+  type: ContextType;
+  id: string;
+}
+
+// コンテキスト詳細レスポンス
+export interface ContextDetailResponse {
+  success: boolean;
+  context: IContextItem;
 }
 
 // 管理者ダッシュボードレスポンス

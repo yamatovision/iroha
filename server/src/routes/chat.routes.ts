@@ -24,9 +24,21 @@ router.get('/history', hybridAuthenticate, chatController.getHistory);
 router.delete('/clear', hybridAuthenticate, chatController.clearHistory);
 
 /**
- * チャットモードを設定するエンドポイント
+ * チャットモードを設定するエンドポイント（レガシー）
  * PUT /api/v1/chat/mode
  */
 router.put('/mode', hybridAuthenticate, chatController.setMode);
+
+/**
+ * 利用可能なコンテキスト情報を取得するエンドポイント（新規）
+ * GET /api/v1/chat/contexts/available
+ */
+router.get('/contexts/available', hybridAuthenticate, chatController.getAvailableContexts);
+
+/**
+ * コンテキスト詳細情報を取得するエンドポイント（新規）
+ * GET /api/v1/chat/contexts/detail
+ */
+router.get('/contexts/detail', hybridAuthenticate, chatController.getContextDetail);
 
 export default router;

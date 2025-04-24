@@ -120,6 +120,38 @@ export const getTestAuthHeaders = async () => {
 };
 
 /**
+ * テスト実行条件をチェックし、条件を満たさない場合はテストをスキップする
+ * 
+ * @param condition 条件式
+ * @param message スキップ時のメッセージ
+ */
+export function skipIfCondition(condition: boolean, message: string): void {
+  if (condition) {
+    console.log(`テストをスキップします: ${message}`);
+    pending(); // Jestのテストをスキップ
+  }
+}
+
+/**
+ * 非同期関数を指定時間待機する
+ * 
+ * @param ms 待機時間（ミリ秒）
+ * @returns Promiseオブジェクト
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * テスト用に一時的なObjectIDを生成
+ * 
+ * @returns MongoDBのObjectID
+ */
+export function generateRandomObjectId(): mongoose.Types.ObjectId {
+  return new mongoose.Types.ObjectId();
+}
+
+/**
  * テストの実行前にデータベースをクリーンアップする関数
  */
 export const cleanDatabase = async () => {

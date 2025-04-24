@@ -492,56 +492,171 @@ export const getCompatibilityScore = async (userId1: string, userId2: string, us
  */
 const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, friendship: any) => {
   try {
-    // 拡張相性計算サービスをインポート
-    const { enhancedCompatibilityService } = await import('../team');
+    // 拡張相性計算サービスを直接インポート - team/index.tsで正しくエクスポートされたものを使用
+    const { enhancedCompatibilityService } = await import('../team/enhanced-compatibility.service');
     
-    // 拡張相性計算を実行 - getOrCreate関数を使用
-    // クラスのプロパティ名を直接参照
-    const compatibilityDoc = await (enhancedCompatibilityService as any).getOrCreateEnhancedCompatibility(
+    // 入力データの検証
+    if (!user1._id || !user2._id) {
+      throw new Error('ユーザーIDが不正です');
+    }
+    
+    // 四柱推命データのチェック
+    if (!user1.fourPillars || !user1.fourPillars.day || !user1.fourPillars.day.heavenlyStem) {
+      throw new Error(`ユーザー1(${user1.displayName})の四柱データが不完全です`);
+    }
+    
+    if (!user2.fourPillars || !user2.fourPillars.day || !user2.fourPillars.day.heavenlyStem) {
+      throw new Error(`ユーザー2(${user2.displayName})の四柱データが不完全です`);
+    }
+    
+    // 四柱推命情報の証明要素の充実度を検証
+    // 強化されたデータ検証 - 四柱データの強弱を確認
+    if (!user1.kakukyoku || !user1.kakukyoku.strength) {
+      throw new Error(`ユーザー1(${user1.displayName})の格局データが不完全です。身強弱の情報がありません。`);
+    }
+    
+    if (!user2.kakukyoku || !user2.kakukyoku.strength) {
+      throw new Error(`ユーザー2(${user2.displayName})の格局データが不完全です。身強弱の情報がありません。`);
+    }
+    
+    // 用神嗣神情報の検証
+    if (!user1.yojin) {
+      throw new Error(`ユーザー1(${user1.displayName})の用神情報が不完全です。拡張診断に必要な情報がありません。`);
+    }
+    
+    if (!user2.yojin) {
+      throw new Error(`ユーザー2(${user2.displayName})の用神情報が不完全です。拡張診断に必要な情報がありません。`);
+    }
+    
+    console.log(`拡張相性計算を実行: ユーザー1=${user1.displayName}, ユーザー2=${user2.displayName}`);
+    
+    // 拡張相性計算を実行
+    const compatibilityDoc = await enhancedCompatibilityService.getOrCreateEnhancedCompatibility(
       user1._id.toString(),
       user2._id.toString()
     );
     
+    console.log('拡張相性計算完了。enhancedDetailsを確認:', compatibilityDoc.enhancedDetails ? '存在します' : '存在しません');
+    
+    // 拡張相性診断の結果を検証
+    if (!compatibilityDoc.enhancedDetails) {
+      throw new Error('拡張相性診断結果のenhancedDetailsが取得できませんでした。');
+    }
+    
+    // 必須データの存在確認
+    if (!compatibilityDoc.enhancedDetails.yinYangBalance) {
+      throw new Error('拡張相性診断の陰陽バランス情報が不足しています。');
+    }
+    
+    if (!compatibilityDoc.enhancedDetails.strengthBalance) {
+      throw new Error('拡張相性診断の身強弱バランス情報が不足しています。');
+    }
+    
+    // 日支関係のチェック
+    if (!compatibilityDoc.enhancedDetails.dayBranchRelationship || 
+        typeof compatibilityDoc.enhancedDetails.dayBranchRelationship !== 'object' ||
+        Object.keys(compatibilityDoc.enhancedDetails.dayBranchRelationship).length === 0 ||
+        !compatibilityDoc.enhancedDetails.dayBranchRelationship.score ||
+        !compatibilityDoc.enhancedDetails.dayBranchRelationship.relationship) {
+      throw new Error('拡張相性診断の日支関係情報が不足しています。');
+    }
+    
+    // 日干干合のチェック
+    if (!compatibilityDoc.enhancedDetails.dayGanCombination || 
+        typeof compatibilityDoc.enhancedDetails.dayGanCombination !== 'object' ||
+        Object.keys(compatibilityDoc.enhancedDetails.dayGanCombination).length === 0 ||
+        compatibilityDoc.enhancedDetails.dayGanCombination.score === undefined ||
+        compatibilityDoc.enhancedDetails.dayGanCombination.isGangou === undefined) {
+      throw new Error('拡張相性診断の日干干合情報が不足しています。');
+    }
+    
+    // 用神情報のチェック
+    if (!compatibilityDoc.enhancedDetails.usefulGods) {
+      throw new Error('拡張相性診断の用神・喜神情報が不足しています。');
+    }
+    
     // 結果を保存
     if (friendship) {
       friendship.compatibilityScore = compatibilityDoc.compatibilityScore;
-      friendship.enhancedDetails = compatibilityDoc.enhancedDetails;
       friendship.relationshipType = compatibilityDoc.relationshipType;
+      friendship.relationship = 'enhanced'; // 拡張相性計算であることを示す
+      
+      // enhancedDetailsを明示的に各フィールドごとにコピー
+      console.log('コピー前のenhancedDetails:', JSON.stringify(compatibilityDoc.enhancedDetails, null, 2));
+      
+      // デバッグ出力：問題のフィールドを詳細にログ
+      console.log('dayBranchRelationship:', {
+        exists: !!compatibilityDoc.enhancedDetails.dayBranchRelationship,
+        type: typeof compatibilityDoc.enhancedDetails.dayBranchRelationship,
+        value: compatibilityDoc.enhancedDetails.dayBranchRelationship,
+        score: compatibilityDoc.enhancedDetails.dayBranchRelationship?.score,
+        relationship: compatibilityDoc.enhancedDetails.dayBranchRelationship?.relationship
+      });
+      
+      console.log('dayGanCombination:', {
+        exists: !!compatibilityDoc.enhancedDetails.dayGanCombination,
+        type: typeof compatibilityDoc.enhancedDetails.dayGanCombination,
+        value: compatibilityDoc.enhancedDetails.dayGanCombination,
+        score: compatibilityDoc.enhancedDetails.dayGanCombination?.score,
+        isGangou: compatibilityDoc.enhancedDetails.dayGanCombination?.isGangou
+      });
+      
+      // 明示的に各フィールドごとに値を設定して保存（深いコピー）
+      friendship.enhancedDetails = {
+        yinYangBalance: compatibilityDoc.enhancedDetails.yinYangBalance,
+        strengthBalance: compatibilityDoc.enhancedDetails.strengthBalance,
+        dayBranchRelationship: {
+          score: compatibilityDoc.enhancedDetails.dayBranchRelationship.score,
+          relationship: compatibilityDoc.enhancedDetails.dayBranchRelationship.relationship
+        },
+        usefulGods: compatibilityDoc.enhancedDetails.usefulGods,
+        dayGanCombination: {
+          score: compatibilityDoc.enhancedDetails.dayGanCombination.score,
+          isGangou: compatibilityDoc.enhancedDetails.dayGanCombination.isGangou
+        },
+        relationshipType: compatibilityDoc.enhancedDetails.relationshipType
+      };
+      
+      // コピー後の値をログ出力
+      console.log('コピー後のenhancedDetails:', JSON.stringify(friendship.enhancedDetails, null, 2));
+      
       await friendship.save();
     }
     
-    // 相性の詳細説明を取得
-    const { compatibilityService } = await import('../team');
-    const details = await compatibilityService.generateDetailDescription(
-      user1.displayName || '友達1',
-      user2.displayName || '友達2',
-      user1.elementAttribute || 'water',
-      user2.elementAttribute || 'water',
-      'neutral' // 拡張相性の場合でも基本関係タイプを指定
-    );
-    
-    // レスポンスの作成
+    // チーム機能と同様のシンプルな形式で結果を返す
     return {
-      score: compatibilityDoc.compatibilityScore,
-      friendship: friendship ? friendship._id : null,
-      relationshipType: compatibilityDoc.relationshipType || '一般的な関係',
+      id: friendship ? friendship._id : null,
       users: [
         {
-          userId: user1._id,
+          id: user1._id,
           displayName: user1.displayName,
-          elementAttribute: user1.elementAttribute
+          element: user1.elementAttribute
         },
         {
-          userId: user2._id,
+          id: user2._id,
           displayName: user2.displayName,
-          elementAttribute: user2.elementAttribute
+          element: user2.elementAttribute
         }
       ],
-      details: details,
-      description: compatibilityDoc.detailDescription || details.detailDescription || 'ご両名の四柱推命による拡張相性診断結果です',
-      teamInsight: details.teamInsight,
-      collaborationTips: details.collaborationTips,
-      enhancedDetails: compatibilityDoc.enhancedDetails
+      score: compatibilityDoc.compatibilityScore,
+      relationshipType: compatibilityDoc.relationshipType,
+      detailDescription: compatibilityDoc.detailDescription,
+      teamInsight: compatibilityDoc.teamInsight || '',
+      collaborationTips: compatibilityDoc.collaborationTips || [],
+      enhancedDetails: {
+        yinYangBalance: compatibilityDoc.enhancedDetails.yinYangBalance,
+        strengthBalance: compatibilityDoc.enhancedDetails.strengthBalance,
+        dayBranchRelationship: {
+          score: compatibilityDoc.enhancedDetails.dayBranchRelationship.score,
+          relationship: compatibilityDoc.enhancedDetails.dayBranchRelationship.relationship
+        },
+        usefulGods: compatibilityDoc.enhancedDetails.usefulGods,
+        dayGanCombination: {
+          score: compatibilityDoc.enhancedDetails.dayGanCombination.score,
+          isGangou: compatibilityDoc.enhancedDetails.dayGanCombination.isGangou
+        },
+        relationshipType: compatibilityDoc.enhancedDetails.relationshipType
+      }
     };
   } catch (error) {
     console.error('拡張相性計算エラー:', error);
@@ -553,21 +668,26 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
       await friendship.save();
     }
     
+    // エラー時もチーム機能と同様の形式で返す
     return {
-      ...result,
+      id: friendship ? friendship._id : null,
       users: [
         {
-          userId: user1._id,
+          id: user1._id,
           displayName: user1.displayName,
-          elementAttribute: user1.elementAttribute
+          element: user1.elementAttribute
         },
         {
-          userId: user2._id,
+          id: user2._id,
           displayName: user2.displayName,
-          elementAttribute: user2.elementAttribute
+          element: user2.elementAttribute
         }
       ],
-      friendship: friendship ? friendship._id : null,
+      score: result.score,
+      relationshipType: result.relationship || '一般的な関係',
+      detailDescription: result.description || '',
+      teamInsight: '',
+      collaborationTips: [],
       errorMessage: '拡張相性診断の実行に失敗しました。基本的な相性情報を表示しています。'
     };
   }

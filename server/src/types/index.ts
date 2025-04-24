@@ -125,13 +125,40 @@ export enum ChatMode {
   TEAM_GOAL = 'team_goal',
 }
 
-export interface ChatMessageRequest {
-  message: string;
-  mode: ChatMode;
-  relatedUserId?: string;
-  contextInfo?: Record<string, any>;
+// コンテキストタイプの列挙型（モード置き換え用）
+export enum ContextType {
+  SELF = 'self',         // 自分の情報
+  FRIEND = 'friend',     // 友達の情報
+  FORTUNE = 'fortune',   // 運勢情報
+  TEAM = 'team',         // チーム情報
+  TEAM_GOAL = 'team_goal', // チーム目標情報
 }
 
+// コンテキスト情報アイテムの基本型
+export interface IContextItem {
+  id: string;         // 一意のID
+  type: string;       // 情報の種類 (旧: ContextType)
+  name: string;       // 表示名
+  iconType: string;   // アイコン種類
+  color: string;      // 表示色
+  removable: boolean; // 削除可能かどうか
+  payload?: any;      // 実際のデータペイロード
+}
+
+// 古いモードベースのリクエスト型（後方互換性）
+export interface ChatMessageRequest {
+  message: string;
+  mode?: ChatMode;
+  relatedUserId?: string;
+  contextInfo?: Record<string, any>;
+  contextItems?: {
+    type: ContextType;
+    id?: string;
+    additionalInfo?: any;
+  }[];
+}
+
+// 古いモード切替リクエスト型（後方互換性）
 export interface ChatModeRequest {
   mode: ChatMode;
   relatedUserId?: string;

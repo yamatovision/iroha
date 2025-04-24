@@ -28,16 +28,10 @@
 - **環境変数ルール**: すべての環境変数はプロジェクトルートの`.env`ファイルに定義されています
 - **環境変数の優先順位**: プロジェクトルート > サブディレクトリ > サンプル値
 - **認証情報**:
-  - Firebase認証情報は`.env`ファイルに定義されています:
-    - **FIREBASE_SERVICE_ACCOUNT_PATH**: Firebase認証用JSONキーファイルの絶対パス（必須）
-      - `/Users/tatsuya/Desktop/システム開発/DailyFortune/docs/scopes/sys-76614112762438486420044584-firebase-adminsdk-fbsvc-cfd0a33bc9.json`を使用してください
-    - **FIREBASE_PROJECT_ID**: Firebaseプロジェクトのプロジェクトコード
-    - **FIREBASE_CLIENT_EMAIL**: サービスアカウントのメールアドレス
+  - JWT認証情報は`.env`ファイルに定義されています:
+    - **JWT_ACCESS_SECRET**: JWT認証用アクセストークンシークレットキー
+    - **JWT_REFRESH_SECRET**: JWT認証用リフレッシュトークンシークレットキー
   - **⚠️ 重要**: テスト環境でも本番環境と同じ認証情報を使用します。ダミー値やモック値を使用しないでください。
-  - **テスト用認証情報**:
-    - メールアドレス: `shiraishi.tatsuya@mikoto.co.jp`
-    - パスワード: `aikakumei`
-    - 権限: `super_admin`
   - MongoDB接続情報も`.env`ファイルで定義（MONGODB_URI）
 
 ### 1.1.1 秘密鍵とAPIキーの安全な取り扱い
@@ -146,13 +140,13 @@ npm test -- --testPathPattern=src/tests/admin/real-auth-fortune-update.test.ts
 npm test -- --testPathPattern=src/tests/admin/real-auth-fortune-logs.test.ts
 npm test -- --testPathPattern=src/tests/admin/real-auth-fortune-run.test.ts
 
-# 実際の認証情報を使用してトークンを取得
-node scripts/get-token.js shiraishi.tatsuya@mikoto.co.jp aikakumei
+# 実際の認証情報を使用してJWTトークンを取得
+node scripts/get-token.js <MongoDB ユーザーID> [権限]
 ```
 
 #### 2.3.1 管理者API実認証テスト
 
-管理者APIテストでは実際のFirebase認証を使用する新しいアプローチを採用しています：
+管理者APIテストでは実際のJWT認証を使用する新しいアプローチを採用しています：
 
 - **実認証テストファイル**:
   - `real-auth-users.test.ts`: ユーザー一覧取得API
@@ -162,7 +156,7 @@ node scripts/get-token.js shiraishi.tatsuya@mikoto.co.jp aikakumei
   - `real-auth-fortune-run.test.ts`: 手動運勢更新実行API
 
 - **認証方法**:
-  - テスト認証情報：`shiraishi.tatsuya@mikoto.co.jp`/`aikakumei`（SuperAdmin権限）
+  - MongoDBに保存されている実際のユーザーIDを使用
   - 専用のテストヘルパー：`withRealAuth()` 関数を使用してリクエストヘッダーに認証情報を追加
   - 認証トークン取得ツール：`get-token.js`で実際の認証トークンを取得可能
 
@@ -189,7 +183,7 @@ node scripts/get-token.js shiraishi.tatsuya@mikoto.co.jp aikakumei
 | 問題 | 解決策 |
 |------|--------|
 | MongoDB接続エラー | `.env`のMONGODB_URIを確認 |
-| Firebase認証エラー | `.env`のFIREBASE_*変数を確認、特にFIREBASE_PRIVATE_KEYの改行文字(`\\n`) |
+| JWT認証エラー | `.env`のJWT_ACCESS_SECRET、JWT_REFRESH_SECRETを確認 |
 | ポート使用中エラー | `lsof -i :8080`で確認し`kill -9 <PID>`で解放 |
 | データモデル型エラー | モデル定義とテストコードの型一致を確認 |
 | コントローラーエラー | `UserRole`などの定義を確認。auth.middleware.tsから正しくインポートしているか確認 |
@@ -233,7 +227,7 @@ Gitプッシュが「リポジトリルール違反」で拒否される場合�
 1. TypeScriptエラーは0か（`npx tsc --noEmit`を実行して確認）
 2. 環境変数は正しく読み込まれているか
 3. MongoDB接続は成功しているか
-4. Firebase認証情報は正しいか
+4. JWT認証情報は正しいか
 5. ビルドは最新か（`npm run build`を実行済みか）
 6. 既存のプロセスと競合していないか
 
@@ -248,7 +242,7 @@ Gitプッシュが「リポジトリルール違反」で拒否される場合�
 ## 実行環境
 - サーバー状態: [起動済み/停止中]
 - 使用DB: [本番/テスト]
-- 認証方法: [Firebase/テスト用]
+- 認証方法: [JWT認証/テスト用]
 
 ## 実行手順
 1. [手順1]
@@ -398,7 +392,6 @@ AIが実行した操作の記録:
 ### 7.2 重要なモデルと関連
 
 - `User`: ユーザー情報
-- `SajuProfile`: 四柱推命プロフィール
 - `DailyFortune`: 日々の運勢データ
 - `DailyFortuneUpdateLog`: 運勢更新ログ
 - `Team`: チーム情報
@@ -424,12 +417,12 @@ npm run db:reset:test  # ※実装必要
 - 認証関連の問題: [担当者名] ([連絡先])
 - データモデル・API: [担当者名] ([連絡先])
 
-### 8.3 管理者API実証試験ツール
+### 8.3 実認証テスト用ツール
 
 **認証トークン取得**:
 ```bash
 cd /Users/tatsuya/Desktop/システム開発/DailyFortune/server
-node scripts/get-token.js shiraishi.tatsuya@mikoto.co.jp aikakumei
+node scripts/get-token.js <MongoDB ユーザーID> [権限]
 ```
 
 **管理者APIテスト**:
@@ -549,19 +542,18 @@ cd server && node scripts/check-mongodb.js
 cd server && node scripts/check-mongodb-collections.js users
 
 # データ型を詳細に確認（_idの型、参照の型を把握）
-cd server && node -e "const mongoose = require('mongoose'); mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://lisence:FhpQAu5UPwjm0L1J@motherprompt-cluster.np3xp.mongodb.net/dailyfortune').then(async () => { console.log('Connected to MongoDB'); const user = await mongoose.connection.collection('users').findOne({}); console.log('User structure:', JSON.stringify({id_type: typeof user._id, keys: Object.keys(user)})); mongoose.disconnect(); })"
+cd server && node -e "const mongoose = require('mongoose'); mongoose.connect(process.env.MONGODB_URI).then(async () => { console.log('Connected to MongoDB'); const user = await mongoose.connection.collection('users').findOne({}); console.log('User structure:', JSON.stringify({id_type: typeof user._id, keys: Object.keys(user)})); mongoose.disconnect(); })"
 
 # 各種データ確認コマンド
-cd server && node scripts/check-user-info.ts "Bs2MacLtK1Z1fVnau2dYPpsWRpa2"
-cd server && node scripts/check-saju-profiles.ts "Bs2MacLtK1Z1fVnau2dYPpsWRpa2"
-cd server && node scripts/check-team-member-cards.ts "67f4fe4bfe04b371f21576f7" "Bs2MacLtK1Z1fVnau2dYPpsWRpa2"
+cd server && node scripts/check-user-info.ts "<ユーザーID>"
+cd server && node scripts/check-teams.js "<チームID>"
 ```
 
 **テスト実装前のチェックリスト**:
 
 1. [ ] データベース接続確認: `node scripts/check-mongodb.js`
 2. [ ] テスト対象コレクション構造確認: `node scripts/check-mongodb-collections.js コレクション名`
-3. [ ] 実データの_id型確認: String型かObjectId型か
+3. [ ] 実データの_id型確認: ObjectId型か
 4. [ ] テスト対象ユーザー確認: 実際に存在するユーザーを特定
 5. [ ] 関連データ確認: テスト対象データに関連する他のデータを確認
 
@@ -654,7 +646,7 @@ checkData();
 
 1. **接続テスト**: データベースに接続できるか確認
    ```bash
-   node -e "require('mongoose').connect(process.env.MONGODB_URI || 'mongodb+srv://lisence:FhpQAu5UPwjm0L1J@motherprompt-cluster.np3xp.mongodb.net/dailyfortune').then(() => console.log('成功')).catch(e => console.error('接続エラー:', e))"
+   node -e "require('mongoose').connect(process.env.MONGODB_URI).then(() => console.log('成功')).catch(e => console.error('接続エラー:', e))"
    ```
 
 2. **データ存在確認**: テストに必要なデータが存在するか確認
@@ -666,7 +658,7 @@ checkData();
 3. **データ構造確認**: 特にIDフィールドの型確認
    ```bash
    # シンプルなデータ構造確認
-   node -e "const mongoose=require('mongoose'); mongoose.connect(process.env.MONGODB_URI||'mongodb+srv://lisence:FhpQAu5UPwjm0L1J@motherprompt-cluster.np3xp.mongodb.net/dailyfortune').then(async()=>{const d=await mongoose.connection.collection('users').findOne({});console.log({_id_type:typeof d._id,_id:d._id,fields:Object.keys(d)});mongoose.disconnect()})"
+   node -e "const mongoose=require('mongoose'); mongoose.connect(process.env.MONGODB_URI).then(async()=>{const d=await mongoose.connection.collection('users').findOne({});console.log({_id_type:typeof d._id,_id:d._id,fields:Object.keys(d)});mongoose.disconnect()})"
    ```
 
 4. **テスト前提条件確認**: テストが期待するデータ状態を確認
@@ -695,7 +687,4 @@ DB-TDDアプローチでは、データ理解を最優先することで、堅�
 
 **注意**: このガイドラインは継続的に更新されます。最新バージョンを参照してください。
 
-**最終更新**: 2025-04-13
-
-
- モックデータを作る前に　とありますがこれはデータベースにモックデータを入れるということですか？
+**最終更新**: 2025-04-24

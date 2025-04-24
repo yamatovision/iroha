@@ -1,83 +1,124 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, CircularProgress } from '@mui/material';
-import { ChatMode } from '../../../../shared';
+import { Box, Typography, CircularProgress, Badge, IconButton, Tooltip } from '@mui/material';
+import { People } from '@mui/icons-material';
+import { ContextType, IContextItem } from '../../../../shared';
 import { chatService } from '../../services/chat.service';
-import ChatModeSelector from './ChatModeSelector';
+import { contextService } from '../../services/context.service';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
-import MemberSelector from './MemberSelector';
+import ChatContextPills from './ChatContextPills';
+import ChatContextSelector from './ChatContextSelector';
+import ChatContextDisplay from './ChatContextDisplay';
 
 // メッセージの型定義
 export interface ChatMessageType {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  contextItems?: {
+    type: string;
+    refId?: string;
+    data?: any;
+  }[];
 }
 
 // チャットコンポーネントのプロパティ
 interface ChatContainerProps {
-  initialMode?: ChatMode;
   onBack?: () => void;
   fullscreen?: boolean;
+  initialMode?: any; // ChatModeを使用する予定がある場合の対応
 }
 
 const ChatContainer: React.FC<ChatContainerProps> = ({
-  // 運勢相談モードをデフォルトに戻す
-  initialMode = ChatMode.PERSONAL,
   onBack,
-  fullscreen = false
+  fullscreen = false,
+  initialMode
 }) => {
   // 状態管理
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ChatMode>(initialMode);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [showMemberSelector, setShowMemberSelector] = useState<boolean>(false);
+  const [activeContexts, setActiveContexts] = useState<IContextItem[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
+  const [showContextSelector, setShowContextSelector] = useState<boolean>(false);
+  const [showContextDetail, setShowContextDetail] = useState<boolean>(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 初回ロード時にウェルカムメッセージを表示
+  // 初回ロード時にチャットを初期化
   useEffect(() => {
     const initializeChat = async () => {
       try {
         setIsLoading(true);
         
-        console.log('チャット初期化開始 - モード:', mode);
+        console.log('コンテキストベースチャットの初期化開始');
         
-        // モードが未設定・未定義の場合はデフォルトのモードに設定
-        const chatMode = mode || ChatMode.PERSONAL;
+        // 初期コンテキスト（自分の情報）を取得
+        const contexts = await contextService.getAvailableContexts();
+        if (contexts.self) {
+          await contextService.addContext(contexts.self);
+          setActiveContexts([contexts.self]);
+        }
         
-        // モードを設定して初期メッセージを取得
-        const response = await chatService.setMode(chatMode);
+        // チャット履歴を取得
+        const historyResponse = await chatService.getHistory();
+        if (historyResponse.chatHistories && historyResponse.chatHistories.length > 0) {
+          const latestHistory = historyResponse.chatHistories[0];
+          setChatId(latestHistory.id);
+          
+          // 最新の履歴からメッセージを取得
+          if (latestHistory.messages && latestHistory.messages.length > 0) {
+            setMessages(latestHistory.messages.map(msg => ({
+              role: msg.role,
+              content: msg.content,
+              timestamp: msg.timestamp,
+              contextItems: msg.contextItems
+            })));
+          } else {
+            // 履歴がない場合はウェルカムメッセージを表示
+            setMessages([{
+              role: 'assistant',
+              content: 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。',
+              timestamp: new Date().toISOString()
+            }]);
+          }
+        } else {
+          // 履歴がない場合はウェルカムメッセージを表示
+          setMessages([{
+            role: 'assistant',
+            content: 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。',
+            timestamp: new Date().toISOString()
+          }]);
+        }
         
-        // 初期メッセージ - AIからのウェルカムメッセージのみを表示
-        setMessages([{
-          role: 'assistant',
-          content: response.welcomeMessage,
-          timestamp: new Date().toISOString()
-        }]);
-        
-        setChatId(response.chatHistory.id);
-        console.log('チャット初期化完了:', { chatId: response.chatHistory.id, mode: chatMode });
+        console.log('チャット初期化完了');
       } catch (error: any) {
         console.error('Chat initialization error:', error);
-        // エラーメッセージをより詳細に
         setError(error.message || 'チャットの初期化に失敗しました。');
         
-        // エラー時はフォールバックとして運勢相談モードを試す
-        if (mode !== ChatMode.PERSONAL) {
-          console.log('フォールバック: 運勢相談モードで再試行');
-          setMode(ChatMode.PERSONAL);
-        }
+        // エラー時も最低限のメッセージを表示
+        setMessages([{
+          role: 'assistant',
+          content: 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。',
+          timestamp: new Date().toISOString()
+        }]);
       } finally {
         setIsLoading(false);
       }
     };
     
     initializeChat();
-  }, [mode]); // モード変更時にも再初期化するように修正
+  }, []);
+
+  // アクティブコンテキストが変更されたときに更新
+  useEffect(() => {
+    const updateActiveContexts = async () => {
+      const contexts = contextService.getActiveContexts();
+      setActiveContexts(contexts);
+    };
+    
+    updateActiveContexts();
+  }, []);
 
   // メッセージリストの末尾に自動スクロール
   useEffect(() => {
@@ -86,68 +127,31 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     }
   }, [messages]);
 
-  // モード変更ハンドラー
-  const handleModeChange = async (newMode: ChatMode) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // チームメンバーモードの場合、メンバーセレクターを表示
-      if (newMode === ChatMode.TEAM_MEMBER) {
-        setShowMemberSelector(true);
-        setMode(newMode);
-        return;
-      }
-      
-      // それ以外のモードの場合、APIを呼び出して切り替え
-      const contextInfo = (newMode as string) === ChatMode.TEAM_MEMBER && selectedMemberId
-        ? { memberId: selectedMemberId }
-        : undefined;
-      
-      const response = await chatService.setMode(newMode, contextInfo);
-      
-      // AIからのウェルカムメッセージのみを表示
-      setMessages([{
-        role: 'assistant',
-        content: response.welcomeMessage,
-        timestamp: new Date().toISOString()
-      }]);
-      
-      setChatId(response.chatHistory.id);
-      setMode(newMode);
-      setShowMemberSelector(false);
-    } catch (error: any) {
-      console.error('Mode change error:', error);
-      setError(error.message || 'モードの変更に失敗しました。');
-    } finally {
-      setIsLoading(false);
-    }
+  // コンテキスト追加ボタンクリックハンドラー
+  const handleContextButtonClick = () => {
+    setShowContextSelector(true);
   };
 
-  // メンバー選択ハンドラー
-  const handleMemberSelect = async (memberId: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await chatService.setMode(ChatMode.TEAM_MEMBER, { memberId });
-      
-      // AIからのウェルカムメッセージのみを表示
-      setMessages([{
-        role: 'assistant',
-        content: response.welcomeMessage,
-        timestamp: new Date().toISOString()
-      }]);
-      
-      setChatId(response.chatHistory.id);
-      setSelectedMemberId(memberId);
-      setShowMemberSelector(false);
-    } catch (error: any) {
-      console.error('Member selection error:', error);
-      setError(error.message || 'メンバーの選択に失敗しました。');
-    } finally {
-      setIsLoading(false);
-    }
+  // コンテキストセレクターを閉じるハンドラー
+  const handleCloseContextSelector = () => {
+    setShowContextSelector(false);
+  };
+
+  // コンテキスト選択ハンドラー
+  const handleSelectContext = async (context: IContextItem) => {
+    const updatedContexts = await contextService.addContext(context);
+    setActiveContexts([...updatedContexts]);
+  };
+
+  // コンテキスト削除ハンドラー
+  const handleRemoveContext = (contextId: string) => {
+    const updatedContexts = contextService.removeContext(contextId);
+    setActiveContexts([...updatedContexts]);
+  };
+
+  // コンテキスト詳細表示ハンドラー
+  const handleToggleContextDetail = () => {
+    setShowContextDetail(!showContextDetail);
   };
 
   // ストリーミングコンテンツを保持するためのRef
@@ -158,16 +162,21 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     if (!message.trim()) return;
     
     try {
-      // ユーザーのメッセージをUIに表示しない（直接APIに送信するのみ）
+      // ユーザーメッセージをUIに追加
+      const userMessage: ChatMessageType = {
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
       setIsLoading(true);
       setError(null);
       
-      // APIを呼び出してAIレスポンスを取得
-      const contextInfo = mode === ChatMode.TEAM_MEMBER && selectedMemberId
-        ? { memberId: selectedMemberId }
-        : undefined;
+      // コンテキスト情報をリクエスト用に変換
+      const contextItems = contextService.getContextItemsForRequest();
       
-      // ストリーミング用の初期メッセージを作成
+      // ストリーミング用の初期AIメッセージを作成
       const timestamp = new Date().toISOString();
       const aiMessage: ChatMessageType = {
         role: 'assistant',
@@ -178,7 +187,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       // ストリーミング開始前にコンテンツをリセット
       streamContentRef.current = '';
       
-      // メッセージリストに空のメッセージを追加
+      // メッセージリストにユーザーメッセージとAIの空メッセージを追加
       setMessages(prev => [...prev, aiMessage]);
       
       // ストリーミングチャンク受信時のコールバックを設定
@@ -199,7 +208,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       });
       
       // ストリーミングでメッセージを送信
-      const response = await chatService.sendMessage(message, mode, contextInfo, true);
+      const response = await chatService.sendMessage(message, contextItems, true);
       
       // ストリーミングが完了したら、コールバックをクリア
       chatService.clearStreamChunkCallback();
@@ -223,23 +232,19 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       setIsLoading(true);
       setError(null);
       
-      await chatService.clearHistory({ mode });
+      await chatService.clearHistory();
       
-      // モードを再設定して新しいチャットを開始
-      const response = await chatService.setMode(mode, 
-        mode === ChatMode.TEAM_MEMBER && selectedMemberId 
-          ? { memberId: selectedMemberId } 
-          : undefined
-      );
-      
-      // AIからのウェルカムメッセージのみを表示
+      // ウェルカムメッセージを表示
       setMessages([{
         role: 'assistant',
-        content: response.welcomeMessage,
+        content: 'こんにちは。今日の運勢や個人的な質問について相談したいことがあれば、お気軽にお尋ねください。',
         timestamp: new Date().toISOString()
       }]);
       
-      setChatId(response.chatHistory.id);
+      // コンテキストもクリア（削除不可のものは残す）
+      const remainingContexts = contextService.clearContexts();
+      setActiveContexts([...remainingContexts]);
+      
     } catch (error: any) {
       console.error('Clear chat error:', error);
       setError(error.message || 'チャットのクリアに失敗しました。');
@@ -272,18 +277,69 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         })
       }}
     >
-      {/* モードセレクター */}
-      <ChatModeSelector 
-        currentMode={mode} 
-        onModeChange={handleModeChange}
-        onBack={onBack}
-        onClearChat={handleClearChat}
-      />
+      {/* ヘッダー */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 1.5,
+          bgcolor: 'primary.main',
+          color: 'white',
+        }}
+      >
+        {/* 戻るボタン */}
+        {onBack && (
+          <IconButton 
+            color="inherit" 
+            onClick={onBack}
+            size="small"
+          >
+            <span className="material-icons">arrow_back</span>
+          </IconButton>
+        )}
+        
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            flexGrow: 1, 
+            textAlign: onBack ? 'center' : 'left',
+            ml: onBack ? 0 : 1,
+            fontSize: '1.125rem',
+          }}
+        >
+          運勢相談
+        </Typography>
+        
+        {/* コンテキスト詳細ボタン */}
+        <Tooltip title="コンテキスト詳細を表示">
+          <Badge
+            badgeContent={activeContexts.length}
+            color="secondary"
+            overlap="circular"
+            sx={{
+              '& .MuiBadge-badge': {
+                backgroundColor: '#4caf50',
+                color: 'white',
+              }
+            }}
+          >
+            <IconButton
+              color="inherit"
+              onClick={handleToggleContextDetail}
+              size="small"
+            >
+              <People />
+            </IconButton>
+          </Badge>
+        </Tooltip>
+      </Box>
       
-      {/* メンバーセレクター（チームメンバーモード時のみ表示） */}
-      {showMemberSelector && (
-        <MemberSelector onMemberSelect={handleMemberSelect} />
-      )}
+      {/* コンテキストピル表示 */}
+      <ChatContextPills
+        activeContexts={activeContexts}
+        onRemoveContext={handleRemoveContext}
+      />
       
       {/* エラーメッセージ */}
       {error && (
@@ -308,7 +364,25 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       {/* 入力フォーム */}
       <ChatInput 
         onSendMessage={handleSendMessage} 
-        disabled={isLoading || showMemberSelector}
+        disabled={isLoading}
+        onContextButtonClick={handleContextButtonClick}
+        activeContexts={activeContexts}
+      />
+      
+      {/* コンテキスト選択ポップアップ */}
+      {showContextSelector && (
+        <ChatContextSelector
+          onSelectContext={handleSelectContext}
+          onClose={handleCloseContextSelector}
+          activeContextIds={activeContexts.map(c => c.id)}
+        />
+      )}
+      
+      {/* コンテキスト詳細表示 */}
+      <ChatContextDisplay
+        open={showContextDetail}
+        onClose={handleToggleContextDetail}
+        contexts={activeContexts}
       />
     </Box>
   );

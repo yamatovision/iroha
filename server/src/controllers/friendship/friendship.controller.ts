@@ -217,7 +217,7 @@ export const getCompatibility = async (req: AuthRequest, res: Response, next: Ne
     const compatibilityData = await friendshipService.getCompatibilityScore(userId, id, false);
     res.status(200).json({
       success: true,
-      data: compatibilityData
+      compatibility: compatibilityData
     });
   } catch (error) {
     next(error);
@@ -239,11 +239,14 @@ export const getEnhancedCompatibility = async (req: AuthRequest, res: Response, 
 
     // 拡張アルゴリズムを使用して相性情報を取得
     const compatibilityData = await friendshipService.getCompatibilityScore(userId, id, true);
+    
+    // チーム機能と同様のシンプルな形式でレスポンスを返す
     res.status(200).json({
       success: true,
-      data: compatibilityData
+      compatibility: compatibilityData
     });
   } catch (error) {
+    console.error('拡張相性診断API呼び出しエラー:', error);
     next(error);
   }
 };

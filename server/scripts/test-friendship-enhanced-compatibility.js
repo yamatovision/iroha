@@ -25,7 +25,7 @@ const testType = args[2] || 'all'; // 'basic', 'enhanced', 'all'
 async function checkDatabaseEntities() {
   try {
     console.log('MongoDB接続を試みます...');
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/dailyfortune');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://lisence:FhpQAu5UPwjm0L1J@motherprompt-cluster.np3xp.mongodb.net/dailyfortune');
     console.log('MongoDB接続成功');
 
     // ユーザーを確認
@@ -123,10 +123,16 @@ async function testEnhancedCompatibilityAPI(token) {
 
     console.log('拡張相性診断APIのレスポンス:');
     console.log('- 成功:', response.data.success);
+    console.log('- レスポンス構造:', JSON.stringify(Object.keys(response.data), null, 2));
     
+    // デバッグ用に完全なレスポンスを表示
+    console.log('\n完全なレスポンス構造:');
+    console.log(JSON.stringify(response.data, null, 2));
+    
+    // data キーの存在をチェック
     if (response.data.success && response.data.data) {
       const data = response.data.data;
-      console.log('\n拡張相性情報:');
+      console.log('\n拡張相性情報 (data キー経由):');
       console.log(`- 相性スコア: ${data.score}`);
       console.log(`- 関係タイプ: ${data.relationshipType || 'N/A'}`);
       console.log(`- ユーザー1: ${data.users[0].displayName} (${data.users[0].elementAttribute})`);
@@ -156,8 +162,41 @@ async function testEnhancedCompatibilityAPI(token) {
       } else {
         console.warn('警告: 拡張詳細情報が含まれていません');
       }
+    }
+    
+    // compatibility キーの存在をチェック
+    if (response.data.success && response.data.compatibility) {
+      const data = response.data.compatibility;
+      console.log('\n拡張相性情報 (compatibility キー経由):');
+      console.log(`- 相性スコア: ${data.score}`);
+      console.log(`- 関係タイプ: ${data.relationshipType || 'N/A'}`);
+      console.log(`- ユーザー1: ${data.users[0].displayName} (${data.users[0].elementAttribute})`);
+      console.log(`- ユーザー2: ${data.users[1].displayName} (${data.users[1].elementAttribute})`);
+      console.log(`- 詳細説明: ${data.detailDescription || 'N/A'}`);
       
-      return data;
+      // 拡張詳細情報を表示
+      if (data.enhancedDetails) {
+        console.log('\n拡張詳細情報:');
+        console.log(`- 陰陽バランス: ${data.enhancedDetails.yinYangBalance}`);
+        console.log(`- 身強弱バランス: ${data.enhancedDetails.strengthBalance}`);
+        if (data.enhancedDetails.dayBranchRelationship) {
+          console.log(`- 日支関係: ${data.enhancedDetails.dayBranchRelationship.relationship} (${data.enhancedDetails.dayBranchRelationship.score}点)`);
+        }
+        console.log(`- 用神・喜神の評価: ${data.enhancedDetails.usefulGods}`);
+        if (data.enhancedDetails.dayGanCombination) {
+          console.log(`- 日干干合: ${data.enhancedDetails.dayGanCombination.isGangou ? 'あり' : 'なし'} (${data.enhancedDetails.dayGanCombination.score}点)`);
+        }
+        console.log(`- 関係性タイプ: ${data.enhancedDetails.relationshipType || 'N/A'}`);
+      } else {
+        console.warn('警告: 拡張詳細情報が含まれていません');
+      }
+    }
+      
+    // 結果を返す（データが存在する形式を優先）
+    if (response.data.compatibility) {
+      return response.data.compatibility;
+    } else if (response.data.data) {
+      return response.data.data;
     } else {
       console.error('エラー: 拡張相性情報が取得できませんでした');
       console.log(response.data);

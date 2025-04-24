@@ -1,16 +1,21 @@
 import { Request, Response } from 'express';
-// 最初にChatModeをインポート
-import { ChatMode, ChatMessageRequest, ChatModeRequest } from '../types';
+import { ChatMessageRequest, ChatModeRequest, IContextItem, ChatMode } from '../types';
+// コンテキストタイプを直接定義（バンドル問題を回避するため）
+export const ContextType = {
+  SELF: 'self',
+  FRIEND: 'friend',
+  FORTUNE: 'fortune',
+  TEAM: 'team',
+  TEAM_GOAL: 'team_goal'
+};
 import { chatService } from '../services/chat/chat.service';
 import { AuthRequest } from '../types/auth';
+import { buildChatContext, contextBuilderService } from '../services/chat/context-builder.service';
 
-// ChatModeの実装が正しくインポートされていることを確認（実際の列挙値を出力）
-const CHAT_MODES = Object.values(ChatMode || {});
+// 直接文字列配列として定義
+const CHAT_MODES = ['personal', 'team_member', 'team_goal'];
 console.log('ChatMode検証:', { 
-  ChatMode,
-  値: CHAT_MODES,
-  存在確認: !!ChatMode,
-  型: typeof ChatMode
+  値: CHAT_MODES
 });
 
 /**
@@ -24,12 +29,17 @@ export class ChatController {
    */
   public async sendMessage(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { message, mode, contextInfo } = req.body as ChatMessageRequest;
+      const { message, mode, contextInfo, contextItems } = req.body as ChatMessageRequest;
       const userId = req.user?.id;
       // ストリーミングフラグを取得
       const useStreaming = req.query.stream === 'true' || req.body.stream === true;
       
-      console.log(`🔊 チャットリクエスト受信 - ユーザーID: ${userId}, モード: ${mode}, ストリーミング: ${useStreaming}, メソッド: ${req.method}`);
+      console.log(`🔊 チャットリクエスト受信 - ユーザーID: ${userId}, ストリーミング: ${useStreaming}, メソッド: ${req.method}`);
+      if (contextItems) {
+        console.log(`コンテキストアイテム: ${contextItems.length}個`);
+      } else if (mode) {
+        console.log(`旧モードベース: モード: ${mode}`);
+      }
 
       if (!userId) {
         res.status(401).json({
@@ -53,34 +63,49 @@ export class ChatController {
         return;
       }
 
-      // ChatModeが正しく定義されているかを確認し、安全に検証
-      try {
-        // 事前定義したCHAT_MODESを使用
-        console.log('チャットモード受信値:', { 
-          mode, 
-          typeOfMode: typeof mode, 
-          chatTypeList: CHAT_MODES 
-        });
+      // 新しいコンテキストベースAPIと旧モードベースAPIの両方をサポート
+      if (contextItems) {
+        // 新しいコンテキストベースのリクエスト
+        console.log('コンテキストベースのリクエストを処理します');
+      } else if (mode) {
+        // 旧モードベースのリクエスト - コンテキストに変換する（後方互換性）
+        console.log('旧モードベースのリクエストをコンテキストに変換します:', mode);
         
-        if (!mode) {
-          throw new Error('モードが指定されていません');
+        // モードの検証
+        try {
+          // 事前定義したCHAT_MODESを使用
+          console.log('チャットモード受信値:', { 
+            mode, 
+            typeOfMode: typeof mode, 
+            chatTypeList: CHAT_MODES 
+          });
+          
+          // 安全なChatMode検証 - 定義された配列を使用
+          const isValidMode = CHAT_MODES.includes(mode) || 
+                             ['personal', 'team_member', 'team_goal'].includes(mode);
+          
+          if (!isValidMode) {
+            console.error(`無効なモード値 [${mode}], 有効な値: ${CHAT_MODES.join(', ')}`);
+            throw new Error(`無効なチャットモードです: ${mode}`);
+          }
+        } catch (error: any) {
+          console.error('チャットモード検証エラー:', error);
+          res.status(400).json({
+            success: false,
+            error: {
+              code: 'INVALID_MODE',
+              message: error.message || '無効なチャットモードです'
+            }
+          });
+          return;
         }
-        
-        // 安全なChatMode検証 - 定義された配列を使用
-        const isValidMode = CHAT_MODES.includes(mode) || 
-                           ['personal', 'team_member', 'team_goal'].includes(mode);
-        
-        if (!isValidMode) {
-          console.error(`無効なモード値 [${mode}], 有効な値: ${CHAT_MODES.join(', ')}`);
-          throw new Error(`無効なチャットモードです: ${mode}`);
-        }
-      } catch (error: any) {
-        console.error('チャットモード検証エラー:', error);
+      } else {
+        // コンテキストアイテムもモードも指定されていない場合はエラー
         res.status(400).json({
           success: false,
           error: {
-            code: 'INVALID_MODE',
-            message: error.message || '無効なチャットモードです'
+            code: 'MISSING_CONTEXT',
+            message: 'コンテキスト情報またはチャットモードが必要です'
           }
         });
         return;
@@ -92,20 +117,26 @@ export class ChatController {
         // クライアントサイドのオリジンを取得
         const clientOrigin = req.headers.origin || 'https://dailyfortune.web.app';
         
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': clientOrigin, // ワイルドカードの代わりに具体的なオリジンを指定
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-          'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Trace-ID, X-Direct-Refresh',
-          'Access-Control-Allow-Credentials': 'true',
-          'Access-Control-Expose-Headers': 'X-Trace-ID'
-        });
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', clientOrigin);
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Trace-ID, X-Direct-Refresh');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Expose-Headers', 'X-Trace-ID');
+        res.status(200);
 
         try {
-          // ストリーミングレスポンスを開始
-          const streamGenerator = chatService.streamMessage(userId, message, mode, contextInfo);
+          // コンテキストベースまたはモードベースに応じてストリーミングメソッドを呼び分ける
+          let streamGenerator;
+          if (contextItems) {
+            // コンテキストベースの新しいAPIを使用
+            streamGenerator = chatService.streamMessageWithContexts(userId, message, contextItems);
+          } else {
+            // モードベースの従来APIを使用（後方互換性）
+            streamGenerator = chatService.streamMessage(userId, message, mode!, contextInfo);
+          }
           
           // 最初のイベントとしてセッション開始を通知
           const sessionId = Date.now().toString();
@@ -113,8 +144,13 @@ export class ChatController {
           
           // ストリーミングでチャンクを返す
           for await (const chunk of streamGenerator) {
-            // テキストチャンクをJSONとしてラップして送信
-            res.write(`data: {"event":"chunk","text":${JSON.stringify(chunk)}}\n\n`);
+            try {
+              // テキストチャンクをJSONとしてラップして送信
+              res.write(`data: {"event":"chunk","text":${JSON.stringify(chunk)}}\n\n`);
+            } catch (writeError) {
+              console.error('Streaming write error:', writeError);
+              break;
+            }
           }
           
           // ストリーミングの終了を通知
@@ -130,13 +166,31 @@ export class ChatController {
         return;
       }
 
-      // 非ストリーミングモード（従来の動作）
-      const { aiResponse, chatHistory } = await chatService.processMessage(
-        userId,
-        message,
-        mode,
-        contextInfo
-      );
+      // 非ストリーミングモード
+      let aiResponse;
+      let chatHistory;
+
+      // コンテキストベースとモードベースの両方をサポート
+      if (contextItems) {
+        // 新しいコンテキストベースAPI
+        const result = await chatService.processMessageWithContexts(
+          userId,
+          message,
+          contextItems
+        );
+        aiResponse = result.aiResponse;
+        chatHistory = result.chatHistory;
+      } else {
+        // 従来のモードベースAPI（後方互換性）
+        const result = await chatService.processMessage(
+          userId,
+          message,
+          mode!,
+          contextInfo
+        );
+        aiResponse = result.aiResponse;
+        chatHistory = result.chatHistory;
+      }
 
       res.status(200).json({
         success: true,
@@ -183,12 +237,12 @@ export class ChatController {
         return;
       }
 
-      const mode = req.query.mode as ChatMode | undefined;
+      const mode = req.query.mode as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
       const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
 
       // モードが指定されている場合の検証
-      if (mode && !Object.values(ChatMode).includes(mode)) {
+      if (mode && !CHAT_MODES.includes(mode)) {
         res.status(400).json({
           success: false,
           error: {
@@ -200,7 +254,7 @@ export class ChatController {
       }
 
       const { chatHistories, total, hasMore } = await chatService.getChatHistory(userId, {
-        mode,
+        mode: mode as ChatMode,
         limit,
         offset
       });
@@ -255,11 +309,11 @@ export class ChatController {
         return;
       }
 
-      const mode = req.query.mode as ChatMode | undefined;
+      const mode = req.query.mode as string | undefined;
       const chatId = req.query.chatId as string | undefined;
 
       // モードが指定されている場合の検証
-      if (mode && !Object.values(ChatMode).includes(mode)) {
+      if (mode && !CHAT_MODES.includes(mode)) {
         res.status(400).json({
           success: false,
           error: {
@@ -271,7 +325,7 @@ export class ChatController {
       }
 
       const { deletedCount } = await chatService.clearChatHistory(userId, {
-        mode,
+        mode: mode as ChatMode,
         chatId
       });
 
@@ -404,6 +458,215 @@ export class ChatController {
         error: {
           code: 'SERVER_ERROR',
           message: 'チャットモードの設定中にエラーが発生しました'
+        }
+      });
+    }
+  }
+
+  /**
+   * 利用可能なコンテキスト情報を取得する
+   * GET /api/v1/chat/contexts/available
+   */
+  public async getAvailableContexts(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '認証が必要です'
+          }
+        });
+        return;
+      }
+
+      // 詳細なデバッグログを追加
+      console.log(`getAvailableContexts - ユーザーID: ${userId} の利用可能コンテキスト情報を取得します`);
+
+      try {
+        // ユーザー自身のコンテキスト情報を取得
+        const selfContext = await contextBuilderService.buildSelfContext(userId);
+        console.log('Self context built successfully:', selfContext ? 'OK' : 'null');
+        
+        // 運勢コンテキスト情報を取得
+        const fortuneContexts = [
+          {
+            id: 'today',
+            type: ContextType.FORTUNE,
+            name: '今日の運勢',
+            iconType: 'today',
+            color: '#ff9800',
+            removable: true
+          },
+          {
+            id: 'tomorrow',
+            type: ContextType.FORTUNE,
+            name: '明日の運勢',
+            iconType: 'event',
+            color: '#ff9800',
+            removable: true
+          }
+        ];
+        
+        // 友達コンテキスト情報を取得
+        let friendsContexts: IContextItem[] = [];
+        try {
+          friendsContexts = await contextBuilderService.buildAvailableFriendsContexts(userId);
+          console.log(`Friends contexts built successfully: ${friendsContexts.length} items`);
+        } catch (friendError) {
+          console.error('Error building friends contexts:', friendError);
+          friendsContexts = []; // エラー時は空配列を使用
+        }
+  
+        // チームコンテキスト情報を取得（必要に応じて）
+        let teamsContexts: IContextItem[] = [];
+        try {
+          teamsContexts = await contextBuilderService.buildAvailableTeamContexts(userId);
+          console.log(`Team contexts built successfully: ${teamsContexts.length} items`);
+        } catch (teamError) {
+          console.error('Error building team contexts:', teamError);
+          teamsContexts = []; // エラー時は空配列を使用
+        }
+        
+        res.status(200).json({
+          success: true,
+          availableContexts: {
+            self: selfContext,
+            fortune: fortuneContexts,
+            friends: friendsContexts,
+            teams: teamsContexts
+          }
+        });
+      } catch (contextBuildError) {
+        // 特定のコンテキスト取得エラー
+        console.error('Context build error:', contextBuildError);
+        
+        // エラーが発生しても最低限のレスポンスを返す
+        res.status(200).json({
+          success: true,
+          availableContexts: {
+            self: null,
+            fortune: [
+              {
+                id: 'today',
+                type: ContextType.FORTUNE,
+                name: '今日の運勢',
+                iconType: 'today',
+                color: '#ff9800',
+                removable: true
+              }
+            ],
+            friends: [],
+            teams: []
+          },
+          warning: "一部のコンテキスト情報の取得に失敗しました"
+        });
+      }
+    } catch (error) {
+      console.error('Get available contexts error:', error);
+      // エラー詳細をレスポンスに含めて返す（開発デバッグ用）
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'コンテキスト情報の取得中にエラーが発生しました',
+          details: error instanceof Error ? error.message : String(error)
+        }
+      });
+    }
+  }
+
+  /**
+   * コンテキスト情報の詳細を取得する
+   * GET /api/v1/chat/contexts/detail
+   */
+  public async getContextDetail(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '認証が必要です'
+          }
+        });
+        return;
+      }
+
+      const type = req.query.type as string;
+      const id = req.query.id as string;
+
+      if (!type) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMS',
+            message: 'type パラメータは必須です'
+          }
+        });
+        return;
+      }
+
+      // SELFタイプの場合はidパラメータは省略可能（現在のユーザー情報を返す）
+      if (type !== ContextType.SELF && !id) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMS',
+            message: '自分以外のコンテキストタイプでは id パラメータは必須です'
+          }
+        });
+        return;
+      }
+
+      // コンテキストタイプを検証
+      const contextType = type as string;
+      const validContextTypes = ['self', 'friend', 'fortune', 'team', 'team_goal'];
+      if (!validContextTypes.includes(contextType)) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_CONTEXT_TYPE',
+            message: '無効なコンテキストタイプです'
+          }
+        });
+        return;
+      }
+
+      // コンテキスト詳細情報を取得
+      // selfタイプの場合、idは無視される（サービス側で対応）
+      const contextDetail = await contextBuilderService.getContextDetail(
+        userId, 
+        contextType, 
+        contextType === ContextType.SELF ? 'current_user' : id
+      );
+      
+      if (!contextDetail) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'CONTEXT_NOT_FOUND',
+            message: '指定されたコンテキスト情報が見つかりませんでした'
+          }
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        context: contextDetail
+      });
+    } catch (error) {
+      console.error('Get context detail error:', error);
+      // エラー詳細をレスポンスに含めて返す（開発デバッグ用）
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'SERVER_ERROR',
+          message: 'コンテキスト詳細の取得中にエラーが発生しました',
+          details: error instanceof Error ? error.message : String(error)
         }
       });
     }

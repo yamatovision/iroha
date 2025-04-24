@@ -1,6 +1,12 @@
-import { CHAT } from '../../../shared';
-import { ChatMode } from '../../../shared';
+import { CHAT, ContextType } from '../../../shared';
 import api from './api.service';
+
+// ChatMode の列挙型（サーバー側と同じ定義）
+export enum ChatMode {
+  PERSONAL = 'personal',
+  TEAM_MEMBER = 'team_member',
+  TEAM_GOAL = 'team_goal',
+}
 
 /**
  * チャットサービス
@@ -8,15 +14,15 @@ import api from './api.service';
  */
 export class ChatService {
   /**
-   * メッセージを送信してAIレスポンスを取得
+   * メッセージを送信してAIレスポンスを取得（コンテキストベース版）
    */
   async sendMessage(
     message: string,
-    mode: ChatMode = ChatMode.PERSONAL,
-    contextInfo?: {
-      memberId?: string;
-      teamGoalId?: string;
-    },
+    contextItems: {
+      type: ContextType;
+      id?: string;
+      additionalInfo?: any;
+    }[],
     useStreaming: boolean = true
   ): Promise<{
     aiMessage: string;
@@ -27,6 +33,11 @@ export class ChatService {
         role: 'user' | 'assistant';
         content: string;
         timestamp: string;
+        contextItems?: {
+          type: string;
+          refId?: string;
+          data?: any;
+        }[];
       }>;
     };
   }> {
@@ -35,8 +46,7 @@ export class ChatService {
       try {
         const response = await api.post(CHAT.SEND_MESSAGE, {
           message,
-          mode,
-          contextInfo
+          contextItems
         });
 
         if (!response.data.success) {
@@ -115,8 +125,7 @@ export class ChatService {
             },
             body: JSON.stringify({
               message,
-              mode,
-              contextInfo,
+              contextItems,
               stream: true
             }),
             // credentials: 'include' はクッキーを送信する時のみ必要
@@ -228,18 +237,21 @@ export class ChatService {
    */
   async getHistory(
     options: {
-      mode?: ChatMode;
       limit?: number;
       offset?: number;
     } = {}
   ): Promise<{
     chatHistories: Array<{
       id: string;
-      chatType: ChatMode;
       messages: Array<{
         role: 'user' | 'assistant';
         content: string;
         timestamp: string;
+        contextItems?: Array<{
+          type: string;
+          refId?: string;
+          data?: any;
+        }>;
       }>;
       createdAt: string;
       lastMessageAt: string;
@@ -252,10 +264,9 @@ export class ChatService {
     };
   }> {
     try {
-      const { mode, limit, offset } = options;
+      const { limit, offset } = options;
       const queryParams = new URLSearchParams();
 
-      if (mode) queryParams.append('mode', mode);
       if (limit) queryParams.append('limit', limit.toString());
       if (offset) queryParams.append('offset', offset.toString());
 
@@ -281,24 +292,12 @@ export class ChatService {
   /**
    * チャット履歴をクリア
    */
-  async clearHistory(
-    options: {
-      mode?: ChatMode;
-      chatId?: string;
-    } = {}
-  ): Promise<{
+  async clearHistory(): Promise<{
     message: string;
     deletedCount: number;
   }> {
     try {
-      const { mode, chatId } = options;
-      const queryParams = new URLSearchParams();
-
-      if (mode) queryParams.append('mode', mode);
-      if (chatId) queryParams.append('chatId', chatId);
-
-      const queryString = queryParams.toString();
-      const url = queryString ? `${CHAT.CLEAR_HISTORY}?${queryString}` : CHAT.CLEAR_HISTORY;
+      const url = CHAT.CLEAR_HISTORY;
 
       const response = await api.delete(url);
 
@@ -317,59 +316,39 @@ export class ChatService {
   }
 
   /**
-   * チャットモードを変更
+   * 利用可能なコンテキスト情報を取得
    */
-  async setMode(
-    mode: ChatMode,
-    contextInfo?: {
-      memberId?: string;
-      teamGoalId?: string;
-    }
-  ): Promise<{
-    mode: ChatMode;
-    welcomeMessage: string;
-    contextInfo?: {
-      memberId?: string;
-      teamGoalId?: string;
-    };
-    chatHistory: {
-      id: string;
-      messages: Array<{
-        role: 'user' | 'assistant';
-        content: string;
-        timestamp: string;
-      }>;
-    };
-  }> {
+  async getAvailableContexts() {
     try {
-      // モードが未定義の場合はデフォルトを使用
-      const safeMode = mode || ChatMode.PERSONAL;
-      
-      console.log('ChatMode設定リクエスト準備:', { 
-        送信するモード: safeMode, 
-        元のモード値: mode, 
-        リクエストURL: CHAT.SET_CHAT_MODE 
-      });
-      
-      // APIリクエスト送信（モードを文字列として明示的に送信）
-      const response = await api.put(CHAT.SET_CHAT_MODE, {
-        mode: String(safeMode),
-        contextInfo
-      });
+      const response = await api.get(CHAT.GET_AVAILABLE_CONTEXTS);
 
       if (!response.data.success) {
-        throw new Error(response.data.error?.message || 'モードの変更に失敗しました');
+        throw new Error(response.data.error?.message || '利用可能なコンテキスト情報の取得に失敗しました');
       }
 
-      return {
-        mode: response.data.mode,
-        welcomeMessage: response.data.welcomeMessage,
-        contextInfo: response.data.contextInfo,
-        chatHistory: response.data.chatHistory
-      };
+      return response.data.availableContexts;
     } catch (error: any) {
-      console.error('Set chat mode error:', error);
-      throw new Error(error.response?.data?.error?.message || error.message || 'チャットモードの設定に失敗しました');
+      console.error('Get available contexts error:', error);
+      throw new Error(error.response?.data?.error?.message || error.message || 'コンテキスト情報の取得に失敗しました');
+    }
+  }
+
+  /**
+   * コンテキスト情報の詳細を取得
+   */
+  async getContextDetail(type: ContextType, id: string) {
+    try {
+      const url = `${CHAT.GET_CONTEXT_DETAIL}?type=${type}&id=${id}`;
+      const response = await api.get(url);
+
+      if (!response.data.success) {
+        throw new Error(response.data.error?.message || 'コンテキスト詳細の取得に失敗しました');
+      }
+
+      return response.data.context;
+    } catch (error: any) {
+      console.error('Get context detail error:', error);
+      throw new Error(error.response?.data?.error?.message || error.message || 'コンテキスト詳細の取得に失敗しました');
     }
   }
 }

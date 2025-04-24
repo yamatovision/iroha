@@ -1,9 +1,9 @@
 import mongoose, { Types } from 'mongoose';
-import { ChatMode } from '../../types';
+import { ChatMode, ContextType, IContextItem } from '../../types';
 import { ChatHistory, IChatHistoryDocument } from '../../models/ChatHistory';
 import { User } from '../../models/User';
 import { claudeApiClient } from '../claude-api-client';
-import { buildChatContext } from './context-builder.service';
+import { buildChatContext, contextBuilderService } from './context-builder.service';
 import { CHAT_SYSTEM_PROMPT, createContextPrompt, formatChatHistory } from './chat-contexts';
 import logger from '../../utils/logger';
 
@@ -589,6 +589,335 @@ export class ChatService {
         throw new Error('指定されたチーム目標が見つかりません');
       }
     }
+  }
+
+  /**
+   * コンテキストアイテムを使用したメッセージ処理
+   */
+  public async processMessageWithContexts(
+    userId: string,
+    message: string,
+    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[]
+  ): Promise<{
+    aiResponse: string;
+    chatHistory: IChatHistoryDocument;
+  }> {
+    const traceId = Math.random().toString(36).substring(2, 15);
+    
+    try {
+      console.log(`[${traceId}] 🔄 コンテキストベースのチャットメッセージ処理開始 - ユーザーID: ${userId}`);
+      console.log(`[${traceId}] コンテキストアイテム:`, JSON.stringify(contextItems));
+      
+      // ユーザー情報の取得
+      const user = await this.findUserById(userId);
+      if (!user) {
+        throw new Error('ユーザーが見つかりません');
+      }
+
+      // AIモデルの選択（エリートプランならSonnet、ライトプランならHaiku）
+      const aiModel = user.plan === 'elite' ? 'sonnet' : 'haiku';
+
+      // アクティブなチャット履歴を取得または作成
+      // 注意: コンテキストベースのチャット履歴は別のタイプで保存
+      const chatSession = await this.getOrCreateContextBasedChatSession(userId, contextItems, aiModel);
+      
+      console.log(`[${traceId}] 📜 チャット履歴取得完了 - ID: ${chatSession.id}, メッセージ数: ${chatSession.messages.length}`);
+
+      // ユーザーメッセージを追加
+      this.addUserMessage(chatSession, message);
+      
+      try {
+        // 実際のコンテキスト構築前にユーザー自身の基本情報が必ず含まれるようにする
+        let hasCurrentUser = contextItems.some(item => item.type === ContextType.SELF);
+        let updatedContextItems = [...contextItems];
+        
+        // 自分情報がない場合は追加
+        if (!hasCurrentUser) {
+          updatedContextItems.unshift({
+            type: ContextType.SELF,
+            id: 'current_user'
+          });
+          console.log(`[${traceId}] 自分の情報が含まれていなかったため追加しました`);
+        }
+        
+        // コンテキストベースのコンテキスト構築
+        const context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
+        
+        console.log(`[${traceId}] processMessageWithContexts: コンテキストデータ確認:`, {
+          contextKeys: Object.keys(context),
+          contextTypes: updatedContextItems.map(item => item.type).join(', '),
+          itemCount: updatedContextItems.length
+        });
+        
+        // コンテキストプロンプトの構築
+        const contextPrompt = createContextPrompt(context);
+        
+        // メッセージをAPIフォーマットに変換
+        const messages = [
+          // 最初のメッセージとしてコンテキストプロンプトを追加
+          {
+            role: 'user' as const,
+            content: contextPrompt
+          },
+          // AIからの応答としてウェルカムメッセージを追加
+          {
+            role: 'assistant' as const,
+            content: 'このコンテキスト情報を受け取りました。あなたの質問に対応いたします。'
+          },
+          // ユーザーとAIのやり取りを追加（最大3ターン分）
+          ...chatSession.messages.slice(-6).map(m => ({
+            role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
+            content: m.content
+          }))
+        ];
+        
+        // AI modelの選択
+        const model = aiModel === 'sonnet' ? 'claude-3-7-sonnet-20250219' : 'claude-3-haiku-20240307';
+        
+        console.log(`[${traceId}] 🤖 コンテキストベースモードでのAI API呼び出し開始 - モデル: ${model}, メッセージ数: ${messages.length}`);
+        
+        const startTime = Date.now();
+        
+        // AIレスポンスの生成
+        const aiResponse = await claudeApiClient.callAPI({
+          messages,
+          system: CHAT_SYSTEM_PROMPT,
+          maxTokens: aiModel === 'sonnet' ? 4000 : 1500,
+          model
+        });
+        
+        const processingTime = Date.now() - startTime;
+        
+        console.log(`[${traceId}] ✅ AI API呼び出し完了 - レスポンス長: ${aiResponse.length}文字, 処理時間: ${processingTime}ms`);
+        
+        // AIレスポンスをチャット履歴に追加
+        this.addAIMessage(chatSession, aiResponse);
+        
+        // チャット履歴のコンテキスト情報を保存
+        chatSession.contextData = {
+          contextItems: updatedContextItems 
+        };
+        
+        // チャット履歴を保存
+        await chatSession.save();
+        
+        console.log(`[${traceId}] 💾 チャットメッセージ処理完了 - 合計メッセージ数: ${chatSession.messages.length}`);
+        
+        return {
+          aiResponse,
+          chatHistory: chatSession
+        };
+      } catch (contextError) {
+        console.error(`[${traceId}] ❌ コンテキスト処理エラー:`, contextError);
+        
+        // エラーが発生した場合でも、フォールバックとして基本的な返答を生成
+        const fallbackResponse = "申し訳ありません。コンテキスト情報の処理中にエラーが発生しました。もう一度お試しいただくか、別のコンテキストでお試しください。";
+        
+        // エラーメッセージをチャット履歴に追加
+        this.addAIMessage(chatSession, fallbackResponse);
+        await chatSession.save();
+        
+        console.log(`[${traceId}] ⚠️ フォールバック応答を返します`);
+        
+        return {
+          aiResponse: fallbackResponse,
+          chatHistory: chatSession
+        };
+      }
+    } catch (error) {
+      console.error(`[${traceId}] ❌ コンテキストベースのチャットメッセージ処理エラー:`, error instanceof Error ? error.message : String(error));
+      throw error;
+    }
+  }
+
+  /**
+   * コンテキストアイテムを使用したストリーミングメッセージ処理
+   */
+  public async *streamMessageWithContexts(
+    userId: string,
+    message: string,
+    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[]
+  ): AsyncGenerator<string, { chatHistory: IChatHistoryDocument }, unknown> {
+    const traceId = Math.random().toString(36).substring(2, 15);
+    
+    try {
+      console.log(`[${traceId}] 🔄 コンテキストベースのチャットストリーミング処理開始 - ユーザーID: ${userId}`);
+      console.log(`[${traceId}] コンテキストアイテム:`, JSON.stringify(contextItems));
+      
+      // ユーザー情報の取得
+      const user = await this.findUserById(userId);
+      if (!user) {
+        throw new Error('ユーザーが見つかりません');
+      }
+
+      // AIモデルの選択
+      const aiModel = user.plan === 'elite' ? 'sonnet' : 'haiku';
+
+      // アクティブなチャット履歴を取得または作成
+      const chatSession = await this.getOrCreateContextBasedChatSession(userId, contextItems, aiModel);
+      
+      console.log(`[${traceId}] 📜 チャット履歴取得完了 - ID: ${chatSession.id}, メッセージ数: ${chatSession.messages.length}`);
+
+      // ユーザーメッセージを追加
+      this.addUserMessage(chatSession, message);
+
+      try {
+        // 実際のコンテキスト構築前にユーザー自身の基本情報が必ず含まれるようにする
+        let hasCurrentUser = contextItems.some(item => item.type === ContextType.SELF);
+        let updatedContextItems = [...contextItems];
+        
+        // 自分情報がない場合は追加
+        if (!hasCurrentUser) {
+          updatedContextItems.unshift({
+            type: ContextType.SELF,
+            id: 'current_user'
+          });
+          console.log(`[${traceId}] 自分の情報が含まれていなかったため追加しました`);
+        }
+
+        // コンテキストベースのコンテキスト構築
+        const context = await contextBuilderService.processMessageWithContexts(userId, updatedContextItems);
+        
+        console.log(`[${traceId}] streamMessageWithContexts: コンテキストデータ確認:`, {
+          contextKeys: Object.keys(context),
+          contextTypes: updatedContextItems.map(item => item.type).join(', '),
+          itemCount: updatedContextItems.length
+        });
+  
+        // コンテキストプロンプトの構築
+        const contextPrompt = createContextPrompt(context);
+        
+        // メッセージをAPIフォーマットに変換
+        const messages = [
+          // 最初のメッセージとしてコンテキストプロンプトを追加
+          {
+            role: 'user' as const,
+            content: contextPrompt
+          },
+          // AIからの応答としてウェルカムメッセージを追加
+          {
+            role: 'assistant' as const,
+            content: 'このコンテキスト情報を受け取りました。あなたの質問に対応いたします。'
+          },
+          // ユーザーとAIのやり取りを追加（最大3ターン分）
+          ...chatSession.messages.slice(-6).map(m => ({
+            role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
+            content: m.content
+          }))
+        ];
+        
+        // AI modelとトークン上限の選択
+        const model = aiModel === 'sonnet' ? 'claude-3-7-sonnet-20250219' : 'claude-3-haiku-20240307';
+        const maxTokens = aiModel === 'sonnet' ? 4000 : 1500;
+        
+        console.log(`[${traceId}] 🤖 コンテキストベースのストリーミングAPI呼び出し開始 - モデル: ${model}, メッセージ数: ${messages.length}`);
+        
+        // ストリーミングAPIを呼び出し
+        let completeResponse = '';
+        try {
+          // ストリームジェネレータを作成
+          const streamGenerator = claudeApiClient.streamAPI({
+            messages: messages,
+            system: CHAT_SYSTEM_PROMPT,
+            maxTokens: maxTokens,
+            model: model,
+            stream: true
+          });
+  
+          // チャンクを順次受け取り転送
+          for await (const chunk of streamGenerator) {
+            completeResponse += chunk;
+            yield chunk;
+          }
+          
+          console.log(`[${traceId}] ✅ ストリーミングレスポンス完了 - 合計文字数: ${completeResponse.length}文字`);
+        } catch (streamError) {
+          console.error(`[${traceId}] ❌ ストリーミングエラー:`, streamError);
+          
+          // ストリーミングエラーの場合、エラーメッセージを生成
+          const errorChunk = "申し訳ありません。ストリーミング処理中にエラーが発生しました。";
+          completeResponse = errorChunk;
+          yield errorChunk;
+        }
+  
+        // AIレスポンスをチャット履歴に追加
+        this.addAIMessage(chatSession, completeResponse);
+  
+        // チャット履歴のコンテキスト情報を保存
+        chatSession.contextData = {
+          contextItems: updatedContextItems
+        };
+  
+        // チャット履歴を保存
+        await chatSession.save();
+        
+        console.log(`[${traceId}] 💾 チャット履歴保存完了 - 合計メッセージ数: ${chatSession.messages.length}`);
+  
+        return { chatHistory: chatSession };
+      } catch (contextError) {
+        console.error(`[${traceId}] ❌ コンテキスト処理エラー:`, contextError);
+        
+        // エラーが発生した場合でも、フォールバックとして基本的な返答を生成
+        const fallbackResponse = "申し訳ありません。コンテキスト情報の処理中にエラーが発生しました。";
+        
+        // エラーメッセージをチャット履歴に追加
+        this.addAIMessage(chatSession, fallbackResponse);
+        await chatSession.save();
+        
+        console.log(`[${traceId}] ⚠️ フォールバック応答をストリーミングします`);
+        
+        yield fallbackResponse;
+        
+        return { chatHistory: chatSession };
+      }
+    } catch (error) {
+      console.error(`[${traceId}] ❌ コンテキストベースのチャットストリーミングエラー:`, error);
+      
+      // 深刻なエラーの場合でも最低限のレスポンスを返す
+      yield "システムエラーが発生しました。しばらく経ってからお試しください。";
+      
+      throw error;
+    }
+  }
+
+  /**
+   * コンテキストベースのチャットセッションを取得または作成
+   */
+  private async getOrCreateContextBasedChatSession(
+    userId: string,
+    contextItems: { type: ContextType; id?: string; additionalInfo?: any }[],
+    aiModel: 'sonnet' | 'haiku' = 'haiku'
+  ): Promise<IChatHistoryDocument> {
+    // セッションタイプ（contextが常に最初にあることを想定）
+    const mainContextType = contextItems.length > 0 ? contextItems[0].type : 'mixed';
+    
+    // クエリの構築
+    const query: any = {
+      userId: new mongoose.Types.ObjectId(userId),
+      chatType: 'context_based',
+      'contextData.contextItems': { $exists: true }
+    };
+
+    // 最新のチャット履歴を取得
+    let chatHistory = await ChatHistory.findOne(query).sort({ lastMessageAt: -1 });
+
+    // チャット履歴が存在しない場合は新規作成
+    if (!chatHistory) {
+      chatHistory = new ChatHistory({
+        userId: new mongoose.Types.ObjectId(userId),
+        chatType: 'context_based',
+        aiModel,
+        messages: [],
+        tokenCount: 0,
+        contextData: {
+          contextItems,
+          mainContextType
+        },
+        lastMessageAt: new Date()
+      });
+    }
+
+    return chatHistory;
   }
 }
 

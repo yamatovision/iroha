@@ -3,7 +3,7 @@ import { Box, IconButton, Typography, useTheme, useMediaQuery } from '@mui/mater
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ChatContainer from '../../components/chat/ChatContainer';
-import { ChatMode } from '../../../../shared';
+import { ChatMode } from '../../services/chat.service';
 
 /**
  * チャットページコンポーネント

@@ -111,15 +111,17 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
         // success: true, data: { score, relationshipType, ... } の形式に対応
         let processedData = null;
         
-        if (data && data.success && data.data) {
-          // 実際のデータはdata.dataにある
-          const actualData = data.data;
+        if (data && data.success && (data.data || data.compatibility)) {
+          // 実際のデータはdata.dataまたはdata.compatibilityにある
+          // チームAPIとの互換性のためにまず compatibility キーをチェック
+          const actualData = data.compatibility || data.data;
           
           console.log('データ構造検証:', {
-            hasScore: 'score' in actualData,
-            hasRelationshipType: 'relationshipType' in actualData,
-            hasUsers: Array.isArray(actualData.users),
-            dataStructure: Object.keys(actualData)
+            hasScore: actualData && 'score' in actualData,
+            hasRelationshipType: actualData && 'relationshipType' in actualData,
+            hasUsers: actualData && Array.isArray(actualData.users),
+            dataKeys: actualData ? Object.keys(actualData) : [],
+            responseKeys: Object.keys(data)
           });
           
           // 実際のAPIレスポンス構造に準拠
@@ -358,18 +360,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       }}>
                         <Box sx={{ 
                           height: '100%',
-                          width: `${compatibility.enhancedDetails.yinYangBalance}%`,
+                          width: `${compatibility.enhancedDetails?.yinYangBalance || 50}%`,
                           bgcolor: 
-                            compatibility.enhancedDetails.yinYangBalance >= 80 ? '#4CAF50' :
-                            compatibility.enhancedDetails.yinYangBalance >= 60 ? '#8BC34A' :
-                            compatibility.enhancedDetails.yinYangBalance >= 40 ? '#FFC107' :
-                            compatibility.enhancedDetails.yinYangBalance >= 20 ? '#FF9800' :
+                            (compatibility.enhancedDetails?.yinYangBalance || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails?.yinYangBalance || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails?.yinYangBalance || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails?.yinYangBalance || 0) >= 20 ? '#FF9800' :
                             '#F44336',
                           borderRadius: '6px',
                         }} />
                       </Box>
                       <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
-                        {compatibility.enhancedDetails.yinYangBalance}点
+                        {compatibility.enhancedDetails?.yinYangBalance || 50}点
                       </Typography>
                     </Box>
                     
@@ -387,25 +389,25 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       }}>
                         <Box sx={{ 
                           height: '100%',
-                          width: `${compatibility.enhancedDetails.strengthBalance}%`,
+                          width: `${compatibility.enhancedDetails?.strengthBalance || 50}%`,
                           bgcolor: 
-                            compatibility.enhancedDetails.strengthBalance >= 80 ? '#4CAF50' :
-                            compatibility.enhancedDetails.strengthBalance >= 60 ? '#8BC34A' :
-                            compatibility.enhancedDetails.strengthBalance >= 40 ? '#FFC107' :
-                            compatibility.enhancedDetails.strengthBalance >= 20 ? '#FF9800' :
+                            (compatibility.enhancedDetails?.strengthBalance || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails?.strengthBalance || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails?.strengthBalance || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails?.strengthBalance || 0) >= 20 ? '#FF9800' :
                             '#F44336',
                           borderRadius: '6px',
                         }} />
                       </Box>
                       <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
-                        {compatibility.enhancedDetails.strengthBalance}点
+                        {compatibility.enhancedDetails?.strengthBalance || 50}点
                       </Typography>
                     </Box>
                     
                     {/* 日支の関係 */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <Typography variant="body2" sx={{ width: '180px' }}>
-                        日支の関係 ({compatibility.enhancedDetails.dayBranchRelationship?.relationship || '通常'}):
+                        日支の関係 ({compatibility.enhancedDetails?.dayBranchRelationship?.relationship || '通常'}):
                       </Typography>
                       <Box sx={{ 
                         height: '12px', 
@@ -416,18 +418,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       }}>
                         <Box sx={{ 
                           height: '100%',
-                          width: `${compatibility.enhancedDetails.dayBranchRelationship?.score || 0}%`,
+                          width: `${compatibility.enhancedDetails?.dayBranchRelationship?.score || 50}%`,
                           bgcolor: 
-                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 80 ? '#4CAF50' :
-                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 60 ? '#8BC34A' :
-                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 40 ? '#FFC107' :
-                            (compatibility.enhancedDetails.dayBranchRelationship?.score || 0) >= 20 ? '#FF9800' :
+                            (compatibility.enhancedDetails?.dayBranchRelationship?.score || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails?.dayBranchRelationship?.score || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails?.dayBranchRelationship?.score || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails?.dayBranchRelationship?.score || 0) >= 20 ? '#FF9800' :
                             '#F44336',
                           borderRadius: '6px',
                         }} />
                       </Box>
                       <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
-                        {compatibility.enhancedDetails.dayBranchRelationship?.score || 0}点
+                        {compatibility.enhancedDetails?.dayBranchRelationship?.score || 50}点
                       </Typography>
                     </Box>
                     
@@ -445,18 +447,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       }}>
                         <Box sx={{ 
                           height: '100%',
-                          width: `${compatibility.enhancedDetails.usefulGods}%`,
+                          width: `${compatibility.enhancedDetails?.usefulGods || 50}%`,
                           bgcolor: 
-                            compatibility.enhancedDetails.usefulGods >= 80 ? '#4CAF50' :
-                            compatibility.enhancedDetails.usefulGods >= 60 ? '#8BC34A' :
-                            compatibility.enhancedDetails.usefulGods >= 40 ? '#FFC107' :
-                            compatibility.enhancedDetails.usefulGods >= 20 ? '#FF9800' :
+                            (compatibility.enhancedDetails?.usefulGods || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails?.usefulGods || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails?.usefulGods || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails?.usefulGods || 0) >= 20 ? '#FF9800' :
                             '#F44336',
                           borderRadius: '6px',
                         }} />
                       </Box>
                       <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
-                        {compatibility.enhancedDetails.usefulGods}点
+                        {compatibility.enhancedDetails?.usefulGods || 50}点
                       </Typography>
                     </Box>
                     
@@ -474,18 +476,18 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
                       }}>
                         <Box sx={{ 
                           height: '100%',
-                          width: `${compatibility.enhancedDetails.dayGanCombination?.score || 0}%`,
+                          width: `${compatibility.enhancedDetails?.dayGanCombination?.score || 50}%`,
                           bgcolor: 
-                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 80 ? '#4CAF50' :
-                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 60 ? '#8BC34A' :
-                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 40 ? '#FFC107' :
-                            (compatibility.enhancedDetails.dayGanCombination?.score || 0) >= 20 ? '#FF9800' :
+                            (compatibility.enhancedDetails?.dayGanCombination?.score || 0) >= 80 ? '#4CAF50' :
+                            (compatibility.enhancedDetails?.dayGanCombination?.score || 0) >= 60 ? '#8BC34A' :
+                            (compatibility.enhancedDetails?.dayGanCombination?.score || 0) >= 40 ? '#FFC107' :
+                            (compatibility.enhancedDetails?.dayGanCombination?.score || 0) >= 20 ? '#FF9800' :
                             '#F44336',
                           borderRadius: '6px',
                         }} />
                       </Box>
                       <Typography variant="body2" sx={{ ml: 1, minWidth: '40px', textAlign: 'right' }}>
-                        {compatibility.enhancedDetails.dayGanCombination?.score || 0}点
+                        {compatibility.enhancedDetails?.dayGanCombination?.score || 50}点
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>

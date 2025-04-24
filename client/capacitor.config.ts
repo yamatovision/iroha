@@ -48,6 +48,10 @@ const config: CapacitorConfig = {
     ScreenOrientation: {
       // デフォルトは縦向き固定
       orientation: "portrait"
+    },
+    SpeechRecognition: {
+      // 音声認識の言語を日本語に設定
+      locale: "ja-JP"
     }
   },
   // ディープリンク設定
