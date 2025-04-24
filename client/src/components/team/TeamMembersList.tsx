@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import teamService from '../../services/team.service';
 import MemberCardView from './MemberCardView';
 import TeamMemberAddModal from './TeamMemberAddModal';
 import { useTeam } from '../../contexts/TeamContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Box } from '@mui/material';
 import { 
   Park as ParkIcon,
   LocalFireDepartment as LocalFireDepartmentIcon,
   Landscape as LandscapeIcon,
   Star as StarIcon,
-  WaterDrop as WaterDropIcon
+  WaterDrop as WaterDropIcon,
+  ExitToApp as ExitToAppIcon
 } from '@mui/icons-material';
 
 type TeamMembersListProps = {
@@ -24,8 +27,14 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
+  // React Router のナビゲーション
+  const navigate = useNavigate();
+  
   // TeamContextを取得
   const { refreshTeams, hasTeamPermission } = useTeam();
+  
+  // AuthContextを取得
+  const { userProfile } = useAuth();
   
   // チームメンバー追加モーダル用の状態
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -74,20 +83,52 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
         const hasManagePermission = await hasTeamPermission('manage_members', teamId);
         setCanManageMembers(hasManagePermission);
         
-        // メンバーデータ取得
-        const data = await teamService.getTeamMembers(teamId);
-        setMembers(data);
-        setError(null);
+        try {
+          // メンバーデータ取得前にキャッシュをクリア
+          const apiService = (await import('../../services/api.service')).default;
+          await apiService.clearCache(`/api/v1/teams/${teamId}/members`);
+          console.log(`[TeamMembersList] メンバー一覧キャッシュをクリア: teamId=${teamId}`);
+          
+          // メンバーデータ取得
+          const data = await teamService.getTeamMembers(teamId);
+          
+          if (!data || !Array.isArray(data)) {
+            console.error(`[TeamMembersList] メンバーデータが正しい形式ではありません:`, data);
+            setMembers([]);
+            setError('メンバー一覧の取得に失敗しました。データ形式が不正です。');
+            return;
+          }
+          
+          console.log(`[TeamMembersList] チームメンバー取得成功: ${data.length}件`);
+          setMembers(data);
+          setError(null);
+        } catch (memberError: any) {
+          // チーム自体が存在しないか、アクセス権がない場合のエラー
+          console.error(`Failed to fetch team members for team ${teamId}:`, memberError);
+          if (memberError?.response?.status === 404) {
+            // チームが存在しない場合はTeamContextを更新してリダイレクト
+            try {
+              console.log(`[TeamMembersList] チームが見つかりません。チーム一覧を更新します`);
+              await refreshTeams();
+              // ここには到達しないはず - リダイレクトされるため
+            } catch (refreshError) {
+              console.error('Failed to refresh teams after team not found error:', refreshError);
+            }
+          }
+          setMembers([]);
+          setError('メンバー一覧の取得に失敗しました。チームが削除されたか、アクセス権限がない可能性があります。');
+        }
       } catch (err) {
-        console.error(`Failed to fetch team members for team ${teamId}:`, err);
-        setError('メンバー一覧の取得に失敗しました。後でもう一度お試しください。');
+        console.error(`Failed to check permissions for team ${teamId}:`, err);
+        setError('権限の確認に失敗しました。後でもう一度お試しください。');
+        setMembers([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMembers();
-  }, [teamId, hasTeamPermission]);
+  }, [teamId, hasTeamPermission, refreshTeams]);
 
   // メンバー追加モーダルを表示
   const handleShowAddModal = () => {
@@ -156,6 +197,32 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
     } catch (err) {
       console.error(`Failed to remove member ${userId} from team ${teamId}:`, err);
       setError('メンバーの削除に失敗しました。後でもう一度お試しください。');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  /**
+   * チーム脱退処理
+   */
+  const handleLeaveTeam = async () => {
+    if (!window.confirm('このチームから脱退してもよろしいですか？')) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await teamService.leaveTeam(teamId);
+      
+      // TeamContextを更新
+      await refreshTeams();
+      
+      // チームハブに戻る
+      navigate('/team');
+      
+    } catch (err) {
+      console.error('チーム脱退エラー:', err);
+      setError('チームの脱退に失敗しました。後でもう一度お試しください。');
     } finally {
       setLoading(false);
     }
@@ -272,7 +339,7 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
-          {members.length > 0 ? (
+          {members && members.length > 0 ? (
             <div>
               {/* デスクトップ表示用テーブル: 中〜大画面のみで表示 */}
               <table className="desktop-table" style={{ 
@@ -538,8 +605,33 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ teamId }) => {
                         <span style={{ fontSize: '16px', marginRight: '4px' }}>📋</span>
                         カルテ
                       </button>
+                      
+                      {/* 自分自身の場合は脱退ボタンを表示（管理者でない場合） */}
+                      {userProfile?.id === member.userId && !member.isAdmin && (
+                        <button 
+                          style={{ 
+                            flex: '1 0 auto',
+                            minWidth: '80px',
+                            padding: '8px 12px', 
+                            backgroundColor: 'transparent',
+                            border: '1px solid #ff9800',
+                            color: '#ff9800', 
+                            borderRadius: '8px', 
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px'
+                          }}
+                          onClick={handleLeaveTeam}
+                        >
+                          <span style={{ fontSize: '16px', marginRight: '4px' }}>🚪</span>
+                          脱退する
+                        </button>
+                      )}
+                      
                       {/* 管理者権限のあるユーザーのみ表示 */}
-                      {canManageMembers && (
+                      {canManageMembers && userProfile?.id !== member.userId && (
                         <>
                           <button 
                             style={{ 

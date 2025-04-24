@@ -28,6 +28,8 @@ router.put('/:teamId/members/:userId/role', hybridAuthenticate, teamMemberContro
 router.delete('/:teamId/members/:userId', hybridAuthenticate, teamMemberController.removeMember);
 // 友達をチームメンバーとして追加するルート
 router.post('/:teamId/members/friend', hybridAuthenticate, teamMemberController.addFriendAsMember);
+// チーム脱退ルート
+router.post('/:teamId/leave', hybridAuthenticate, teamMemberController.leaveTeam);
 
 // メンバーカルテ関連のルート
 router.get('/:teamId/members/:userId/card', hybridAuthenticate, teamMemberCardController.getMemberCard);

@@ -338,62 +338,199 @@ export const removeFriend = async (friendshipId: string, currentUserId: string) 
  * @returns 相性スコアとデータ
  */
 export const getCompatibilityScore = async (userId1: string, userId2: string, useEnhancedAlgorithm = false) => {
-  // ユーザーの存在確認
-  const [user1, user2] = await Promise.all([
-    User.findById(userId1).select('displayName email elementAttribute fourPillars kakukyoku yojin'),
-    User.findById(userId2).select('displayName email elementAttribute fourPillars kakukyoku yojin')
-  ]);
+  try {
+    console.log(`相性診断処理開始: ユーザー1=${userId1}, ユーザー2=${userId2}, 拡張=${useEnhancedAlgorithm}`);
 
-  if (!user1 || !user2) {
-    throw new NotFoundError('ユーザーが見つかりません');
-  }
+    // ステップ1: まず拡張相性診断を先に検索（これがあれば最優先で返す）
+    if (useEnhancedAlgorithm) {
+      // 拡張相性サービスを直接インポート
+      const { enhancedCompatibilityService } = await import('../team/enhanced-compatibility.service');
+      
+      try {
+        // 既存の拡張相性データを検索
+        const existingEnhancedCompatibility = await enhancedCompatibilityService.getOrCreateEnhancedCompatibility(
+          userId1, 
+          userId2
+        );
+        
+        // 既存の拡張相性データがあれば、それを使用
+        if (existingEnhancedCompatibility && existingEnhancedCompatibility._id) {
+          console.log('拡張相性データを見つけました:', existingEnhancedCompatibility._id);
+          
+          // 友達関係を取得
+          const friendship = await Friendship.findOne({
+            $or: [
+              { userId1, userId2, status: 'accepted' },
+              { userId1: userId2, userId2: userId1, status: 'accepted' }
+            ]
+          });
+          
+          // ユーザー情報を取得 (表示用)
+          const [user1, user2] = await Promise.all([
+            User.findById(userId1).select('displayName elementAttribute'),
+            User.findById(userId2).select('displayName elementAttribute')
+          ]);
+          
+          if (!user1 || !user2) {
+            throw new NotFoundError('ユーザーが見つかりません');
+          }
+          
+          // レスポンスデータを作成
+          return {
+            id: friendship ? friendship._id : null,
+            users: [
+              {
+                id: user1._id,
+                displayName: user1.displayName,
+                element: user1.elementAttribute
+              },
+              {
+                id: user2._id,
+                displayName: user2.displayName,
+                element: user2.elementAttribute
+              }
+            ],
+            score: existingEnhancedCompatibility.compatibilityScore,
+            relationshipType: existingEnhancedCompatibility.relationshipType,
+            detailDescription: existingEnhancedCompatibility.detailDescription,
+            teamInsight: existingEnhancedCompatibility.teamInsight || '',
+            collaborationTips: existingEnhancedCompatibility.collaborationTips || [],
+            enhancedDetails: existingEnhancedCompatibility.enhancedDetails
+          };
+        }
+      } catch (error) {
+        console.error('拡張相性検索中にエラー発生:', error);
+        // 拡張相性検索に失敗した場合は、通常の相性検索に進む
+      }
+    }
+    
+    // ステップ2: 通常の相性データのフローに進む
+    // ユーザーの存在確認
+    const [user1, user2] = await Promise.all([
+      User.findById(userId1).select('displayName email elementAttribute fourPillars kakukyoku yojin'),
+      User.findById(userId2).select('displayName email elementAttribute fourPillars kakukyoku yojin')
+    ]);
 
-  // 四柱推命プロフィールのチェック
-  if (!user1.fourPillars || !user2.fourPillars) {
-    throw new BadRequestError('四柱推命プロフィールが設定されていません');
-  }
+    if (!user1 || !user2) {
+      throw new NotFoundError('ユーザーが見つかりません');
+    }
 
-  // 友達関係の確認
-  const friendship = await Friendship.findOne({
-    $or: [
-      { userId1, userId2, status: 'accepted' },
-      { userId1: userId2, userId2: userId1, status: 'accepted' }
-    ]
-  });
+    // 四柱推命プロフィールのチェック
+    if (!user1.fourPillars || !user2.fourPillars) {
+      throw new BadRequestError('四柱推命プロフィールが設定されていません');
+    }
 
-  // 既に相性情報が保存されている場合
-  if (friendship?.compatibilityScore) {
+    // 友達関係の確認
+    const friendship = await Friendship.findOne({
+      $or: [
+        { userId1, userId2, status: 'accepted' },
+        { userId1: userId2, userId2: userId1, status: 'accepted' }
+      ]
+    });
+
+    // 既に相性情報が保存されている場合
+    if (friendship?.compatibilityScore) {
+      try {
+        // 拡張アルゴリズムが要求され、friendship.enhancedDetailsがない場合は
+        // 新たに拡張アルゴリズムで計算し直す
+        if (useEnhancedAlgorithm && !friendship.enhancedDetails) {
+          console.log('friendship.enhancedDetailsがないため、拡張相性診断を実行します');
+          return await calculateAndSaveEnhancedCompatibility(user1, user2, friendship);
+        }
+        
+        // 既存の相性計算サービスを呼び出し
+        const { compatibilityService } = await import('../team');
+        
+        const relationship = compatibilityService.determineRelationship(
+          user1.elementAttribute || 'water',
+          user2.elementAttribute || 'water'
+        );
+        
+        // 詳細な説明を生成
+        const details = await compatibilityService.generateDetailDescription(
+          user1.displayName || '友達1',
+          user2.displayName || '友達2',
+          user1.elementAttribute || 'water',
+          user2.elementAttribute || 'water', 
+          relationship
+        );
+        
+        // 基本レスポンスデータ
+        const baseResponse = {
+          score: friendship.compatibilityScore,
+          friendship: friendship._id,
+          relationshipType: friendship.relationshipType || 
+                          (relationship === 'mutual_generation' ? '相生' : 
+                            relationship === 'mutual_restriction' ? '相克' : '中和'),
+          users: [
+            {
+              userId: user1._id,
+              displayName: user1.displayName,
+              elementAttribute: user1.elementAttribute
+            },
+            {
+              userId: user2._id,
+              displayName: user2.displayName,
+              elementAttribute: user2.elementAttribute
+            }
+          ],
+          details: details,
+          description: details.detailDescription || '友達との相性です',
+          teamInsight: details.teamInsight,
+          collaborationTips: details.collaborationTips
+        };
+        
+        // 拡張詳細情報がある場合は追加
+        if (useEnhancedAlgorithm && friendship.enhancedDetails) {
+          console.log('friendship.enhancedDetailsが存在するため、既存データを使用します');
+          return {
+            ...baseResponse,
+            enhancedDetails: friendship.enhancedDetails
+          };
+        }
+        
+        return baseResponse;
+      } catch (error) {
+        console.error('相性詳細生成エラー:', error);
+        // エラーが発生しても基本情報だけは返す
+        return {
+          score: friendship.compatibilityScore,
+          friendship: friendship._id,
+          users: [
+            {
+              userId: user1._id,
+              displayName: user1.displayName,
+              elementAttribute: user1.elementAttribute
+            },
+            {
+              userId: user2._id,
+              displayName: user2.displayName,
+              elementAttribute: user2.elementAttribute
+            }
+          ]
+        };
+      }
+    }
+
+    // 相性情報が存在しない場合は新たに計算
     try {
-      // 拡張アルゴリズムが要求され、friendship.enhancedDetailsがない場合は
-      // 新たに拡張アルゴリズムで計算し直す
-      if (useEnhancedAlgorithm && !friendship.enhancedDetails) {
+      // 拡張アルゴリズムが要求された場合
+      if (useEnhancedAlgorithm) {
         return await calculateAndSaveEnhancedCompatibility(user1, user2, friendship);
       }
       
-      // 既存の相性計算サービスを呼び出し
-      const { compatibilityService } = await import('../team');
+      // 基本の相性計算ロジック
+      const compatibilityScore = await calculateCompatibilityScore(user1, user2);
       
-      const relationship = compatibilityService.determineRelationship(
-        user1.elementAttribute || 'water',
-        user2.elementAttribute || 'water'
-      );
+      // 友達関係にスコアを保存（可能な場合）
+      if (friendship) {
+        friendship.compatibilityScore = compatibilityScore.score;
+        await friendship.save();
+      }
       
-      // 詳細な説明を生成
-      const details = await compatibilityService.generateDetailDescription(
-        user1.displayName || '友達1',
-        user2.displayName || '友達2',
-        user1.elementAttribute || 'water',
-        user2.elementAttribute || 'water', 
-        relationship
-      );
-      
-      // 基本レスポンスデータ
-      const baseResponse = {
-        score: friendship.compatibilityScore,
-        friendship: friendship._id,
-        relationshipType: friendship.relationshipType || 
-                         (relationship === 'mutual_generation' ? '相生' : 
-                          relationship === 'mutual_restriction' ? '相克' : '中和'),
+      // 必須の情報を追加
+      return {
+        ...compatibilityScore,
         users: [
           {
             userId: user1._id,
@@ -406,80 +543,16 @@ export const getCompatibilityScore = async (userId1: string, userId2: string, us
             elementAttribute: user2.elementAttribute
           }
         ],
-        details: details,
-        description: details.detailDescription || '友達との相性です',
-        teamInsight: details.teamInsight,
-        collaborationTips: details.collaborationTips
+        friendship: friendship ? friendship._id : null
       };
       
-      // 拡張詳細情報がある場合は追加
-      if (useEnhancedAlgorithm && friendship.enhancedDetails) {
-        return {
-          ...baseResponse,
-          enhancedDetails: friendship.enhancedDetails
-        };
-      }
-      
-      return baseResponse;
     } catch (error) {
-      console.error('相性詳細生成エラー:', error);
-      // エラーが発生しても基本情報だけは返す
-      return {
-        score: friendship.compatibilityScore,
-        friendship: friendship._id,
-        users: [
-          {
-            userId: user1._id,
-            displayName: user1.displayName,
-            elementAttribute: user1.elementAttribute
-          },
-          {
-            userId: user2._id,
-            displayName: user2.displayName,
-            elementAttribute: user2.elementAttribute
-          }
-        ]
-      };
+      console.error('相性スコア計算エラー:', error);
+      throw new Error('相性スコアの計算に失敗しました');
     }
-  }
-
-  // 相性情報が存在しない場合は新たに計算
-  try {
-    // 拡張アルゴリズムが要求された場合
-    if (useEnhancedAlgorithm) {
-      return await calculateAndSaveEnhancedCompatibility(user1, user2, friendship);
-    }
-    
-    // 基本の相性計算ロジック
-    const compatibilityScore = await calculateCompatibilityScore(user1, user2);
-    
-    // 友達関係にスコアを保存（可能な場合）
-    if (friendship) {
-      friendship.compatibilityScore = compatibilityScore.score;
-      await friendship.save();
-    }
-    
-    // 必須の情報を追加
-    return {
-      ...compatibilityScore,
-      users: [
-        {
-          userId: user1._id,
-          displayName: user1.displayName,
-          elementAttribute: user1.elementAttribute
-        },
-        {
-          userId: user2._id,
-          displayName: user2.displayName,
-          elementAttribute: user2.elementAttribute
-        }
-      ],
-      friendship: friendship ? friendship._id : null
-    };
-    
   } catch (error) {
-    console.error('相性スコア計算エラー:', error);
-    throw new Error('相性スコアの計算に失敗しました');
+    console.error('相性スコア全体処理エラー:', error);
+    throw error;
   }
 };
 
@@ -499,6 +572,10 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
     if (!user1._id || !user2._id) {
       throw new Error('ユーザーIDが不正です');
     }
+    
+    // ユーザーIDの文字列化を確実に行う - 必ず文字列として扱う
+    const user1IdStr = typeof user1._id === 'string' ? user1._id : user1._id.toString();
+    const user2IdStr = typeof user2._id === 'string' ? user2._id : user2._id.toString();
     
     // 四柱推命データのチェック
     if (!user1.fourPillars || !user1.fourPillars.day || !user1.fourPillars.day.heavenlyStem) {
@@ -528,12 +605,12 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
       throw new Error(`ユーザー2(${user2.displayName})の用神情報が不完全です。拡張診断に必要な情報がありません。`);
     }
     
-    console.log(`拡張相性計算を実行: ユーザー1=${user1.displayName}, ユーザー2=${user2.displayName}`);
+    console.log(`拡張相性計算を実行: ユーザー1=${user1.displayName}(${user1IdStr}), ユーザー2=${user2.displayName}(${user2IdStr})`);
     
-    // 拡張相性計算を実行
+    // 拡張相性計算を実行 - IDを必ず文字列で渡す
     const compatibilityDoc = await enhancedCompatibilityService.getOrCreateEnhancedCompatibility(
-      user1._id.toString(),
-      user2._id.toString()
+      user1IdStr,
+      user2IdStr
     );
     
     console.log('拡張相性計算完了。enhancedDetailsを確認:', compatibilityDoc.enhancedDetails ? '存在します' : '存在しません');
@@ -544,11 +621,11 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
     }
     
     // 必須データの存在確認
-    if (!compatibilityDoc.enhancedDetails.yinYangBalance) {
+    if (compatibilityDoc.enhancedDetails.yinYangBalance === undefined) {
       throw new Error('拡張相性診断の陰陽バランス情報が不足しています。');
     }
     
-    if (!compatibilityDoc.enhancedDetails.strengthBalance) {
+    if (compatibilityDoc.enhancedDetails.strengthBalance === undefined) {
       throw new Error('拡張相性診断の身強弱バランス情報が不足しています。');
     }
     
@@ -556,7 +633,7 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
     if (!compatibilityDoc.enhancedDetails.dayBranchRelationship || 
         typeof compatibilityDoc.enhancedDetails.dayBranchRelationship !== 'object' ||
         Object.keys(compatibilityDoc.enhancedDetails.dayBranchRelationship).length === 0 ||
-        !compatibilityDoc.enhancedDetails.dayBranchRelationship.score ||
+        compatibilityDoc.enhancedDetails.dayBranchRelationship.score === undefined ||
         !compatibilityDoc.enhancedDetails.dayBranchRelationship.relationship) {
       throw new Error('拡張相性診断の日支関係情報が不足しています。');
     }
@@ -571,7 +648,7 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
     }
     
     // 用神情報のチェック
-    if (!compatibilityDoc.enhancedDetails.usefulGods) {
+    if (compatibilityDoc.enhancedDetails.usefulGods === undefined) {
       throw new Error('拡張相性診断の用神・喜神情報が不足しています。');
     }
     
@@ -583,23 +660,6 @@ const calculateAndSaveEnhancedCompatibility = async (user1: any, user2: any, fri
       
       // enhancedDetailsを明示的に各フィールドごとにコピー
       console.log('コピー前のenhancedDetails:', JSON.stringify(compatibilityDoc.enhancedDetails, null, 2));
-      
-      // デバッグ出力：問題のフィールドを詳細にログ
-      console.log('dayBranchRelationship:', {
-        exists: !!compatibilityDoc.enhancedDetails.dayBranchRelationship,
-        type: typeof compatibilityDoc.enhancedDetails.dayBranchRelationship,
-        value: compatibilityDoc.enhancedDetails.dayBranchRelationship,
-        score: compatibilityDoc.enhancedDetails.dayBranchRelationship?.score,
-        relationship: compatibilityDoc.enhancedDetails.dayBranchRelationship?.relationship
-      });
-      
-      console.log('dayGanCombination:', {
-        exists: !!compatibilityDoc.enhancedDetails.dayGanCombination,
-        type: typeof compatibilityDoc.enhancedDetails.dayGanCombination,
-        value: compatibilityDoc.enhancedDetails.dayGanCombination,
-        score: compatibilityDoc.enhancedDetails.dayGanCombination?.score,
-        isGangou: compatibilityDoc.enhancedDetails.dayGanCombination?.isGangou
-      });
       
       // 明示的に各フィールドごとに値を設定して保存（深いコピー）
       friendship.enhancedDetails = {

@@ -159,72 +159,88 @@ const ChatContextSelector: React.FC<ChatContextSelectorProps> = ({
   };
 
   return (
-    <SelectorContainer onClick={(e) => e.stopPropagation()}>
-      <Tabs 
-        value={tabValue} 
-        onChange={handleTabChange}
-        variant="fullWidth"
-        textColor="primary"
-        indicatorColor="primary"
-      >
-        <ContextTab label="友達" />
-        <ContextTab label="運勢" />
-        <ContextTab label="チーム" />
-      </Tabs>
+    <>
+      {/* オーバーレイ - タップで閉じる */}
+      <Box
+        onClick={onClose}
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1100,
+          backgroundColor: 'rgba(0, 0, 0, 0.2)'
+        }}
+      />
+      
+      <SelectorContainer onClick={(e) => e.stopPropagation()}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange}
+          variant="fullWidth"
+          textColor="primary"
+          indicatorColor="primary"
+        >
+          <ContextTab label="友達" />
+          <ContextTab label="運勢" />
+          <ContextTab label="チーム" />
+        </Tabs>
 
-      <CustomTabPanel value={tabValue} index={tabValue}>
-        <TabPanel>
-          {loading ? (
-            <Box display="flex" justifyContent="center" p={2}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : error ? (
-            <EmptyMessage>
-              <Typography variant="body2" color="error">{error}</Typography>
-            </EmptyMessage>
-          ) : (
-            <List>
-              {getContextsByTab().length > 0 ? (
-                getContextsByTab().map((context) => (
-                  <ListItem
-                    button
-                    key={context.id}
-                    onClick={() => handleSelectContext(context)}
-                    disabled={isContextSelected(context.id)}
-                    sx={{
-                      opacity: isContextSelected(context.id) ? 0.5 : 1,
-                      '&:hover': {
-                        backgroundColor: `${getColorByType(context.type)}10`,
-                      }
-                    }}
-                  >
-                    <ListItemIcon>
-                      <Avatar
-                        sx={{
-                          bgcolor: context.color || getColorByType(context.type),
-                          width: 36,
-                          height: 36,
-                        }}
-                      >
-                        <span className="material-icons">{context.iconType}</span>
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={context.name}
-                      secondary={isContextSelected(context.id) ? '選択中' : null}
-                    />
-                  </ListItem>
-                ))
-              ) : (
-                <EmptyMessage>
-                  <Typography variant="body2">利用可能な項目がありません</Typography>
-                </EmptyMessage>
-              )}
-            </List>
-          )}
-        </TabPanel>
-      </CustomTabPanel>
-    </SelectorContainer>
+        <CustomTabPanel value={tabValue} index={tabValue}>
+          <TabPanel>
+            {loading ? (
+              <Box display="flex" justifyContent="center" p={2}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : error ? (
+              <EmptyMessage>
+                <Typography variant="body2" color="error">{error}</Typography>
+              </EmptyMessage>
+            ) : (
+              <List>
+                {getContextsByTab().length > 0 ? (
+                  getContextsByTab().map((context) => (
+                    <ListItem
+                      button
+                      key={context.id}
+                      onClick={() => handleSelectContext(context)}
+                      disabled={isContextSelected(context.id)}
+                      sx={{
+                        opacity: isContextSelected(context.id) ? 0.5 : 1,
+                        '&:hover': {
+                          backgroundColor: `${getColorByType(context.type)}10`,
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <Avatar
+                          sx={{
+                            bgcolor: context.color || getColorByType(context.type),
+                            width: 36,
+                            height: 36,
+                          }}
+                        >
+                          <span className="material-icons">{context.iconType}</span>
+                        </Avatar>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={context.name}
+                        secondary={isContextSelected(context.id) ? '選択中' : null}
+                      />
+                    </ListItem>
+                  ))
+                ) : (
+                  <EmptyMessage>
+                    <Typography variant="body2">利用可能な項目がありません</Typography>
+                  </EmptyMessage>
+                )}
+              </List>
+            )}
+          </TabPanel>
+        </CustomTabPanel>
+      </SelectorContainer>
+    </>
   );
 };
 

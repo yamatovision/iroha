@@ -39,7 +39,7 @@ const Fortune: React.FC = () => {
         severity: 'info'
       });
       
-      // 運勢データを再取得
+      // 運勢データを再取得（fetchDashboard内でrefreshingがtrueに設定される）
       if (userProfile) {
         fetchDashboard();
       }
@@ -55,6 +55,7 @@ const Fortune: React.FC = () => {
         if (wasUpdated && userProfile) {
           // 日付が変わっていた場合のみロード表示
           setLoading(true);
+          setRefreshing(true); // 追加: 日付変更時も豆知識を表示する
           setNotification({
             open: true,
             message: '日付が変わりました。今日の運勢を取得しています...',
@@ -86,6 +87,7 @@ const Fortune: React.FC = () => {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
+      setRefreshing(true); // 追加: 初期ロード時も豆知識を表示するために refreshing を true に設定
       console.log('認証済みユーザープロファイルでの運勢ダッシュボード取得開始', { userId: userProfile?.id });
       
       // 統合ダッシュボードデータを取得
@@ -132,6 +134,7 @@ const Fortune: React.FC = () => {
       // 失敗時はデータをクリア
       setFortune(null);
     } finally {
+      setRefreshing(false); // 追加: 処理完了時に refreshing を false に戻す
       setLoading(false);
     }
   };

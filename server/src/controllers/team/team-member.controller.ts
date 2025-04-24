@@ -211,3 +211,28 @@ export const addFriendAsMember = async (req: AuthRequest, res: Response, next: N
     next(error);
   }
 };
+
+/**
+ * チームから脱退する（自分自身が実行）
+ */
+export const leaveTeam = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { teamId } = req.params;
+    
+    if (!req.user) {
+      return res.status(401).json({ message: '認証されていません' });
+    }
+    const userId = req.user.id || req.user._id;
+
+    // チームから脱退するサービス関数を呼び出し
+    const result = await teamMemberService.leaveTeam(teamId, userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'チームから脱退しました',
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -123,11 +123,36 @@ class TeamService {
    */
   async getTeamMembers(teamId: string): Promise<any[]> {
     try {
-      const response = await apiService.get(TEAM.GET_TEAM_MEMBERS(teamId));
+      console.log(`[teamService] チームメンバー一覧取得開始: teamId=${teamId}`);
+      
+      // キャッシュをクリアして確実に最新データを取得
+      await apiService.clearCache(TEAM.GET_TEAM_MEMBERS(teamId));
+      
+      const response = await apiService.get(TEAM.GET_TEAM_MEMBERS(teamId), undefined, {
+        skipCache: true,
+        forceRefresh: true
+      });
+      
+      if (!response || !response.data) {
+        console.error(`[teamService] チームメンバー取得エラー: レスポンスが空です teamId=${teamId}`);
+        return [];
+      }
+      
+      if (!response.data.members) {
+        console.error(`[teamService] チームメンバー取得エラー: members配列がありません`, response.data);
+        return [];
+      }
+      
+      console.log(`[teamService] チームメンバー取得成功: ${response.data.members.length}件`);
       return response.data.members;
-    } catch (error) {
-      console.error(`Failed to fetch team members for team ${teamId}:`, error);
-      throw error;
+    } catch (error: any) {
+      console.error(`[teamService] チームメンバー取得エラー (teamId=${teamId}):`, error);
+      // APIエラーの詳細ログ
+      if (error.response) {
+        console.error(`[teamService] APIエラー詳細: status=${error.response.status}, data=`, error.response.data);
+      }
+      // エラーでも空配列を返して処理を継続可能にする
+      return [];
     }
   }
 
@@ -225,6 +250,26 @@ class TeamService {
       return response.data;
     } catch (error) {
       console.error(`Failed to remove user ${userId} from team ${teamId}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * チームから脱退する（メンバー自身が実行）
+   * @param teamId チームID
+   * @returns 成功状態
+   */
+  async leaveTeam(teamId: string): Promise<{ success: boolean }> {
+    try {
+      const response = await apiService.post(TEAM.LEAVE_TEAM(teamId));
+      
+      // キャッシュを無効化
+      this.invalidateTeamCache(teamId);
+      this.invalidateTeamCache('userTeams');
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to leave team ${teamId}:`, error);
       throw error;
     }
   }

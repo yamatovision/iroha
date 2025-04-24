@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, CircularProgress, Badge, IconButton, Tooltip } from '@mui/material';
-import { People } from '@mui/icons-material';
-import { ContextType, IContextItem } from '../../../../shared';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { Box, Typography, CircularProgress } from '@mui/material';
+import { IContextItem } from '../../../../shared';
 import { chatService } from '../../services/chat.service';
 import { contextService } from '../../services/context.service';
 import ChatMessageList from './ChatMessageList';
 import ChatInput from './ChatInput';
-import ChatContextPills from './ChatContextPills';
 import ChatContextSelector from './ChatContextSelector';
-import ChatContextDisplay from './ChatContextDisplay';
 
 // メッセージの型定義
 export interface ChatMessageType {
@@ -27,13 +24,22 @@ interface ChatContainerProps {
   onBack?: () => void;
   fullscreen?: boolean;
   initialMode?: any; // ChatModeを使用する予定がある場合の対応
+  hideContextBar?: boolean; // コンテキストバーを非表示にするオプション
+  removeHeader?: boolean; // 内部ヘッダーを削除するオプション（親にヘッダーがある場合など）
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({
+// 親コンポーネントに公開するメソッド
+export interface ChatContainerHandle {
+  handleClearChat: () => Promise<void>;
+}
+
+const ChatContainer = forwardRef<ChatContainerHandle, ChatContainerProps>(({
   onBack,
   fullscreen = false,
-  initialMode
-}) => {
+  initialMode,
+  hideContextBar = false,
+  removeHeader = false
+}, ref) => {
   // 状態管理
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -41,9 +47,13 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   const [activeContexts, setActiveContexts] = useState<IContextItem[]>([]);
   const [chatId, setChatId] = useState<string | null>(null);
   const [showContextSelector, setShowContextSelector] = useState<boolean>(false);
-  const [showContextDetail, setShowContextDetail] = useState<boolean>(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 親コンポーネントに公開するメソッド
+  useImperativeHandle(ref, () => ({
+    handleClearChat
+  }));
 
   // 初回ロード時にチャットを初期化
   useEffect(() => {
@@ -141,17 +151,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleSelectContext = async (context: IContextItem) => {
     const updatedContexts = await contextService.addContext(context);
     setActiveContexts([...updatedContexts]);
-  };
-
-  // コンテキスト削除ハンドラー
-  const handleRemoveContext = (contextId: string) => {
-    const updatedContexts = contextService.removeContext(contextId);
-    setActiveContexts([...updatedContexts]);
-  };
-
-  // コンテキスト詳細表示ハンドラー
-  const handleToggleContextDetail = () => {
-    setShowContextDetail(!showContextDetail);
   };
 
   // ストリーミングコンテンツを保持するためのRef
@@ -292,70 +291,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         })
       }}
     >
-      {/* ヘッダー */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          p: 1.5,
-          bgcolor: 'primary.main',
-          color: 'white',
-        }}
-      >
-        {/* 戻るボタン */}
-        {onBack && (
-          <IconButton 
-            color="inherit" 
-            onClick={onBack}
-            size="small"
-          >
-            <span className="material-icons">arrow_back</span>
-          </IconButton>
-        )}
-        
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            flexGrow: 1, 
-            textAlign: onBack ? 'center' : 'left',
-            ml: onBack ? 0 : 1,
-            fontSize: '1.125rem',
-          }}
-        >
-          運勢相談
-        </Typography>
-        
-        {/* コンテキスト詳細ボタン */}
-        <Tooltip title="コンテキスト詳細を表示">
-          <Badge
-            badgeContent={activeContexts.length}
-            color="secondary"
-            overlap="circular"
-            sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: '#4caf50',
-                color: 'white',
-              }
-            }}
-          >
-            <IconButton
-              color="inherit"
-              onClick={handleToggleContextDetail}
-              size="small"
-            >
-              <People />
-            </IconButton>
-          </Badge>
-        </Tooltip>
-      </Box>
-      
-      {/* コンテキストピル表示 */}
-      <ChatContextPills
-        activeContexts={activeContexts}
-        onRemoveContext={handleRemoveContext}
-      />
-      
       {/* エラーメッセージ */}
       {error && (
         <Box sx={{ p: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
@@ -384,23 +319,16 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         activeContexts={activeContexts}
       />
       
-      {/* コンテキスト選択ポップアップ */}
-      {showContextSelector && (
+      {/* コンテキスト選択ポップアップ - hideContextBarまたはremoveHeaderが有効の場合は表示しない */}
+      {showContextSelector && !hideContextBar && !removeHeader && (
         <ChatContextSelector
           onSelectContext={handleSelectContext}
           onClose={handleCloseContextSelector}
           activeContextIds={activeContexts.map(c => c.id)}
         />
       )}
-      
-      {/* コンテキスト詳細表示 */}
-      <ChatContextDisplay
-        open={showContextDetail}
-        onClose={handleToggleContextDetail}
-        contexts={activeContexts}
-      />
     </Box>
   );
-};
+});
 
 export default ChatContainer;

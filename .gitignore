@@ -86,6 +86,14 @@ server/scripts/test-jwt-login.js
 server/scripts/test-jwt-objectid.js
 server/scripts/verify-migration.js
 server/deploy-command.sh
+server/scripts/check-invalid-memberships.js
+server/scripts/check-specific-team.js
+server/scripts/check-team-by-id.js
+server/scripts/check-user-email.js
+server/scripts/fix-team-members-issue.js
+server/scripts/get-jwt-for-test-simple.js
+server/scripts/test-compatibility/
+server/scripts/test-team-members-api.js
 
 # ローカルツール
 .appgenius_temp/

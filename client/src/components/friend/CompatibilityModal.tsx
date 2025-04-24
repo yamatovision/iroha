@@ -102,9 +102,9 @@ const CompatibilityModal: React.FC<CompatibilityModalProps> = ({
         // 友達IDを決定
         const targetFriendId = friendId || friendData?.userId;
         
-        // 相性データを取得（常に拡張アルゴリズムを使用）
+        // 相性データを取得（常に拡張アルゴリズムを使用）- キャッシュバイパス
         console.log('拡張相性診断アルゴリズムを使用します');
-        const data = await friendService.getEnhancedCompatibility(targetFriendId);
+        const data = await friendService.getEnhancedCompatibility(targetFriendId, true); // 強制的にキャッシュをバイパス
         console.log('取得した相性データ:', data);
         
         // データを整形（APIレスポンス構造に合わせて）

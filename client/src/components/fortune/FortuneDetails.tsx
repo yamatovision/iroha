@@ -38,11 +38,19 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
     const personalGoalMatch = advice.match(personalGoalRegex);
     const wisdomMatch = advice.match(wisdomRegex);
     
+    // マークダウンテキストの整形用ヘルパー関数
+    const formatMarkdown = (text: string) => {
+      if (!text) return '';
+      
+      // "** テキスト **" パターンを "**テキスト**" に変換（スペースを削除）
+      return text.replace(/\*\*\s+(.+?)\s+\*\*/g, '**$1**');
+    };
+    
     // 結果オブジェクト
     const sections = {
-      todayFortune: todayFortuneMatch ? todayFortuneMatch[1].trim() : '',
-      personalGoal: personalGoalMatch ? personalGoalMatch[1].trim() : '',
-      wisdom: wisdomMatch ? wisdomMatch[1].trim() : '',
+      todayFortune: todayFortuneMatch ? formatMarkdown(todayFortuneMatch[1].trim()) : '',
+      personalGoal: personalGoalMatch ? formatMarkdown(personalGoalMatch[1].trim()) : '',
+      wisdom: wisdomMatch ? formatMarkdown(wisdomMatch[1].trim()) : '',
       otherSections: [] as {title: string, content: string}[]
     };
     
@@ -51,7 +59,7 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
     while ((otherMatch = otherSectionsRegex.exec(advice)) !== null) {
       sections.otherSections.push({
         title: otherMatch[1].trim(),
-        content: otherMatch[2].trim()
+        content: formatMarkdown(otherMatch[2].trim())
       });
     }
     
@@ -107,17 +115,35 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
             >
               今日のあなたの運気
             </Typography>
-            <Typography 
-              variant="body1" 
-              component="p" 
-              sx={{ 
-                mb: 2,
-                lineHeight: 1.7,
-                fontSize: '1.05rem'
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => (
+                  <Typography
+                    variant="body1"
+                    component="p"
+                    sx={{
+                      mb: 2,
+                      lineHeight: 1.7,
+                      fontSize: '1.05rem'
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                ),
+                strong: ({ children }) => (
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontWeight: 700
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                )
               }}
             >
               {sections.todayFortune}
-            </Typography>
+            </ReactMarkdown>
           </Box>
         )}
 
@@ -135,17 +161,35 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
             >
               個人目標へのアドバイス
             </Typography>
-            <Typography 
-              variant="body1" 
-              component="p" 
-              sx={{ 
-                mb: 2,
-                lineHeight: 1.7,
-                fontSize: '1.05rem'
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => (
+                  <Typography
+                    variant="body1"
+                    component="p"
+                    sx={{
+                      mb: 2,
+                      lineHeight: 1.7,
+                      fontSize: '1.05rem'
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                ),
+                strong: ({ children }) => (
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontWeight: 700
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                )
               }}
             >
               {sections.personalGoal}
-            </Typography>
+            </ReactMarkdown>
           </Box>
         )}
 
@@ -188,18 +232,36 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
               />
               
               <Box sx={{ ml: 4 }}>
-                <Typography 
-                  variant="body1" 
-                  component="p" 
-                  sx={{ 
-                    fontWeight: 500,
-                    lineHeight: 1.7,
-                    fontSize: '1.05rem',
-                    fontStyle: 'italic'
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => (
+                      <Typography
+                        variant="body1"
+                        component="p"
+                        sx={{
+                          fontWeight: 500,
+                          lineHeight: 1.7,
+                          fontSize: '1.05rem',
+                          fontStyle: 'italic'
+                        }}
+                      >
+                        {children}
+                      </Typography>
+                    ),
+                    strong: ({ children }) => (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 700,
+                        }}
+                      >
+                        {children}
+                      </Typography>
+                    )
                   }}
                 >
                   {sections.wisdom}
-                </Typography>
+                </ReactMarkdown>
               </Box>
             </Box>
           </Box>
@@ -219,17 +281,35 @@ const FortuneDetails: React.FC<FortuneDetailsProps> = ({ fortune }) => {
             >
               {section.title}
             </Typography>
-            <Typography 
-              variant="body1" 
-              component="p" 
-              sx={{ 
-                mb: 2,
-                lineHeight: 1.7,
-                fontSize: '1.05rem'
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => (
+                  <Typography
+                    variant="body1"
+                    component="p"
+                    sx={{
+                      mb: 2,
+                      lineHeight: 1.7,
+                      fontSize: '1.05rem'
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                ),
+                strong: ({ children }) => (
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontWeight: 700
+                    }}
+                  >
+                    {children}
+                  </Typography>
+                )
               }}
             >
               {section.content}
-            </Typography>
+            </ReactMarkdown>
           </Box>
         ))}
       </Box>

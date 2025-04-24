@@ -329,12 +329,16 @@ class FriendService {
   /**
    * 拡張相性診断を取得する（aisyouyouken.mdの詳細アルゴリズムを使用）
    * @param friendId 友達のユーザーID
+   * @param forceRefresh キャッシュをバイパスするかどうか
    * @returns 拡張相性診断データ
    */
-  async getEnhancedCompatibility(friendId: string) {
+  async getEnhancedCompatibility(friendId: string, forceRefresh: boolean = false) {
     try {
       console.log('拡張相性診断を取得しています...');
-      const response = await apiService.get(FRIENDS.ENHANCED_COMPATIBILITY(friendId));
+      // キャッシュオプションを設定
+      const cacheOptions = forceRefresh ? { forceRefresh: true } : undefined;
+      
+      const response = await apiService.get(FRIENDS.ENHANCED_COMPATIBILITY(friendId), undefined, cacheOptions);
       console.log('拡張相性診断レスポンス:', response.data);
       return response.data;
     } catch (error) {

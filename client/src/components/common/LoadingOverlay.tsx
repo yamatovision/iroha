@@ -133,7 +133,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             justifyContent: 'center',
             boxShadow: theme.shadows[4],
             maxWidth: '90%',
-            width: contentType === 'simple' ? 'auto' : '400px',
+            width: contentType === 'simple' ? 'auto' : { xs: '90%', sm: '500px' },
             minWidth: contentType === 'simple' ? '200px' : '300px',
             border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
             backdropFilter: 'blur(8px)',

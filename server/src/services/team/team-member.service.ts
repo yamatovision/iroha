@@ -555,6 +555,62 @@ export const removeMember = async (
 };
 
 /**
+ * ユーザー自身がチームから脱退する
+ */
+export const leaveTeam = async (
+  teamId: string | mongoose.Types.ObjectId,
+  userId: string | mongoose.Types.ObjectId
+) => {
+  // チームの存在確認
+  const team = await Team.findById(teamId);
+  if (!team) {
+    throw new NotFoundError('チームが見つかりません');
+  }
+
+  const userIdStr = userId.toString();
+  
+  // 作成者・管理者チェック
+  // 作成者は脱退不可（チームを削除するしかない）
+  if (team.creatorId && team.creatorId.toString() === userIdStr) {
+    throw new BadRequestError('チーム作成者はチームから脱退できません。チームを削除するか、管理者権限を他のメンバーに譲渡してください。');
+  }
+  
+  // チーム管理者リストに含まれる場合も削除不可
+  if (team.administrators && team.administrators.some(id => id && id.toString() === userIdStr)) {
+    throw new BadRequestError('チーム管理者はチームから脱退できません。管理者権限を放棄してから脱退してください。');
+  }
+
+  // チームメンバーシップを確認
+  const membership = await TeamMembership.findOne({
+    teamId,
+    userId
+  });
+
+  if (!membership) {
+    throw new NotFoundError('このチームのメンバーではありません');
+  }
+
+  // メンバーシップを削除
+  await TeamMembership.deleteOne({
+    teamId,
+    userId
+  });
+
+  // 後方互換性のため、Userモデルも更新
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $unset: { teamId: 1, teamRole: 1 } },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    throw new NotFoundError('ユーザーが見つかりません');
+  }
+
+  return updatedUser;
+};
+
+/**
  * 友達をチームメンバーとして追加する
  */
 export const addFriendAsMember = async (

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Box, Typography, Button, CircularProgress, Divider, Paper, 
   Card, IconButton, Tooltip, Chip, CardContent, CardActions, 
-  ButtonGroup, useTheme, Modal, TextField
+  ButtonGroup, useTheme, Modal, TextField, Menu, MenuItem
 } from '@mui/material';
 import LoadingOverlay from '../../components/common/LoadingOverlay';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -15,6 +15,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import EventIcon from '@mui/icons-material/Event';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { ITeam, ITeamContextFortune } from '../../../../shared';
 import teamService from '../../services/team.service';
 import fortuneService from '../../services/fortune.service';
@@ -39,8 +41,11 @@ const TeamSelectorHeader: React.FC<{
   isAdmin: boolean;
   onOpenManagement: () => void;
   onCreateTeam: () => void; // 新規チーム作成モーダルを開く関数
-}> = ({ activeTeam, teams, onTeamSelect, onCreateTeam }) => {
+}> = ({ activeTeam, teams, onTeamSelect, onCreateTeam, isAdmin, onOpenManagement }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminMenuAnchor, setAdminMenuAnchor] = useState<null | HTMLElement>(null);
+  const adminMenuOpen = Boolean(adminMenuAnchor);
+  const navigate = useNavigate();
   
   // ドロップダウンの表示切り替え
   const toggleMenu = () => {
@@ -53,6 +58,34 @@ const TeamSelectorHeader: React.FC<{
     setMenuOpen(false);
   };
   
+  // TeamContextのrefreshTeams関数を取得
+  const { refreshTeams } = useTeam();
+  
+  // チーム削除ハンドラー
+  const handleDeleteTeam = async () => {
+    if (!activeTeam) return;
+    
+    // 確認ダイアログ
+    if (!window.confirm(`チーム「${activeTeam.name}」を削除してもよろしいですか？\nこの操作は元に戻せません。`)) {
+      return;
+    }
+    
+    try {
+      // メニューを閉じる
+      setAdminMenuAnchor(null);
+      
+      // チーム削除
+      await teamService.deleteTeam(activeTeam.id);
+      
+      // リストを更新してチームハブに戻る
+      await refreshTeams();
+      navigate('/team');
+    } catch (err) {
+      console.error('チーム削除エラー:', err);
+      alert('チームの削除に失敗しました。');
+    }
+  };
+
   return (
     <Box sx={{
       backgroundColor: '#5e35b1',
@@ -73,7 +106,8 @@ const TeamSelectorHeader: React.FC<{
         alignItems: 'center',
         justifyContent: 'center',
         maxWidth: '300px',
-        width: '100%'
+        width: '100%',
+        position: 'relative'
       }}>
         {/* チーム名ラベル (完全に非表示) */}
         <Typography 
@@ -147,6 +181,44 @@ const TeamSelectorHeader: React.FC<{
             arrow_drop_down
           </Box>
         </Box>
+        
+        {/* 管理者メニューボタン */}
+        {isAdmin && activeTeam && (
+          <Box sx={{
+            position: 'absolute',
+            right: '-140px',
+            top: '50%',
+            transform: 'translateY(-50%)'
+          }}>
+            <Tooltip title="チーム管理">
+              <IconButton
+                onClick={(event) => setAdminMenuAnchor(event.currentTarget)}
+                sx={{ color: 'white' }}
+                aria-controls={adminMenuOpen ? 'admin-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={adminMenuOpen ? 'true' : undefined}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            
+            {/* 管理者メニュー */}
+            <Menu
+              id="admin-menu"
+              anchorEl={adminMenuAnchor}
+              open={adminMenuOpen}
+              onClose={() => setAdminMenuAnchor(null)}
+              MenuListProps={{
+                'aria-labelledby': 'admin-menu-button',
+              }}
+            >
+              <MenuItem onClick={handleDeleteTeam}>
+                <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                チームを削除
+              </MenuItem>
+            </Menu>
+          </Box>
+        )}
       </Box>
       
       {/* チーム選択メニュー - 視認性向上版 */}
@@ -398,12 +470,52 @@ const TeamAdvice: React.FC = () => {
 
   // チームが選択されていない場合はチームハブに遷移
   useEffect(() => {
-    if (!teamId && !activeTeamId) {
-      navigate('/team');
-    } else if (teamId && teamId !== activeTeamId) {
-      // URLのチームIDとアクティブチームIDが異なる場合、アクティブチームIDを更新
-      setActiveTeamId(teamId);
-    }
+    const handleTeamSelection = async () => {
+      if (!teamId && !activeTeamId) {
+        navigate('/team');
+      } else if (teamId && teamId !== activeTeamId) {
+        // 重要: URL由来のチームIDが使用される前に、チームIDに関連するキャッシュをクリア
+        console.log(`[TeamAdvice] チームIDが変更されました: ${activeTeamId} -> ${teamId}`);
+        
+        try {
+          // すべてのチーム関連キャッシュをクリア
+          console.log('[TeamAdvice] チーム関連のキャッシュをクリア');
+          
+          // チームメンバー関連のキャッシュをクリア
+          await apiService.clearCache(`/api/v1/teams/${teamId}/members`);
+          
+          // チーム運勢関連のキャッシュをクリア
+          await apiService.clearCache(`/api/v1/fortune/team/${teamId}/context`);
+          await apiService.clearCache(`/api/v1/fortune/team/${teamId}/ranking`);
+          
+          // チーム目標関連のキャッシュをクリア
+          await apiService.clearCache(`/api/v1/teams/${teamId}/goal`);
+          
+          // 古いチームIDのキャッシュも念のためクリア
+          if (activeTeamId) {
+            await apiService.clearCache(`/api/v1/teams/${activeTeamId}/members`);
+            await apiService.clearCache(`/api/v1/fortune/team/${activeTeamId}/context`);
+            await apiService.clearCache(`/api/v1/fortune/team/${activeTeamId}/ranking`);
+            await apiService.clearCache(`/api/v1/teams/${activeTeamId}/goal`);
+          }
+          
+          // 無効なチームID（6806c251ee9352d08ceba138）も念のためクリア
+          await apiService.clearCache(`/api/v1/teams/6806c251ee9352d08ceba138/members`);
+          await apiService.clearCache(`/api/v1/fortune/team/6806c251ee9352d08ceba138/context`);
+          await apiService.clearCache(`/api/v1/fortune/team/6806c251ee9352d08ceba138/ranking`);
+          await apiService.clearCache(`/api/v1/teams/6806c251ee9352d08ceba138/goal`);
+          
+          console.log('[TeamAdvice] キャッシュクリア完了、アクティブチームID更新');
+        } catch (err) {
+          console.error('[TeamAdvice] キャッシュクリア中にエラー:', err);
+        }
+        
+        // URLのチームIDとアクティブチームIDが異なる場合、アクティブチームIDを更新
+        setActiveTeamId(teamId);
+      }
+    };
+    
+    handleTeamSelection();
   }, [teamId, activeTeamId, navigate, setActiveTeamId]);
   
   // ユーザーの権限チェック - キャッシュを活用して不要な再取得を防止
@@ -949,7 +1061,7 @@ const TeamAdvice: React.FC = () => {
                     )}
                     
                     {/* チーム内での役割発揮のポイントを表示（MarkDownから抽出） */}
-                    {teamContextFortune.teamContextAdvice && (
+                    {teamContextFortune.teamContextAdvice && teamContextFortune.collaborationTips && (
                       <Box sx={{
                         mt: { xs: 1, sm: 2 }, 
                         p: { xs: 2, sm: 2.5 }, 
@@ -970,8 +1082,12 @@ const TeamAdvice: React.FC = () => {
                           今日のチーム協力アドバイス:
                         </Typography>
                         <Box sx={{ lineHeight: '1.7', fontSize: { xs: '13px', sm: '14px', md: '16px' } }}>
-                          {/* マークダウンから「チーム内での役割発揮のポイント」セクションを抽出して表示 */}
+                          {/* コラボレーションヒントがある場合はそれを表示、なければマークダウンから「チーム内での役割発揮のポイント」セクションを抽出して表示 */}
                           {(() => {
+                            if (Array.isArray(teamContextFortune.collaborationTips) && teamContextFortune.collaborationTips.length > 0) {
+                              return teamContextFortune.collaborationTips.join('\n\n');
+                            }
+                            
                             const text = teamContextFortune.teamContextAdvice;
                             const roleSection = text.split('## チーム内での役割発揮のポイント');
                             if (roleSection.length > 1) {
@@ -1052,6 +1168,39 @@ const TeamAdvice: React.FC = () => {
             <TeamMembersList teamId={teamId} />
           )}
         </Box>
+
+        {/* チーム脱退ボタン（管理者ではない場合のみ表示） */}
+        {teamId && !isTeamAdmin && (
+          <Box sx={{ 
+            mt: 4, 
+            mb: 6, 
+            display: 'flex', 
+            justifyContent: 'center',
+            borderTop: '1px solid #eee',
+            paddingTop: 4
+          }}>
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<ExitToAppIcon />}
+              onClick={() => {
+                if (window.confirm('このチームから脱退してもよろしいですか？')) {
+                  teamService.leaveTeam(teamId)
+                    .then(() => {
+                      refreshTeams();
+                      navigate('/team');
+                    })
+                    .catch(err => {
+                      console.error('チーム脱退エラー:', err);
+                      setError('チームの脱退に失敗しました。');
+                    });
+                }
+              }}
+            >
+              チームから脱退する
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {/* フローティングアクションボタン */}

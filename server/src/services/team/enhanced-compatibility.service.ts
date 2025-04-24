@@ -3,6 +3,7 @@ import { Compatibility, ICompatibilityDocument } from '../../models/Compatibilit
 import { User } from '../../models/User';
 import { Team } from '../../models/Team';
 import claudeAI from '../../utils/claude-ai';
+import { toObjectId } from '../../utils/id-helpers';
 
 /**
  * 高度な四柱推命相性診断サービスクラス
@@ -565,97 +566,149 @@ ${user1DisplayName}(${this.ELEMENT_JP_MAP[user1Element as keyof typeof this.ELEM
     try {
       console.log(`相性診断開始: ユーザー1=${user1Id}, ユーザー2=${user2Id}`);
       
-      // 既存の相性データを検索（ユーザーIDの順序を考慮）
-      let compatibility = await Compatibility.findOne({
-        $or: [
-          { user1Id: user1Id, user2Id: user2Id },
-          { user1Id: user2Id, user2Id: user1Id }
-        ]
-      });
-      
-      // 相性データが存在する場合はそれを返す
-      if (compatibility) {
-        console.log('既存の相性データを返します:', compatibility._id);
-        return compatibility;
+      if (!user1Id || !user2Id) {
+        throw new Error('有効なユーザーIDが必要です');
       }
       
-      // 小さい方のIDが先に来るようにソート（文字列比較）
-      const [smallerId, largerId] = user1Id < user2Id 
-        ? [user1Id, user2Id] 
-        : [user2Id, user1Id];
-      
-      console.log('ユーザー情報を取得中...');
-      
-      // ユーザー情報を取得
-      const [user1, user2] = await Promise.all([
-        User.findById(user1Id),
-        User.findById(user2Id)
-      ]);
-      
-      if (!user1 || !user2) {
-        throw new Error('ユーザーが見つかりません');
-      }
-      
-      console.log(`ユーザー情報: user1=${user1.displayName}, user2=${user2.displayName}`);
-      console.log(`五行属性: user1=${user1.elementAttribute}, user2=${user2.elementAttribute}`);
-      
-      if (!user1.elementAttribute || !user2.elementAttribute) {
-        throw new Error('ユーザーの五行属性が設定されていません');
-      }
-      
-      // 四柱データが存在するか確認
-      if (!user1.fourPillars || !user1.fourPillars.day || !user1.fourPillars.day.heavenlyStem) {
-        throw new Error(`ユーザー1(${user1.displayName})の四柱データが不完全です`);
-      }
-      
-      if (!user2.fourPillars || !user2.fourPillars.day || !user2.fourPillars.day.heavenlyStem) {
-        throw new Error(`ユーザー2(${user2.displayName})の四柱データが不完全です`);
-      }
-    
-    try {
-      // 相性の詳細計算
-      const compatibilityDetails = this.calculateCompatibilityScore(user1, user2);
-      
-      // 相性の詳細説明を生成
-      const detailDescription = await this.generateDetailDescription(
-        user1.displayName,
-        user2.displayName,
-        user1.elementAttribute,
-        user2.elementAttribute,
-        compatibilityDetails
-      );
-      
-      // 関係性タイプを日本語に変換
-      const relationshipTypeJP = this.RELATIONSHIP_TYPE_JP[compatibilityDetails.relationshipType as keyof typeof this.RELATIONSHIP_TYPE_JP];
-      
-      console.log('相性データを作成中...');
-      
-      // 相性データを作成
-      compatibility = await Compatibility.create({
-        user1Id: smallerId,
-        user2Id: largerId,
-        compatibilityScore: compatibilityDetails.totalScore,
-        relationship: 'enhanced', // 拡張相性計算であることを示す
-        relationshipType: relationshipTypeJP,
-        user1Element: user1.elementAttribute,
-        user2Element: user2.elementAttribute,
-        detailDescription,
-        teamInsight: "", // 廃止（詳細説明に含める）
-        collaborationTips: [], // 廃止（詳細説明に含める）
-        enhancedDetails: {
-          yinYangBalance: compatibilityDetails.details.yinYangBalance,
-          strengthBalance: compatibilityDetails.details.strengthBalance,
-          dayBranchRelationship: compatibilityDetails.details.dayBranchRelationship,
-          usefulGods: compatibilityDetails.details.usefulGods,
-          dayGanCombination: compatibilityDetails.details.dayGanCombination,
-          relationshipType: compatibilityDetails.relationshipType
+      // IDをObjectIdに変換
+      try {
+        // IDをObjectIdに確実に変換
+        const user1ObjectId = toObjectId(user1Id);
+        const user2ObjectId = toObjectId(user2Id);
+        
+        console.log(`変換後のObjectId - user1=${user1ObjectId}, user2=${user2ObjectId}`);
+        
+        // ObjectIdの文字列表現を取得（検索の一貫性のため）
+        const user1IdStr = user1ObjectId.toString();
+        const user2IdStr = user2ObjectId.toString();
+        
+        // 小さい方のIDが先に来るようにソート
+        const [smallerId, largerId] = user1IdStr < user2IdStr 
+          ? [user1ObjectId, user2ObjectId] 
+          : [user2ObjectId, user1ObjectId];
+          
+        console.log(`ソート後のID順序 - smallerId=${smallerId}, largerId=${largerId}`);
+        
+        // 1. 最初に正しくソートされた順序で検索
+        console.log('既存の相性データを検索中...');
+        let compatibility = await Compatibility.findOne({
+          user1Id: smallerId,
+          user2Id: largerId
+        });
+        
+        if (compatibility) {
+          console.log('既存の相性データを見つけました:', compatibility._id);
+          return compatibility;
         }
-      });
+        
+        // 2. バックアップ検索: $orクエリで両方向を試す
+        console.log('バックアップ検索(ObjectId)を実行中...');
+        compatibility = await Compatibility.findOne({
+          $or: [
+            { user1Id: user1ObjectId, user2Id: user2ObjectId },
+            { user1Id: user2ObjectId, user2Id: user1ObjectId }
+          ]
+        });
+        
+        if (compatibility) {
+          console.log('バックアップ検索(ObjectId)で相性データを見つけました:', compatibility._id);
+          return compatibility;
+        }
+        
+        // 3. 互換性のために文字列IDでも検索
+        console.log('バックアップ検索(文字列ID)を実行中...');
+        compatibility = await Compatibility.findOne({
+          $or: [
+            { user1Id: user1IdStr, user2Id: user2IdStr },
+            { user1Id: user2IdStr, user2Id: user1IdStr }
+          ]
+        });
+        
+        if (compatibility) {
+          console.log('バックアップ検索(文字列ID)で相性データを見つけました:', compatibility._id);
+          return compatibility;
+        }
+        
+        console.log('既存の相性データが見つかりませんでした。新規作成します。');
+        
+        console.log('ユーザー情報を取得中...');
+        
+        // ユーザー情報を取得
+        const [user1, user2] = await Promise.all([
+          User.findById(user1ObjectId),
+          User.findById(user2ObjectId)
+        ]);
+        
+        if (!user1 || !user2) {
+          throw new Error('ユーザーが見つかりません');
+        }
+        
+        console.log(`ユーザー情報: user1=${user1.displayName}, user2=${user2.displayName}`);
+        console.log(`五行属性: user1=${user1.elementAttribute}, user2=${user2.elementAttribute}`);
+        
+        if (!user1.elementAttribute || !user2.elementAttribute) {
+          throw new Error('ユーザーの五行属性が設定されていません');
+        }
+        
+        // 四柱データが存在するか確認
+        if (!user1.fourPillars || !user1.fourPillars.day || !user1.fourPillars.day.heavenlyStem) {
+          throw new Error(`ユーザー1(${user1.displayName})の四柱データが不完全です`);
+        }
+        
+        if (!user2.fourPillars || !user2.fourPillars.day || !user2.fourPillars.day.heavenlyStem) {
+          throw new Error(`ユーザー2(${user2.displayName})の四柱データが不完全です`);
+        }
       
-      console.log('相性データ作成完了:', compatibility._id);
-      return compatibility;
+      try {
+        // 相性の詳細計算
+        const compatibilityDetails = this.calculateCompatibilityScore(user1, user2);
+        
+        // 相性の詳細説明を生成
+        const detailDescription = await this.generateDetailDescription(
+          user1.displayName,
+          user2.displayName,
+          user1.elementAttribute,
+          user2.elementAttribute,
+          compatibilityDetails
+        );
+        
+        // 関係性タイプを日本語に変換
+        const relationshipTypeJP = this.RELATIONSHIP_TYPE_JP[compatibilityDetails.relationshipType as keyof typeof this.RELATIONSHIP_TYPE_JP];
+        
+        console.log('相性データを作成中...');
+        console.log('使用するユーザーID: user1Id=', smallerId, 'user2Id=', largerId);
+        
+        // 新しい相性データを作成
+        compatibility = new Compatibility({
+          user1Id: smallerId,
+          user2Id: largerId,
+          compatibilityScore: compatibilityDetails.totalScore,
+          relationship: 'enhanced', // 拡張相性計算であることを示す
+          relationshipType: relationshipTypeJP,
+          user1Element: user1.elementAttribute,
+          user2Element: user2.elementAttribute,
+          detailDescription,
+          teamInsight: "", // 廃止（詳細説明に含める）
+          collaborationTips: [], // 廃止（詳細説明に含める）
+          enhancedDetails: {
+            yinYangBalance: compatibilityDetails.details.yinYangBalance,
+            strengthBalance: compatibilityDetails.details.strengthBalance,
+            dayBranchRelationship: compatibilityDetails.details.dayBranchRelationship,
+            usefulGods: compatibilityDetails.details.usefulGods,
+            dayGanCombination: compatibilityDetails.details.dayGanCombination,
+            relationshipType: compatibilityDetails.relationshipType
+          }
+        });
+        
+        await compatibility.save();
+        console.log('新規相性データを作成しました:', compatibility._id);
+        return compatibility;
+      } catch (error) {
+        console.error('相性データ作成エラー:', error);
+        throw error;
+      }
     } catch (error) {
-      console.error('相性データ作成エラー:', error);
+      console.error('ObjectId変換またはユーザー検索エラー:', error);
       throw error;
     }
   } catch (error) {

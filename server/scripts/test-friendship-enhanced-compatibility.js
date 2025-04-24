@@ -1,352 +1,225 @@
-/**
- * 友達APIのテストスクリプト
- * 友達関連の各種エンドポイントをテストします
- */
-
-require('dotenv').config();
 const mongoose = require('mongoose');
-const axios = require('axios');
-const { generateToken } = require('./utils/auth-helper');
+require('dotenv').config();
 
-// デフォルト設定
-const API_BASE_URL = 'http://localhost:8080/api/v1';
-const DEFAULT_USER_ID = '65f4fe4bfe04b371f21576f7'; // テスト用ユーザーID
-const DEFAULT_FRIEND_ID = '65f4fbbd4da35d0b2e8891ed'; // テスト用友達ID
+// MongoDB接続情報
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dailyfortune';
 
-// コマンドライン引数解析
-const args = process.argv.slice(2);
-const userId = args[0] || DEFAULT_USER_ID;
-const friendId = args[1] || DEFAULT_FRIEND_ID;
-const testType = args[2] || 'all'; // 'basic', 'enhanced', 'all'
+// モデルスキーマをゆるく定義
+const userSchema = new mongoose.Schema({}, { strict: false });
+const compatibilitySchema = new mongoose.Schema({}, { strict: false });
+const friendshipSchema = new mongoose.Schema({}, { strict: false });
 
-/**
- * データベースに接続して、有効なユーザーが存在するか確認
- */
-async function checkDatabaseEntities() {
-  try {
-    console.log('MongoDB接続を試みます...');
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://lisence:FhpQAu5UPwjm0L1J@motherprompt-cluster.np3xp.mongodb.net/dailyfortune');
-    console.log('MongoDB接続成功');
-
-    // ユーザーを確認
-    const users = await mongoose.connection.collection('users').find({
-      _id: { $in: [new mongoose.Types.ObjectId(userId), new mongoose.Types.ObjectId(friendId)] }
-    }).toArray();
-
-    if (users.length < 2) {
-      console.error(`エラー: テスト用のユーザーが見つかりません。見つかったユーザー数: ${users.length}`);
-      users.forEach(user => console.log(`- ユーザー: ${user._id}, ${user.displayName}`));
-      console.log('有効なユーザーIDを指定してください');
-      process.exit(1);
+// ObjectIdからmongoose.Types.ObjectId型の値を作成する関数
+const toObjectId = (id) => {
+  if (!id) {
+    throw new Error('IDがnullまたはundefinedです');
+  }
+  
+  if (id instanceof mongoose.Types.ObjectId) {
+    return id;
+  }
+  
+  if (typeof id === 'string') {
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      return new mongoose.Types.ObjectId(id);
+    } else {
+      throw new Error(`不正なObjectId形式: ${id}`);
     }
+  }
+  
+  throw new Error(`不正なID型: ${typeof id}`);
+};
 
-    // 友達関係があるかチェック
-    const friendship = await mongoose.connection.collection('friendships').findOne({
+// 拡張相性計算のシミュレーション関数
+async function calculateAndSaveEnhancedCompatibility(user1, user2, friendship) {
+  try {
+    console.log(`拡張相性計算をシミュレーション: user1=${user1.displayName}, user2=${user2.displayName}`);
+    
+    // ユーザーIDの文字列化を確実に行う
+    const user1IdStr = typeof user1._id === 'string' ? user1._id : user1._id.toString();
+    const user2IdStr = typeof user2._id === 'string' ? user2._id : user2._id.toString();
+    
+    // ObjectIdへの変換
+    const user1ObjectId = toObjectId(user1IdStr);
+    const user2ObjectId = toObjectId(user2IdStr);
+    
+    console.log(`ObjectId変換後: user1=${user1ObjectId}, user2=${user2ObjectId}`);
+    
+    // 小さい方のIDが先に来るようにソート
+    const [smallerId, largerId] = user1ObjectId.toString() < user2ObjectId.toString() 
+      ? [user1ObjectId, user2ObjectId] 
+      : [user2ObjectId, user1ObjectId];
+      
+    console.log(`ソート後のID順序: smallerId=${smallerId}, largerId=${largerId}`);
+    
+    // 既存の相性データを検索 - Compatibility モデルを使用
+    const Compatibility = mongoose.model('Compatibility', compatibilitySchema);
+    
+    console.log('既存の相性データを検索中...');
+    let compatibility = await Compatibility.findOne({
+      user1Id: smallerId,
+      user2Id: largerId
+    });
+    
+    if (compatibility) {
+      console.log('既存の相性データを見つけました:', compatibility._id);
+      return compatibility;
+    }
+    
+    // それでも見つからない場合は、$orクエリで両方向を試す
+    console.log('バックアップ検索を実行中...');
+    compatibility = await Compatibility.findOne({
       $or: [
-        { userId1: new mongoose.Types.ObjectId(userId), userId2: new mongoose.Types.ObjectId(friendId) },
-        { userId1: new mongoose.Types.ObjectId(friendId), userId2: new mongoose.Types.ObjectId(userId) }
+        { user1Id: user1ObjectId, user2Id: user2ObjectId },
+        { user1Id: user2ObjectId, user2Id: user1ObjectId }
       ]
     });
-
-    console.log(`テスト準備完了:`);
-    console.log(`- ユーザー: ${users[0].displayName} (${users[0]._id})`);
-    console.log(`- 友達: ${users.length > 1 ? users[1].displayName : 'Not Found'} (${users.length > 1 ? users[1]._id : 'N/A'})`);
-    console.log(`- 友達関係: ${friendship ? '存在します' : '存在しません'}`);
-    if (friendship) {
-      console.log(`  - 関係ID: ${friendship._id}`);
-      console.log(`  - ステータス: ${friendship.status}`);
-      console.log(`  - 既存の相性スコア: ${friendship.compatibilityScore || 'なし'}`);
-    }
-
-    return { users, friendship };
-  } catch (error) {
-    console.error('データベース確認中にエラーが発生しました:', error);
-    process.exit(1);
-  } finally {
-    await mongoose.disconnect();
-    console.log('MongoDB切断');
-  }
-}
-
-/**
- * 基本相性診断APIを呼び出してテスト
- */
-async function testBasicCompatibilityAPI(token) {
-  try {
-    console.log(`\n基本相性診断API (GET /api/v1/friends/${friendId}/compatibility) を呼び出し中...`);
-    const response = await axios.get(
-      `${API_BASE_URL}/friends/${friendId}/compatibility`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
-
-    console.log('基本相性診断APIのレスポンス:');
-    console.log('- 成功:', response.data.success);
     
-    if (response.data.success && response.data.data) {
-      const data = response.data.data;
-      console.log('\n基本相性情報:');
-      console.log(`- 相性スコア: ${data.score}`);
-      console.log(`- 関係タイプ: ${data.relationshipType || data.relationship || 'N/A'}`);
-      console.log(`- ユーザー1: ${data.users[0].displayName} (${data.users[0].elementAttribute})`);
-      console.log(`- ユーザー2: ${data.users[1].displayName} (${data.users[1].elementAttribute})`);
-      console.log(`- 説明: ${data.description || 'N/A'}`);
-      
-      if (data.details) {
-        console.log('\n詳細情報:');
-        console.log(`- 詳細説明: ${data.details.detailDescription || 'N/A'}`);
-        console.log(`- チーム考察: ${data.details.teamInsight || 'N/A'}`);
-        console.log(`- 協力ヒント: ${data.details.collaborationTips || 'N/A'}`);
-      }
-      
-      return data;
-    } else {
-      console.error('エラー: 相性情報が取得できませんでした');
-      console.log(response.data);
-      return null;
+    if (compatibility) {
+      console.log('バックアップ検索で相性データを見つけました:', compatibility._id);
+      return compatibility;
     }
-  } catch (error) {
-    console.error('基本相性診断API呼び出し中にエラーが発生しました:', error.response?.data || error.message);
+    
+    console.log('既存の相性データが見つかりませんでした。新規作成が必要です。');
+    
+    // ここで実際の実装では新しい相性データを作成しますが、
+    // テストなので作成は行わず、相性データが見つからなかったことを示すだけにします
+    
     return null;
+  } catch (error) {
+    console.error('拡張相性計算エラー:', error);
+    throw error;
   }
 }
 
-/**
- * 拡張相性診断APIを呼び出してテスト
- */
-async function testEnhancedCompatibilityAPI(token) {
+// 友達の相性診断テスト
+async function testFriendshipCompatibility() {
   try {
-    console.log(`\n拡張相性診断API (GET /api/v1/friends/${friendId}/enhanced-compatibility) を呼び出し中...`);
-    const response = await axios.get(
-      `${API_BASE_URL}/friends/${friendId}/enhanced-compatibility`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
+    console.log(`MongoDB接続: ${MONGODB_URI}`);
+    await mongoose.connect(MONGODB_URI);
+    console.log('MongoDB接続成功');
+    
+    // モデルの定義
+    const User = mongoose.model('User', userSchema);
+    const Friendship = mongoose.model('Friendship', friendshipSchema);
+    
+    // 特定のユーザーを検索（メールアドレスから）
+    const userEmail = 'shiraishi.tatsuya@mikoto.co.jp';
+    console.log(`ユーザー検索: ${userEmail}`);
+    const user = await User.findOne({ email: userEmail });
+    
+    if (!user) {
+      console.error(`ユーザー ${userEmail} が見つかりません`);
+      await mongoose.connection.close();
+      return;
+    }
+    
+    console.log(`ユーザーを見つけました: ${user.displayName} (${user._id})`);
+    
+    // このユーザーの友達を検索
+    console.log('友達関係を検索中...');
+    const friendships = await Friendship.find({
+      $or: [
+        { userId1: user._id, status: 'accepted' },
+        { userId2: user._id, status: 'accepted' }
+      ]
+    });
+    
+    console.log(`友達関係が ${friendships.length} 件見つかりました`);
+    
+    if (friendships.length === 0) {
+      console.log('友達関係が見つからないため、テストを中止します');
+      await mongoose.connection.close();
+      return;
+    }
+    
+    // 友達のIDリストを作成
+    const friendIds = friendships.map(f => 
+      f.userId1.toString() === user._id.toString() ? f.userId2 : f.userId1
     );
-
-    console.log('拡張相性診断APIのレスポンス:');
-    console.log('- 成功:', response.data.success);
-    console.log('- レスポンス構造:', JSON.stringify(Object.keys(response.data), null, 2));
     
-    // デバッグ用に完全なレスポンスを表示
-    console.log('\n完全なレスポンス構造:');
-    console.log(JSON.stringify(response.data, null, 2));
+    // 友達の詳細情報を取得
+    const friends = await User.find({
+      _id: { $in: friendIds }
+    });
     
-    // data キーの存在をチェック
-    if (response.data.success && response.data.data) {
-      const data = response.data.data;
-      console.log('\n拡張相性情報 (data キー経由):');
-      console.log(`- 相性スコア: ${data.score}`);
-      console.log(`- 関係タイプ: ${data.relationshipType || 'N/A'}`);
-      console.log(`- ユーザー1: ${data.users[0].displayName} (${data.users[0].elementAttribute})`);
-      console.log(`- ユーザー2: ${data.users[1].displayName} (${data.users[1].elementAttribute})`);
-      console.log(`- 説明: ${data.description || 'N/A'}`);
+    console.log(`友達のユーザーが ${friends.length} 名見つかりました`);
+    
+    // レノンというユーザーを探す
+    const renonUser = friends.find(f => f.displayName && f.displayName.includes('レノン'));
+    
+    // 友達の中にレノンがいなければ、最初の友達を使用
+    const friendUser = renonUser || friends[0];
+    
+    if (!friendUser) {
+      console.log('友達ユーザーが見つからないため、テストを中止します');
+      await mongoose.connection.close();
+      return;
+    }
+    
+    console.log(`テスト対象の友達: ${friendUser.displayName} (${friendUser._id})`);
+    
+    // 友達関係を取得
+    const friendship = friendships.find(f => 
+      (f.userId1.toString() === user._id.toString() && f.userId2.toString() === friendUser._id.toString()) ||
+      (f.userId1.toString() === friendUser._id.toString() && f.userId2.toString() === user._id.toString())
+    );
+    
+    if (!friendship) {
+      console.log('友達関係が見つかりません。これは想定外の状態です。');
+    } else {
+      console.log(`友達関係ID: ${friendship._id}`);
       
-      if (data.details) {
-        console.log('\n詳細情報:');
-        console.log(`- 詳細説明: ${data.details.detailDescription || 'N/A'}`);
-        console.log(`- チーム考察: ${data.details.teamInsight || 'N/A'}`);
-        console.log(`- 協力ヒント: ${data.details.collaborationTips || 'N/A'}`);
+      if (friendship.compatibilityScore) {
+        console.log(`既存の相性スコア: ${friendship.compatibilityScore}`);
       }
       
-      // 拡張詳細情報を表示
-      if (data.enhancedDetails) {
-        console.log('\n拡張詳細情報:');
-        console.log(`- 陰陽バランス: ${data.enhancedDetails.yinYangBalance}`);
-        console.log(`- 身強弱バランス: ${data.enhancedDetails.strengthBalance}`);
-        if (data.enhancedDetails.dayBranchRelationship) {
-          console.log(`- 日支関係: ${data.enhancedDetails.dayBranchRelationship.relationship} (${data.enhancedDetails.dayBranchRelationship.score}点)`);
-        }
-        console.log(`- 用神・喜神の評価: ${data.enhancedDetails.usefulGods}`);
-        if (data.enhancedDetails.dayGanCombination) {
-          console.log(`- 日干干合: ${data.enhancedDetails.dayGanCombination.isGangou ? 'あり' : 'なし'} (${data.enhancedDetails.dayGanCombination.score}点)`);
-        }
-        console.log(`- 関係性タイプ: ${data.enhancedDetails.relationshipType || 'N/A'}`);
+      if (friendship.enhancedDetails) {
+        console.log('拡張相性データが存在します');
       } else {
-        console.warn('警告: 拡張詳細情報が含まれていません');
+        console.log('拡張相性データが存在しません');
       }
     }
     
-    // compatibility キーの存在をチェック
-    if (response.data.success && response.data.compatibility) {
-      const data = response.data.compatibility;
-      console.log('\n拡張相性情報 (compatibility キー経由):');
-      console.log(`- 相性スコア: ${data.score}`);
-      console.log(`- 関係タイプ: ${data.relationshipType || 'N/A'}`);
-      console.log(`- ユーザー1: ${data.users[0].displayName} (${data.users[0].elementAttribute})`);
-      console.log(`- ユーザー2: ${data.users[1].displayName} (${data.users[1].elementAttribute})`);
-      console.log(`- 詳細説明: ${data.detailDescription || 'N/A'}`);
-      
-      // 拡張詳細情報を表示
-      if (data.enhancedDetails) {
-        console.log('\n拡張詳細情報:');
-        console.log(`- 陰陽バランス: ${data.enhancedDetails.yinYangBalance}`);
-        console.log(`- 身強弱バランス: ${data.enhancedDetails.strengthBalance}`);
-        if (data.enhancedDetails.dayBranchRelationship) {
-          console.log(`- 日支関係: ${data.enhancedDetails.dayBranchRelationship.relationship} (${data.enhancedDetails.dayBranchRelationship.score}点)`);
-        }
-        console.log(`- 用神・喜神の評価: ${data.enhancedDetails.usefulGods}`);
-        if (data.enhancedDetails.dayGanCombination) {
-          console.log(`- 日干干合: ${data.enhancedDetails.dayGanCombination.isGangou ? 'あり' : 'なし'} (${data.enhancedDetails.dayGanCombination.score}点)`);
-        }
-        console.log(`- 関係性タイプ: ${data.enhancedDetails.relationshipType || 'N/A'}`);
-      } else {
-        console.warn('警告: 拡張詳細情報が含まれていません');
-      }
-    }
-      
-    // 結果を返す（データが存在する形式を優先）
-    if (response.data.compatibility) {
-      return response.data.compatibility;
-    } else if (response.data.data) {
-      return response.data.data;
-    } else {
-      console.error('エラー: 拡張相性情報が取得できませんでした');
-      console.log(response.data);
-      return null;
-    }
-  } catch (error) {
-    console.error('拡張相性診断API呼び出し中にエラーが発生しました:', error.response?.data || error.message);
-    return null;
-  }
-}
-
-/**
- * 友達プロフィール取得APIを呼び出してテスト
- */
-async function testFriendProfileAPI(token) {
-  try {
-    console.log(`\n友達プロフィール取得API (GET /api/v1/friends/${friendId}/profile) を呼び出し中...`);
-    const response = await axios.get(
-      `${API_BASE_URL}/friends/${friendId}/profile`,
-      { headers: { 'Authorization': `Bearer ${token}` } }
+    // 拡張相性の検索シミュレーション
+    console.log('\n拡張相性診断の検索シミュレーションを実行します...');
+    const compatibilityResult = await calculateAndSaveEnhancedCompatibility(
+      user, 
+      friendUser, 
+      friendship
     );
-
-    console.log('友達プロフィール取得APIのレスポンス:');
-    console.log('- 成功:', response.data.success);
     
-    if (response.data.success && response.data.data) {
-      const profile = response.data.data;
-      console.log('\n友達プロフィール情報:');
-      console.log(`- ユーザーID: ${profile.userId}`);
-      console.log(`- 表示名: ${profile.displayName}`);
-      console.log(`- メール: ${profile.email}`);
-      console.log(`- 五行属性: ${profile.elementAttribute || profile.mainElement || 'N/A'}`);
+    if (compatibilityResult) {
+      console.log('相性診断結果:');
+      console.log(` - ID: ${compatibilityResult._id}`);
+      console.log(` - スコア: ${compatibilityResult.compatibilityScore}`);
+      console.log(` - user1Id: ${compatibilityResult.user1Id}`);
+      console.log(` - user2Id: ${compatibilityResult.user2Id}`);
       
-      // 四柱推命データを表示
-      if (profile.fourPillars) {
-        console.log('\n四柱推命データ:');
-        console.log('- 年柱:', profile.fourPillars.year?.heavenlyStem, profile.fourPillars.year?.earthlyBranch);
-        console.log('- 月柱:', profile.fourPillars.month?.heavenlyStem, profile.fourPillars.month?.earthlyBranch);
-        console.log('- 日柱:', profile.fourPillars.day?.heavenlyStem, profile.fourPillars.day?.earthlyBranch);
-        console.log('- 時柱:', profile.fourPillars.hour?.heavenlyStem, profile.fourPillars.hour?.earthlyBranch);
+      // enhancedDetailsの存在確認
+      if (compatibilityResult.enhancedDetails) {
+        console.log('拡張相性詳細情報が存在します');
+      } else {
+        console.log('拡張相性詳細情報が存在しません');
       }
-      
-      // 格局情報を表示
-      if (profile.kakukyoku) {
-        console.log('\n格局情報:');
-        console.log(`- タイプ: ${profile.kakukyoku.type}`);
-        console.log(`- 強弱: ${profile.kakukyoku.strength}`);
-        console.log(`- カテゴリー: ${profile.kakukyoku.category}`);
-      }
-      
-      // 用神情報を表示
-      if (profile.yojin) {
-        console.log('\n用神情報:');
-        console.log(`- 十神: ${profile.yojin.tenGod}`);
-        console.log(`- 五行: ${profile.yojin.element}`);
-      }
-      
-      return profile;
     } else {
-      console.error('エラー: 友達プロフィール情報が取得できませんでした');
-      console.log(response.data);
-      return null;
+      console.log('相性診断データが見つからず、新規作成が必要です');
     }
+    
+    // データベース接続を閉じる
+    await mongoose.connection.close();
+    console.log('MongoDB接続を閉じました');
+    
   } catch (error) {
-    console.error('友達プロフィール取得API呼び出し中にエラーが発生しました:', error.response?.data || error.message);
-    return null;
+    console.error('テスト中にエラーが発生しました:', error);
+    
+    // データベース接続を閉じる
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+      console.log('MongoDB接続を閉じました');
+    }
   }
 }
 
-/**
- * 相性結果を比較して違いを表示
- */
-function compareCompatibilityResults(basicResult, enhancedResult) {
-  if (!basicResult || !enhancedResult) {
-    console.log('\n比較結果: 両方の結果が取得できなかったため、比較できません');
-    return;
-  }
-  
-  console.log('\n==== 基本相性診断と拡張相性診断の比較 ====');
-  
-  // スコアの比較
-  const scoreDiff = enhancedResult.score - basicResult.score;
-  console.log(`- 相性スコア差: ${scoreDiff} (基本: ${basicResult.score}, 拡張: ${enhancedResult.score})`);
-  
-  // 関係タイプの比較
-  const basicRelationType = basicResult.relationshipType || basicResult.relationship || 'N/A';
-  const enhancedRelationType = enhancedResult.relationshipType || 'N/A';
-  console.log(`- 関係タイプ: ${basicRelationType !== enhancedRelationType ? '異なる' : '同じ'}`);
-  console.log(`  - 基本: ${basicRelationType}`);
-  console.log(`  - 拡張: ${enhancedRelationType}`);
-  
-  // 説明の比較（最初の50文字だけ）
-  const basicDesc = (basicResult.description || '').substring(0, 50) + '...';
-  const enhancedDesc = (enhancedResult.description || '').substring(0, 50) + '...';
-  console.log(`- 説明: ${basicDesc !== enhancedDesc ? '異なる' : '同じ'}`);
-  
-  // 拡張アルゴリズムで追加された情報
-  console.log('\n拡張アルゴリズムで追加された情報:');
-  if (enhancedResult.enhancedDetails) {
-    console.log('- 陰陽バランスの考慮');
-    console.log('- 身強弱バランスの評価');
-    console.log('- 日支関係の分析');
-    console.log('- 用神・喜神の評価');
-    console.log('- 日干干合の検出');
-    console.log('- より詳細な関係性タイプの分類');
-  } else {
-    console.log('- 拡張詳細情報がレスポンスに含まれていないため、不明');
-  }
-}
-
-/**
- * メイン関数
- */
-async function main() {
-  console.log('友達APIテストを開始します...');
-  
-  // データベースのエンティティを確認
-  await checkDatabaseEntities();
-  
-  // 認証トークンを取得
-  const token = await generateToken();
-  console.log('認証トークンを取得しました');
-  
-  let basicResult = null;
-  let enhancedResult = null;
-  
-  // テストタイプに応じてAPIをテスト
-  if (testType === 'basic' || testType === 'all') {
-    // 基本相性診断APIをテスト
-    basicResult = await testBasicCompatibilityAPI(token);
-  }
-  
-  if (testType === 'enhanced' || testType === 'all') {
-    // 拡張相性診断APIをテスト
-    enhancedResult = await testEnhancedCompatibilityAPI(token);
-  }
-  
-  // 友達プロフィール取得APIをテスト
-  const profileResult = await testFriendProfileAPI(token);
-  
-  // 結果を比較（両方のAPIをテストした場合のみ）
-  if (testType === 'all') {
-    compareCompatibilityResults(basicResult, enhancedResult);
-  }
-  
-  console.log('\nテスト完了!');
-}
-
-// スクリプト実行
-main().catch(error => {
-  console.error('テスト実行中にエラーが発生しました:', error);
-  process.exit(1);
-});
+// テストの実行
+testFriendshipCompatibility();

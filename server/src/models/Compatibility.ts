@@ -22,8 +22,8 @@ export interface IEnhancedCompatibilityDetails {
  * 相性モデルのインターフェース
  */
 export interface ICompatibility {
-  user1Id: string;
-  user2Id: string;
+  user1Id: mongoose.Types.ObjectId;
+  user2Id: mongoose.Types.ObjectId;
   compatibilityScore: number;
   relationship: 'mutual_generation' | 'mutual_restriction' | 'neutral' | 'enhanced';
   relationshipType?: '相生' | '相克' | '中和' | '理想的パートナー' | '良好な協力関係' | '安定した関係' | '刺激的な関係' | '要注意の関係' | '一般的な関係';
@@ -48,12 +48,12 @@ export interface ICompatibilityDocument extends ICompatibility, Document {}
 const compatibilitySchema = new Schema<ICompatibilityDocument>(
   {
     user1Id: {
-      type: String,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'ユーザー1IDは必須です']
     },
     user2Id: {
-      type: String,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'ユーザー2IDは必須です']
     },
@@ -163,6 +163,10 @@ compatibilitySchema.index({ user1Id: 1, user2Id: 1 }, { unique: true });
 compatibilitySchema.index({ user1Id: 1 });
 compatibilitySchema.index({ user2Id: 1 });
 compatibilitySchema.index({ compatibilityScore: -1 });
+
+// ユーザーIDが文字列として保存されている場合のためのインデックス
+// これはレガシーデータの互換性のために必要
+compatibilitySchema.index({ user1Id: 'text', user2Id: 'text' });
 
 /**
  * 相性モデル

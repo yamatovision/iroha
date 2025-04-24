@@ -337,43 +337,45 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <InputContainer>
-      {/* コンテキスト追加ボタン */}
-      <Tooltip title="コンテキストを追加">
-        <div style={{ position: 'relative', marginRight: '8px' }}>
-          <Badge 
-            badgeContent={activeContexts.length} 
-            color="primary" 
-            overlap="circular"
-            max={9}
-            sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: '#4caf50',
-                color: 'white',
-              }
-            }}
-          >
-            <IconButton
-              color="primary"
-              onClick={onContextButtonClick}
-              disabled={disabled}
-              sx={{ 
-                width: '44px',
-                height: '44px',
-                background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
-                color: 'white',
-                boxShadow: '0 3px 8px rgba(0,0,0,0.15)',
-                '&:hover': {
-                  transform: !disabled ? 'translateY(-2px)' : 'none',
-                  boxShadow: !disabled ? '0 5px 12px rgba(0,0,0,0.2)' : '0 3px 8px rgba(0,0,0,0.15)',
-                },
-                transition: 'all 0.3s ease',
+      {/* コンテキスト追加ボタン（表示制御） */}
+      {onContextButtonClick && (
+        <Tooltip title="コンテキストを追加">
+          <div style={{ position: 'relative', marginRight: '8px' }}>
+            <Badge 
+              badgeContent={activeContexts.length} 
+              color="primary" 
+              overlap="circular"
+              max={9}
+              sx={{
+                '& .MuiBadge-badge': {
+                  backgroundColor: '#4caf50',
+                  color: 'white',
+                }
               }}
             >
-              <Add fontSize="small" />
-            </IconButton>
-          </Badge>
-        </div>
-      </Tooltip>
+              <IconButton
+                color="primary"
+                onClick={onContextButtonClick}
+                disabled={disabled}
+                sx={{ 
+                  width: '44px',
+                  height: '44px',
+                  background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
+                  color: 'white',
+                  boxShadow: '0 3px 8px rgba(0,0,0,0.15)',
+                  '&:hover': {
+                    transform: !disabled ? 'translateY(-2px)' : 'none',
+                    boxShadow: !disabled ? '0 5px 12px rgba(0,0,0,0.2)' : '0 3px 8px rgba(0,0,0,0.15)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <Add fontSize="small" />
+              </IconButton>
+            </Badge>
+          </div>
+        </Tooltip>
+      )}
       
       {/* 音声入力ボタン */}
       <Tooltip title={isRecording ? "音声入力を停止" : "音声入力を開始"}>

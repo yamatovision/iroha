@@ -6,6 +6,7 @@ import { Friendship } from '../../models/Friendship';
 import { InvitationLink } from '../../models/InvitationLink';
 import { NotFoundError, UnauthorizedError, BadRequestError } from '../../utils/error-handler';
 import { addMemberById } from './team-member.service';
+import { toObjectId } from '../../utils/id-helpers';
 
 export const createTeam = async (
   name: string,
@@ -183,76 +184,97 @@ export const updateTeam = async (
 };
 
 export const deleteTeam = async (teamId: string | mongoose.Types.ObjectId, userId: string | mongoose.Types.ObjectId): Promise<void> => {
-  // チームの存在確認
-  const team = await Team.findById(teamId);
-  if (!team) {
-    throw new NotFoundError('チームが見つかりません');
-  }
+  try {
+    // チームの存在確認 - toObjectId関数を使用して確実にObjectIDに変換
+    const team = await Team.findById(toObjectId(teamId));
+    if (!team) {
+      throw new NotFoundError('チームが見つかりません');
+    }
 
-  // 管理者権限チェック
-  const isAdmin = await isTeamAdmin(teamId, userId);
-  if (!isAdmin) {
-    throw new UnauthorizedError('チームの削除は管理者のみ可能です');
+    // 管理者権限チェック
+    const isAdmin = await isTeamAdmin(teamId, userId);
+    if (!isAdmin) {
+      throw new UnauthorizedError('チームの削除は管理者のみ可能です');
+    }
+  } catch (error: any) {
+    // ObjectID変換エラーが発生した場合
+    if (error.message && error.message.includes('不正なObjectId形式')) {
+      throw new NotFoundError('チームが見つかりません');
+    }
+    throw error;
   }
 
   // チームのメンバーシップを削除
-  await TeamMembership.deleteMany({ teamId });
+  await TeamMembership.deleteMany({ teamId: toObjectId(teamId) });
   
   // 後方互換性のため、Userモデルのチーム参照も更新
   await User.updateMany(
-    { teamId: teamId },
+    { teamId: toObjectId(teamId) },
     { $unset: { teamId: 1, teamRole: 1 } }
   );
 
   // チームの招待を取り消し
   await InvitationLink.updateMany(
-    { teamId, status: 'pending' },
+    { teamId: toObjectId(teamId), status: 'pending' },
     { status: 'expired' }
   );
 
   // チーム削除
-  await Team.findByIdAndDelete(teamId);
+  await Team.findByIdAndDelete(toObjectId(teamId));
 };
 
 export const isTeamAdmin = async (teamId: string | mongoose.Types.ObjectId, userId: string | mongoose.Types.ObjectId): Promise<boolean> => {
-  const team = await Team.findById(teamId);
-  if (!team) {
-    return false;
+  let team;
+  let user;
+  
+  try {
+    // チームの存在確認 - toObjectId関数を使用
+    team = await Team.findById(toObjectId(teamId));
+    if (!team) {
+      return false;
+    }
+    
+    // ユーザー情報を取得してSuperAdmin権限も確認 - toObjectId関数を使用
+    user = await User.findById(toObjectId(userId));
+    if (!user) {
+      return false;
+    }
+    
+    // SuperAdminロールの場合、常に管理者権限があると見なす
+    if (user.role === 'SuperAdmin') {
+      return true;
+    }
+    
+    // 通常のチーム管理者確認 - 常に文字列化して比較
+    const userIdStr = userId.toString();
+    
+    // チームの管理者一覧をチェック
+    if (team.administrators && team.administrators.length > 0) {
+      const isInAdminList = team.administrators.some(adminId => 
+        adminId && adminId.toString() === userIdStr
+      );
+      if (isInAdminList) return true;
+    }
+    
+    // 従来のadminIdもチェック
+    const adminIdStr = team.adminId ? team.adminId.toString() : '';
+    if (adminIdStr === userIdStr) return true;
+    
+    // TeamMembershipでisAdmin=trueも確認 - toObjectId関数を使用
+    const membership = await TeamMembership.findOne({
+      teamId: toObjectId(teamId),
+      userId: toObjectId(userId),
+      isAdmin: true
+    });
+    return !!membership;
+    
+  } catch (error: any) {
+    // ObjectID変換エラーが発生した場合はfalseを返す
+    if (error.message && error.message.includes('不正なObjectId形式')) {
+      return false;
+    }
+    throw error;
   }
-  
-  // ユーザー情報を取得してSuperAdmin権限も確認
-  const user = await User.findById(userId);
-  if (!user) {
-    return false;
-  }
-  
-  // SuperAdminロールの場合、常に管理者権限があると見なす
-  if (user.role === 'SuperAdmin') {
-    return true;
-  }
-  
-  // 通常のチーム管理者確認 - 常に文字列化して比較
-  const userIdStr = userId.toString();
-  
-  // チームの管理者一覧をチェック
-  if (team.administrators && team.administrators.length > 0) {
-    const isInAdminList = team.administrators.some(adminId => 
-      adminId && adminId.toString() === userIdStr
-    );
-    if (isInAdminList) return true;
-  }
-  
-  // 従来のadminIdもチェック
-  const adminIdStr = team.adminId ? team.adminId.toString() : '';
-  if (adminIdStr === userIdStr) return true;
-  
-  // TeamMembershipでisAdmin=trueも確認
-  const membership = await TeamMembership.findOne({
-    teamId,
-    userId,
-    isAdmin: true
-  });
-  return !!membership;
 };
 
 /**
@@ -264,16 +286,24 @@ export const isTeamAdmin = async (teamId: string | mongoose.Types.ObjectId, user
  * @returns メンバーの場合はtrue、そうでない場合はfalse
  */
 export const isTeamMember = async (teamId: string | mongoose.Types.ObjectId, userId: string | mongoose.Types.ObjectId): Promise<boolean> => {
-  // まずTeamMembershipを確認
-  const membership = await TeamMembership.findOne({
-    teamId,
-    userId
-  });
-  
-  if (membership) return true;
-  
-  // TeamMembershipモデルに移行したため、旧モデルは確認しない
-  return false;
+  try {
+    // まずTeamMembershipを確認 - toObjectId関数を使用
+    const membership = await TeamMembership.findOne({
+      teamId: toObjectId(teamId),
+      userId: toObjectId(userId)
+    });
+    
+    if (membership) return true;
+    
+    // TeamMembershipモデルに移行したため、旧モデルは確認しない
+    return false;
+  } catch (error: any) {
+    // ObjectID変換エラーが発生した場合はfalseを返す
+    if (error.message && error.message.includes('不正なObjectId形式')) {
+      return false;
+    }
+    throw error;
+  }
 };
 
 /**
@@ -631,7 +661,21 @@ export const getUserTeamsWithMemberships = async (userId: string | mongoose.Type
     _id: { $in: uniqueTeamIds.map(id => new mongoose.Types.ObjectId(id)) }
   });
   
-  // チーム情報とメンバーシップ情報を結合
+  // 存在するチームのIDリストを作成
+  const existingTeamIds = teams.map(team => team._id ? team._id.toString() : '');
+  
+  // 存在しないチームを参照しているメンバーシップを特定
+  const invalidMemberships = updatedMemberships.filter(
+    membership => !existingTeamIds.includes(membership.teamId.toString())
+  );
+  
+  // ログに記録（問題追跡のため）
+  if (invalidMemberships.length > 0) {
+    console.warn(`警告: ユーザー ${userId} に対して ${invalidMemberships.length} 件の無効なチームメンバーシップが見つかりました`);
+    console.warn('無効なチームID: ', invalidMemberships.map(m => m.teamId.toString()));
+  }
+  
+  // チーム情報とメンバーシップ情報を結合（存在するチームのみ）
   return teams.map(team => {
     const teamIdStr = team._id ? team._id.toString() : '';
     const membership = updatedMemberships.find(

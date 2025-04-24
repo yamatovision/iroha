@@ -14,6 +14,7 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 import sessionManager from './services/auth/session-manager.service'
 import deepLinkHandler from './utils/deep-link-handler'
 import { ScreenOrientation } from '@capacitor/screen-orientation'
+import storageService from './services/storage'
 
 // ページコンポーネント
 import Layout from './components/layout/Layout'
