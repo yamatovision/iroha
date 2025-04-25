@@ -12,6 +12,8 @@ PODS:
     - Capacitor
   - CapacitorScreenOrientation (7.0.1):
     - Capacitor
+  - CapacitorStatusBar (7.0.1):
+    - Capacitor
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -21,6 +23,7 @@ DEPENDENCIES:
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorScreenOrientation (from `../../node_modules/@capacitor/screen-orientation`)"
+  - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -37,6 +40,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/preferences"
   CapacitorScreenOrientation:
     :path: "../../node_modules/@capacitor/screen-orientation"
+  CapacitorStatusBar:
+    :path: "../../node_modules/@capacitor/status-bar"
 
 SPEC CHECKSUMS:
   Capacitor: 106e7a4205f4618d582b886a975657c61179138d
@@ -46,7 +51,8 @@ SPEC CHECKSUMS:
   CapacitorNetwork: 07ec4c69c1bb696f41c23e00d31bda1bbb221bba
   CapacitorPreferences: cbf154e5e5519b7f5ab33817a334dda1e98387f9
   CapacitorScreenOrientation: 6590ca2800f2ddab521fae2580808fc7e66dfa1c
+  CapacitorStatusBar: 275cbf2f4dfc00388f519ef80c7ec22edda342c9
 
-PODFILE CHECKSUM: fcf1633d18a921ea9dfb147d6fc7bf3d7c63a9a0
+PODFILE CHECKSUM: 7ed5a44bba4907d32a3769469f0cf8991b39e562
 
 COCOAPODS: 1.16.2

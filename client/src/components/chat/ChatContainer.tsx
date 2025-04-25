@@ -130,12 +130,7 @@ const ChatContainer = forwardRef<ChatContainerHandle, ChatContainerProps>(({
     updateActiveContexts();
   }, []);
 
-  // メッセージリストの末尾に自動スクロール
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+  // メッセージリストのスクロールはChatMessageListコンポーネントで処理
 
   // コンテキスト追加ボタンクリックハンドラー
   const handleContextButtonClick = () => {

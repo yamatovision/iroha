@@ -287,9 +287,17 @@ export class ChatService {
             
             try {
               // iOSの場合は安全のため読み込み回数に制限を設ける
-              const maxReadAttempts = isIOS ? 1000 : Infinity; // 1000回を上限とする
+              const maxReadAttempts = isIOS ? 2000 : Infinity; // iOSの場合は2000回に引き上げ
               
-              while (readCount < maxReadAttempts) {
+              // ストリーム読み込みのタイムアウト設定（iOSで特に重要）
+              const streamTimeout = isIOS ? 120000 : 90000; // iOSでは120秒に延長
+              const streamTimeoutId = setTimeout(() => {
+                console.warn(`ストリーム読み込みタイムアウト(${streamTimeout}ms)。処理を打ち切ります。`);
+                reader.cancel('ストリーム読み込みタイムアウト'); // 明示的にストリーム読み込みをキャンセル
+              }, streamTimeout);
+              
+              try {
+                while (readCount < maxReadAttempts) {
                 try {
                   const { done, value } = await reader.read();
                   readCount++;
@@ -306,6 +314,9 @@ export class ChatService {
                       bufferLength: buffer.length,
                       messageLength: completeMessage.length
                     });
+                    
+                    // ストリームタイムアウトをクリア
+                    clearTimeout(streamTimeoutId);
                     break;
                   }
                   
@@ -419,15 +430,47 @@ export class ChatService {
               if (isIOS && readCount >= maxReadAttempts) {
                 console.warn(`最大読み込み回数(${maxReadAttempts})に達しました。処理を終了します。`);
               }
+              
+              // タイムアウトをクリア
+              clearTimeout(streamTimeoutId);
+              
+              } finally {
+                // 万が一の場合でもタイムアウトをクリア
+                clearTimeout(streamTimeoutId);
+              }
             } catch (streamError: any) {
-              console.error('ストリーム読み込みエラー:', {
+              // ストリームエラーの詳細なロギング
+              console.error('ストリーム読み込みエラー詳細:', {
                 error: streamError,
                 errorName: streamError.name,
                 errorMessage: streamError.message || '不明なエラー',
+                errorStack: streamError.stack || 'スタックトレースなし',
                 bufferState: buffer.substring(0, 100) + '...',
                 readCount,
-                platform: Capacitor.getPlatform()
+                timingInfo: {
+                  totalTime: Date.now() - readStartTime,
+                  averageReadTime: readCount > 0 ? (Date.now() - readStartTime) / readCount : 0
+                },
+                platform: Capacitor.getPlatform(),
+                iOSVersion: Capacitor.getPlatform() === 'ios' ? navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/)?.[0] : null,
+                connectionType: '不明' // navigator.connectionは標準ではないため削除
               });
+              
+              // iOS特有のエラー詳細情報（デバッグ用）
+              if (Capacitor.getPlatform() === 'ios') {
+                console.warn('iOS特有のストリームエラー診断:', {
+                  userAgentFull: navigator.userAgent,
+                  // エラーメッセージに特定のiOSエラー文字列が含まれているか確認
+                  hasTimeoutIndication: streamError.message && 
+                    (streamError.message.includes('timeout') || 
+                     streamError.message.includes('timed out') || 
+                     streamError.message.includes('time')),
+                  hasConnectionLostIndication: streamError.message && 
+                    (streamError.message.includes('connection') || 
+                     streamError.message.includes('network') ||
+                     streamError.message.includes('lost'))
+                });
+              }
               
               // ストリーミングエラーの場合でも、部分的に受信したメッセージがあれば返却
               if (completeMessage.length > 0) {
@@ -485,18 +528,93 @@ export class ChatService {
           // iOSの場合、ストリーミングが失敗したら非ストリーミングモードを試行
           const isIOS = Capacitor.getPlatform() === 'ios';
           
-          if (isIOS && error.name === 'TypeError' && error.message === 'Load failed') {
+          // エラー条件の拡張 - iOSでの一般的なネットワークエラーパターンに対応
+          const isIOSNetworkError = isIOS && (
+            (error.name === 'TypeError' && error.message === 'Load failed') ||
+            error.message?.includes('network connection was lost') ||
+            error.message?.includes('Network Error') ||
+            error.message?.includes('timeout') ||
+            error.name === 'AbortError' ||
+            error.code === 'ECONNABORTED'
+          );
+          
+          console.log('エラー診断:', {
+            isIOS,
+            errorName: error.name,
+            errorMessage: error.message,
+            errorCode: error.code,
+            isIOSNetworkError,
+            networkStatus: navigator.onLine ? 'オンライン' : 'オフライン'
+          });
+          
+          if (isIOSNetworkError) {
             console.log('iOSストリーミングエラーを検出。非ストリーミングモードで再試行します...');
             
             try {
-              // 非ストリーミングモードでの再試行
-              const nonStreamingResponse = await api.post(CHAT.SEND_MESSAGE, {
-                message,
-                contextItems
+              // ネイティブHTTPクライアントを使用して再試行
+              console.log('🔌 ネイティブHTTPクライアントを使用します');
+              
+              // JWTトークンを取得
+              const tokenService = await import('./auth/token.service').then(m => m.default);
+              const token = await tokenService.getAccessToken();
+              
+              if (!token) {
+                throw new Error('認証トークンがありません');
+              }
+              
+              // リクエストURLの構築
+              const baseURL = import.meta.env.PROD 
+                ? import.meta.env.VITE_API_URL 
+                : '';
+              
+              let url;
+              if (baseURL) {
+                // baseURLに '/api/v1' が含まれている場合は重複を防ぐ
+                if (baseURL.includes('/api/v1')) {
+                  // '/api/v1'を除去してパスを連結
+                  const cleanBaseUrl = baseURL.replace('/api/v1', '');
+                  url = `${cleanBaseUrl}${CHAT.SEND_MESSAGE}`;
+                } else {
+                  // 通常通り連結
+                  url = `${baseURL}${CHAT.SEND_MESSAGE}`;
+                }
+              } else {
+                // 開発環境: 相対パスを使用
+                url = `${CHAT.SEND_MESSAGE}`;
+              }
+              
+              console.log('🌐 ネイティブHTTP POST: ' + url);
+              console.log('Headers:', {
+                "Content-Type": "application/json",
+                "X-Trace-ID": Math.random().toString(36).substring(2),
+                "Authorization": `Bearer ${token.substring(0, 15)}...`
+              });
+              console.log('Data:', {message, contextItems});
+              
+              // Capacitor HTTP APIを使用
+              const { CapacitorHttp } = await import('@capacitor/core');
+              
+              const nonStreamingResponse = await CapacitorHttp.post({
+                url,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                  'Cache-Control': 'no-cache'
+                },
+                data: {
+                  message,
+                  contextItems
+                }
               });
               
-              if (!nonStreamingResponse.data.success) {
-                throw new Error(nonStreamingResponse.data.error?.message || 'メッセージの送信に失敗しました');
+              console.log('非ストリーミングレスポンス:', {
+                status: nonStreamingResponse.status,
+                dataType: typeof nonStreamingResponse.data,
+                dataPreview: JSON.stringify(nonStreamingResponse.data).substring(0, 100) + '...'
+              });
+              
+              if (nonStreamingResponse.status !== 200 || !nonStreamingResponse.data.success) {
+                throw new Error(nonStreamingResponse.data.error?.message || `API エラー: ${nonStreamingResponse.status}`);
               }
               
               console.log('非ストリーミングモードでの送信成功');
@@ -508,7 +626,12 @@ export class ChatService {
               });
               return; // 成功したので処理終了
             } catch (fallbackError: any) {
-              console.error('非ストリーミングモードでの再試行も失敗:', fallbackError);
+              console.error('非ストリーミングモードでの再試行も失敗:', {
+                errorObject: fallbackError,
+                errorMessage: fallbackError.message || 'エラーメッセージなし',
+                errorResponse: fallbackError.response || '詳細なし',
+                errorCode: fallbackError.code || 'コードなし'
+              });
               // 元のエラーを使用して拒否
             }
           }
