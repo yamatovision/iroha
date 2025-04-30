@@ -1,417 +1,437 @@
-# DailyFortuneネイティブアプリ移行チェックリスト
+# iroha（いろは）実装マスターインデックス
 
-## 🔄 データモデル改善計画: 複数チーム所属対応
+このドキュメントは、irohaプロジェクトの実装状況と計画を一元管理します。データフローと依存関係を考慮し、各機能の実装順序を明確化しています。
 
-### 現状の問題点
-- ユーザーは1つのチームにしか所属できない制約がある
-- `User`モデルは`teamId`フィールドを単一値として保持
-- チーム作成者が他のチームに所属している場合、自身のチームに自動的に所属できない
-- エラーメッセージ: "このユーザーは既に別のチームに所属しています"が発生
+## 1. 実装概要と進捗
 
-### リファクタリング案
-1. **データモデル変更**
-   - `User`モデルの`teamId`を`teamIds`配列に変更
-   - または新しい`TeamMembership`中間テーブルを作成して多対多関係を表現
+| アプリケーション | 完了率 | 状態 |
+|----------------|-------|------|
+| SuperAdmin管理サイト | 5% | ログイン画面実装済み |
+| サロン管理者サイト（Admin） | 0% | 未着手 |
+| スタイリスト用モバイルアプリ（Client） | 40% | 基盤機能実装済み |
 
-2. **TeamMembershipモデル案（推奨）**
-   ```typescript
-   const teamMembershipSchema = new Schema({
-     userId: {
-       type: Schema.Types.ObjectId,
-       ref: 'User',
-       required: true
-     },
-     teamId: {
-       type: Schema.Types.ObjectId,
-       ref: 'Team',
-       required: true
-     },
-     role: {
-       type: String,
-       required: true
-     },
-     isAdmin: {
-       type: Boolean,
-       default: false
-     },
-     joinedAt: {
-       type: Date,
-       default: Date.now
-     }
-   });
-   // 複合インデックス
-   teamMembershipSchema.index({ userId: 1, teamId: 1 }, { unique: true });
-   ```
+**全体進捗**: 7/21 機能完了 (33%)  
+**最終更新日**: 2025/4/30
 
-### ビジネスモデルの方向性
-- **誰でもチーム作成可能なオープンモデル採用**
-  - 全ユーザーがチームを自由に作成できる権限を持つ
-  - LINEやSlackのようなグループ作成モデルに近い
-  - ユーザーの主体性を重視し、口コミでの拡散を促進
+## 2. 実装優先順位順の機能リスト
 
-- **将来的な機能強化の方向性**
-  - ID検索やユーザー検索機能の実装
-  - 相性ベースの人材推奨機能
-  - チームに必要な五行属性の提案
-  - 相性マッチング機能（ビジネスパートナー探し）
+### SuperAdmin管理サイト
 
-- **課金モデル**
-  - 基本機能（プロフィール閲覧、チーム作成）は無料
-  - デイリーフォーチュンなど日常的に価値を感じる機能を有料化
-  - チーム管理機能や高度な分析は上位プランに配置
+#### 0. ログイン画面
+- **状態**: ✅ 完了
+- **API仕様**: [jwt-auth.routes.ts](/server/src/routes/jwt-auth.routes.ts)
+- **依存関係**: なし
+- **主要機能**:
+  - JWT認証による管理者ログイン
+  - SuperAdmin権限の検証
+  - トークン管理（生成、リフレッシュ）
+  - セキュアなパスワード認証
 
-## 初期設定・環境構築
-- [x] 1. 新規プロジェクト作成 (`DailyFortune-Native`)
-- [x] 2. 不要ファイル削除 (.git, node_modules など)
-- [x] 3. Git リポジトリ初期化
-- [x] 4. package.json の名前を `dailyfortune-native` に更新
-- [x] 5. README と関連ドキュメントの更新
+#### 1. 組織管理画面（メイン画面）
+- **状態**: ❌ 未着手
+- **API仕様**: 
+  - [superadmin.md](/docs/api/superadmin.md)
+  - [superadmin-role-v2.md](/docs/api/superadmin-role-v2.md)
+  - [admin-role-expansion.md](/docs/api/admin-role-expansion.md)
+- **依存関係**: 認証システム
+- **主要機能**:
+  - シンプルなメニュー構成
+  - 統計情報表示
+  - 組織の検索とフィルタリング
+  - 組織の一括操作
+  - 新規組織登録と初期オーナー設定
 
-## Capacitor導入
-- [x] 6. Capacitor Core と CLI をインストール
-- [x] 7. Capacitor プロジェクト初期化 (`npx cap init`)
-- [x] 8. vite.config.ts の base を `'./'` に変更
-- [x] 9. Capacitor Preferences パッケージをインストール
-- [x] 10. npm run build の実行
-- [x] 11. Android プラットフォーム追加 (`npx cap add android`)
-- [x] 12. iOS プラットフォーム追加 (`npx cap add ios`)
-- [x] 13. capacitor.config.ts の設定
+#### 2. 課金・プラン管理画面
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-superadmin-plans.md](/docs/implementation/beauty-superadmin-plans.md)
+- **API仕様**: [superadmin-plans.md](/docs/api/superadmin-plans.md)
+- **依存関係**: 組織管理
+- **主要機能**:
+  - 収益シミュレーション
+  - プラン設定
+  - 請求管理
 
-## API設定と環境変数
-- [x] 14. 本番環境用API URL設定
-- [x] 15. API通信のHTTPS強制対応
-- [x] 16. バックエンドのCORS設定確認・調整
+#### 3. サポートチケット管理画面（SuperAdmin用）
+- **状態**: ❌ 未着手
+- **API仕様**: [support.md](/docs/api/support.md)
+- **依存関係**: 組織管理
+- **主要機能**:
+  - 全組織からのチケット一元管理
+  - シンプルな検索機能
+  - 会話形式のチケット詳細表示
+  - テキスト返信機能
 
-## ストレージシステム実装
-- [x] 17. IStorageService インターフェース作成
-- [x] 18. CapacitorStorageService 実装 (Preferences 使用)
-- [x] 19. WebStorageService 実装 (localStorage バックアップ)
-- [x] 20. プラットフォーム検出ロジック実装
+### サロン管理者サイト（Admin）
 
-## 認証システム対応
-- [x] 21. token.service.ts の非同期対応
-- [x] 22. AuthContext の非同期対応
-- [x] 23. ローディング状態の適切な管理実装
-- [x] 24. 認証関連の全コンポーネント更新
-  - [x] 24.1. ログイン関連画面（Register, ForgotPassword）
-  - [x] 24.2. ユーザーメニュー・ナビゲーション（UserMenu, NavigationMenu）
-  - [x] 24.3. プロファイル関連コンポーネント（SajuProfileModal, SajuProfileSection）
-  - [x] 24.4. チーム関連コンポーネント（Team pages）
-  - [x] 24.5. その他認証利用コンポーネント（Fortune, Chat）
-  - [x] 24.6. auth-manager.service.ts の非同期対応  
-- [x] 25. JWT更新ロジックの非同期対応
-- [x] 26. ログイン・ログアウトフローのテスト
-- [x] 27. セッション管理の最適化
+#### 4. スタイリスト管理
+- **状態**: ❌ 未着手
+- **実装ガイド**: 
+  - [beauty-stylist-management.md](/docs/implementation/beauty-stylist-management.md)
+  - [beauty-stylist-management-update.md](/docs/implementation/beauty-stylist-management-update.md)
+- **API仕様**: [stylist-management.md](/docs/api/stylist-management.md)
+- **依存関係**: 認証システム、組織管理
+- **主要機能**:
+  - スタイリスト一覧表示
+  - アカウント作成・編集・削除
+  - 権限設定
+  - 四柱推命情報の閲覧
 
-## ネットワーク監視実装
-- [x] 28. NetworkMonitorService の作成
-- [x] 29. プラットフォーム別ネットワーク検出実装
-- [x] 30. ネットワーク状態表示コンポーネント作成
-- [x] 31. オフライン状態時の UI フィードバック実装
+#### 5. クライアント管理
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-client-management.md](/docs/implementation/beauty-client-management.md)
+- **API仕様**: [client-management.md](/docs/api/client-management.md)
+- **依存関係**: 認証システム、スタイリスト管理
+- **主要機能**:
+  - クライアント一覧表示
+  - 四柱推命情報の自動計算と統合
+  - スタイリストとの相性診断
+  - 顧客メモと時系列記録
+  - 検索・フィルタリング
 
-## APIサービスのオフライン対応 (基本)
-- [x] 32. GET リクエストのキャッシュシステム実装
-- [x] 33. キャッシュのタイムスタンプと有効期限管理
-- [x] 34. キャッシュのクリア機能実装
-- [x] 35. オフライン読み取り時のキャッシュフォールバック実装
-- [x] 36. オンライン復帰時のキャッシュ再検証ロジック
+#### 6. データインポート
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-data-import.md](/docs/implementation/beauty-data-import.md)
+- **API仕様**: [beauty-data-import.md](/docs/api/beauty-data-import.md)
+- **依存関係**: クライアント管理
+- **主要機能**:
+  - Googleカレンダー連携
+  - iCloudカレンダー連携
+  - CSVファイルアップロードとインポート
+  - インポート履歴と結果管理
 
-## 基本UI/UXの調整（限定テスト版用）
-- [x] 37. スプラッシュスクリーン設定
-- [x] 38. アプリアイコン設定
-- [x] 39. 基本的なレイアウト調整（最小限）
-- [x] 40. ナビゲーション基本機能確認
+#### 7. 管理者ダッシュボード
+- **状態**: ❌ 未着手
+- **実装ガイド**: [admin-dashboard.md](/docs/implementation/admin-dashboard.md)
+- **API仕様**: [admin-dashboard.md](/docs/api/admin-dashboard.md)
+- **依存関係**: クライアント管理、スタイリスト管理
+- **主要機能**:
+  - スタイリスト・クライアント数表示
+  - 今日の予約数表示
+  - GPT-4oトークン使用状況グラフ
+  - 未担当予約の一覧表示と割り当て管理
 
-※ 詳細なUI/UX最適化は限定テスト版フィードバック後に実施
+#### 8. 予約・担当管理
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-appointment-management.md](/docs/implementation/beauty-appointment-management.md)
+- **API仕様**: [appointment-management.md](/docs/api/appointment-management.md)
+- **依存関係**: クライアント管理、スタイリスト管理
+- **主要機能**:
+  - 日付別クライアント一覧表示
+  - 各カードに担当者選択機能
+  - 未割り当て予約のフィルタリング
+  - 相性順のスタイリスト提案
+  - タイムスロット調整
+  - カレンダー連携機能
 
-## 時差計算方式改善
-- [x] 41. 現在の時差計算実装の分析 ([時差計算方式改善計画書](/時差計算方式改善計画書.md)を参照)
-  - [x] 41.1. TimeZoneDatabase.ts の現状分析 (計画書の5.1節に記録)
-  - [x] 41.2. DateTimeProcessor.ts の現状分析 (計画書の5.2節に記録)
-  - [x] 41.3. TimeZoneUtils.ts の現状分析 (計画書の5.3節に記録)
-  - [x] 41.4. コードの問題点と改善可能箇所の特定 (計画書の5.5節に記録)
-- [x] 42. シンプル版時差計算の実装（バックエンド）
-  - [x] 42.1. 都道府県と時差調整値のJSONデータ作成
-  - [x] 42.2. SimplifiedTimeZoneManager.ts の実装
-  - [x] 42.3. DateTimeProcessor.ts の簡略化
-  - [x] 42.4. 不要コードの削除と整理
-- [x] 43. バックエンドAPIエンドポイントの修正
-  - [x] 43.1. getTimezoneInfo API の簡略化
-  - [x] 43.2. getAvailableCities API の改修
-  - [x] 43.3. 単体テストの実装
-  - [x] 43.4. 修正済みAPIの動作検証
+#### 9. 請求・支払い管理
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-admin-billing.md](/docs/implementation/beauty-admin-billing.md)
+- **API仕様**: [billing.md](/docs/api/billing.md)
+- **依存関係**: スタイリスト管理、プラン管理
+- **主要機能**:
+  - 現在のプラン概要表示
+  - APIトークン使用状況の視覚的表示
+  - 追加チャージ済みトークンの表示
+  - プラン詳細情報の表示
+  - プラン変更機能
+  - 支払い方法の管理
 
-## パッケージ構造修正
-- [x] 45.5. sajuengine_packageとサーバー間の連携問題解決 ([国際時差計算システム再構築計画](/docs/international-timezone-refactoring-plan.md)を参照)
-  - [x] 45.5.1. 緊急対応：サーバー側で独立実装
-  - [x] 45.5.2. パッケージ構造の見直し
-  - [x] 45.5.3. ビルドプロセスの統合
-  - [x] 45.5.4. モジュールの参照方法改善（相対パスからnpmパッケージ形式へ）
-  - [x] 45.5.5. テストの強化
+#### 10. サポート管理（サロン用）
+- **状態**: ❌ 未着手
+- **実装ガイド**: [support-system.md](/docs/implementation/support-system.md)
+- **API仕様**: [support.md](/docs/api/support.md)
+- **依存関係**: 認証システム
+- **主要機能**:
+  - サポートチケット一覧表示
+  - 新規チケット作成フォーム
+  - チケット詳細と会話履歴
+  - 返信機能
+  - ステータス管理
 
-### 国際時差計算システム再構築の問題解決
-- **実装済み内容**：SimplifiedTimeZoneManagerの作成、コントローラーとサービス層の実装、ビルドプロセス改善を実施
-- **解決済み課題**：サーバー側APIの応答が期待通りの形式に変わっていなかった（locationsとcategoriesが含まれていない）問題を解決
-- **原因と解決策**：
-  1. **モジュールの参照問題**: サーバーからsajuengine_packageのモジュールをインポートする際、ビルド後のファイルではなくソースファイル（例: `import ... from '../../sajuengine_package/src'`）を直接参照していた。また、パッケージ間の依存関係が複雑だった。
-  2. **キャッシュの問題**: Node.jsがモジュールをキャッシュするため、一度読み込まれた古いバージョンが使われ続けていた。
-  3. **ビルドパスの不一致**: サーバー起動時に`dist/index.js`を参照していたが、実際のビルド出力は`dist/src/index.js`だった。
-  4. **解決方法**:
-     - 完全なクリーンビルドスクリプト(`clean-rebuild.sh`)を作成して両パッケージを一括でリビルド
-     - キャッシュとdistディレクトリを完全に削除してからビルド
-     - サーバー起動パスを正しい`dist/src/index.js`に修正
-     - フォールバック機構の実装でバックエンド側で緊急対応も可能に
+### スタイリスト用モバイルアプリケーション（Client）
 
-- **今後のリファクタリング案**：
-  1. **パッケージ参照の改善**: インポート文を相対パス（`../../sajuengine_package/src`）からnpmパッケージ形式（`saju-engine`）に変更。package.jsonでは既に`"saju-engine": "file:../sajuengine_package"`として参照しているので、この方法が望ましい
-  2. **再利用性向上**: `SimplifiedTimeZoneManager`などの便利なクラスを明示的にエクスポートし、サーバーコードから直接アクセスできるよう改善
-  3. **テスト追加**: 統合テストを追加して、コードの変更がAPIレスポンスに反映されることを自動的に確認できるようにする
+#### 11. ログイン・登録ページ `/login`
+- **状態**: ✅ 完了
+- **API仕様**: [auth.md](/docs/api/auth.md)
+- **依存関係**: スタイリスト管理
+- **主要機能**:
+  - アカウントログイン
+  - パスワードリセット
 
-この経験から得た学び:
-- 複数パッケージ構成での変更は、必ず完全なクリーンビルドを行う
-- モジュールパスは絶対パスではなく、パッケージ管理システム経由のインポートが望ましい
-- キャッシュの影響を考慮したデバッグ手法が重要（Node.jsは一度読み込んだモジュールをキャッシュする）
+#### 12. プロフィール設定 `/profile`
+- **状態**: ✅ 完了
+- **API仕様**: [saju-profile.md](/docs/api/saju-profile.md)
+- **依存関係**: 認証システム
+- **主要機能**:
+  - 基本情報表示・編集
+  - 命式情報表示
+  - パスワード変更
+  - 通知設定
 
-## TypeScriptエラー解消
-- [x] 45. 型定義エラーの解消
-  - [x] 45.1. エラー分析と解決計画の策定 ([TypeScript分析と解決計画](/docs/typescript-error-analysis.md)を参照)
-  - [x] 45.2. 型定義ファイルの修正（ChatMode、FortuneScoreResultなど）
-  - [x] 45.3. 認証関連の型定義（LoginRequest、RegisterRequestなど）
-  - [x] 45.4. 型のみのインポート方法の修正（import type構文の使用）
+#### 13. 運勢ページ `/fortune`
+- **状態**: ✅ 完了
+- **API仕様**: [fortune.md](/docs/api/fortune.md)
+- **依存関係**: 四柱推命プロフィール、日柱情報
+- **主要機能**:
+  - 今日の運勢スコアと詳細表示
+  - 施術に関連するアドバイス表示
+  - ラッキーアイテム表示
 
-## フロントエンド実装
-- [x] 44. フロントエンド実装（クライアント側）
-  - [x] 44.1. シンプルな LocationSelector コンポーネントの作成
-  - [x] 44.2. SajuProfileForm.tsx の更新
-  - [x] 44.3. ガイダンスメッセージの実装
-  - [x] 44.4. 修正済みUIの動作検証と結合テスト
+#### 14. 本日の施術クライアント一覧
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-daily-clients.md](/docs/implementation/beauty-daily-clients.md)
+- **API仕様**: [daily-clients.md](/docs/api/daily-clients.md)
+- **依存関係**: クライアント管理、予約管理
+- **主要機能**:
+  - クライアント一覧（時間順）
+  - 各クライアントの五行属性表示
+  - クライアントとの相性スコア表示
+  - クリックで詳細表示
 
-## プラットフォーム固有設定
-- [x] 46. Android マニフェスト設定（権限など）
-- [x] 47. iOS Info.plist 設定（権限など）
-- [x] 48. Android アイコンセット準備（各解像度）
-- [x] 49. iOS アイコンセット準備（各解像度）
-- [x] 50. Android スプラッシュ画像準備
-- [x] 51. iOS スプラッシュ画像準備
-- [x] 52. Android キーボード設定
-- [x] 53. iOS キーボード設定
+#### 15. クライアントプロフィール
+- **状態**: ❌ 未着手
+- **実装ガイド**: クライアント詳細モーダル（beauty-daily-clients内）
+- **API仕様**: [client-management.md](/docs/api/client-management.md)
+- **依存関係**: クライアント管理
+- **主要機能**:
+  - 基本情報表示（名前、性別、連絡先等）
+  - 四柱推命プロフィール表示
+  - 性格特性と施術アドバイス
+  - 施術履歴一覧
 
-## アプリ基本機能実装
-- [x] 54. バックボタン処理の実装
-- [x] 55. アプリ終了処理の実装
-- [x] 56. ディープリンク基本設定
-- [x] 57. スクリーン方向設定（縦横）
-- [x] 58. App.tsx のライフサイクル処理調整
-- [x] 59. エラーバウンダリの実装
-- [x] 60. クラッシュレポート基本設定
+#### 16. 一般チャット相談 `/chat`
+- **状態**: ✅ 完了
+- **API仕様**: [chat.md](/docs/api/chat.md)
+- **依存関係**: 四柱推命プロフィール
+- **主要機能**:
+  - 自由なテキスト入力
+  - コンテキスト選択
+  - 相談履歴表示
+  - ナレッジベースとしての活用
 
-## ビルド設定
-- [x] 61. Android ビルド設定（build.gradle）
-- [x] 62. iOS ビルド設定（Xcode project）
-- [x] 63. Android リリース用署名Keystore作成
-- [x] 64. iOS 証明書とプロビジョニングプロファイル設定
-- [x] 65. ビルド環境変数の設定
-- [x] 66. ビルドスクリプト作成
+#### 17. クライアント専用チャット
+- **状態**: ⚠️ 進行中
+- **実装ガイド**: [beauty-client-chat.md](/docs/implementation/beauty-client-chat.md)
+- **API仕様**: [beauty-client-chat.md](/docs/api/beauty-client-chat.md)
+- **依存関係**: AIチャット機能、クライアント管理
+- **主要機能**:
+  - クライアント情報の自動コンテキスト設定
+  - 当日の日柱情報に基づくアドバイス
+  - ヘアスタイル・カラーのパーソナライズされた提案
+  - クライアント別の会話履歴の永続化
 
-## ビルド設定とデバッグビルド（限定テスト版用）
-- [x] 67. バージョン番号と識別子の設定
-- [x] 68. TestFlight の設定 (iOS)
-- [x] 69. Firebase App Distribution の設定 (Android)
-- [x] 70. デバッグビルドAPIエンドポイント設定
-- [x] 70a. APIエンドポイントの動作検証とテスト
-- [x] 71. Android デバッグビルド生成と配布
-- [x] 72. iOS デバッグビルド生成と配布
-- [x] 73. テスター向け簡易ガイド作成
+#### 18. クライアント直接入力・結果表示
+- **状態**: ❌ 未着手
+- **実装ガイド**: [beauty-client-input.md](/docs/implementation/beauty-client-input.md)
+- **API仕様**: [beauty-client-input.md](/docs/api/beauty-client-input.md)
+- **依存関係**: 四柱推命プロフィール
+- **主要機能**:
+  - 生年月日・時間の簡易入力フォーム
+  - 性別選択
+  - 命式計算と五行属性の即時表示
+  - パーソナライズされたヘアスタイル・カラー提案
+  - 結果の保存・共有機能
 
-## 限定テストとフィードバック
-- [ ] 74. 基本機能の動作確認テスト
-- [ ] 75. オフライン⇔オンライン切り替えテスト
-- [ ] 76. ローカルストレージの動作確認
-- [ ] 77. 実機でのUI/UXフィードバック収集
-- [ ] 78. 複数デバイスでのレイアウト確認
-- [ ] 79. バグ報告とクラッシュレポート分析
+## 3. 実際の実装状況
 
-## UI/UXの詳細最適化（フィードバック後）
-- [ ] 80. ボタンサイズとタッチターゲット拡大
-- [ ] 81. フォントサイズと余白の調整
-- [ ] 82. スクロール動作の最適化
-- [ ] 83. フォーム入力のモバイル最適化
-- [ ] 84. キーボード表示時のUI調整
-- [ ] 85. ナビゲーションの最適化（スワイプ操作等）
-- [ ] 86. モバイル向けローディングインジケーター調整
-- [x] 86a. SajuProfileFormの改善
-  - [x] 86a.1. 海外出生の詳細設定トグルを削除（不要なUI簡略化）
-  - [x] 86a.2. 海外選択時の時差調整値が19分になる問題の修正
-  - [x] 86a.3. フォームの動作確認テスト
+| # | 機能名 | 状態 | アプリ |
+|---|-------|------|-------|
+| 0 | ログイン画面 | ✅ 完了 | SuperAdmin |
+| 1 | 組織管理画面 | ❌ 未着手 | SuperAdmin |
+| 2 | 課金・プラン管理画面 | ❌ 未着手 | SuperAdmin |
+| 3 | サポートチケット管理画面（SuperAdmin） | ❌ 未着手 | SuperAdmin |
+| 4 | スタイリスト管理 | ❌ 未着手 | Admin |
+| 5 | クライアント管理 | ❌ 未着手 | Admin |
+| 6 | データインポート | ❌ 未着手 | Admin |
+| 7 | 管理者ダッシュボード | ❌ 未着手 | Admin |
+| 8 | 予約・担当管理 | ❌ 未着手 | Admin |
+| 9 | 請求・支払い管理 | ❌ 未着手 | Admin |
+| 10 | サポート管理（サロン用） | ❌ 未着手 | Admin |
+| 11 | ログイン・登録ページ | ✅ 完了 | Client |
+| 12 | プロフィール設定 | ✅ 完了 | Client |
+| 13 | 運勢ページ | ✅ 完了 | Client |
+| 14 | 本日の施術クライアント一覧 | ❌ 未着手 | Client |
+| 15 | クライアントプロフィール | ❌ 未着手 | Client |
+| 16 | 一般チャット相談 | ✅ 完了 | Client |
+| 17 | クライアント専用チャット | ⚠️ 進行中 | Client |
+| 18 | クライアント直接入力・結果表示 | ❌ 未着手 | Client |
 
-## 一般配布準備
-- [~] 87. App Store Connect アカウント設定
-- [~] 88. Google Play Console アカウント設定
-- [ ] 89. App Storeスクリーンショット準備（各デバイスサイズ）
-- [ ] 90. Google Playスクリーンショット準備（各デバイスサイズ）
-- [ ] 91. アプリ説明文の準備
-- [ ] 92. プライバシーポリシーの調整
-- [ ] 93. アプリのカテゴリとレーティング設定
-- [ ] 94. リリース用APIエンドポイント設定
-- [ ] 95. デバッグコードの削除
+## 4. 実装時の依存関係と注意点
 
-## 一般公開リリース
-- [ ] 96. Android リリースビルド生成
-- [ ] 97. iOS リリースビルド生成
-- [ ] 98. リリースビルドの最終動作確認
-
-## 一般公開前の最終確認
-- [ ] 99. アプリ起動・終了サイクルテスト
-- [ ] 100. メモリ使用量チェック
-- [ ] 101. バッテリー消費テスト
-- [ ] 102. 初回起動時の動作確認
-- [ ] 103. アプリ再インストール後の動作確認
-- [ ] 104. すべての主要機能の最終確認
-- [ ] 105. 設定・環境値の最終確認
-
-## 一般配布とモニタリング
-- [ ] 106. App Storeへの提出
-- [ ] 107. Google Playへの提出
-- [ ] 108. レビュープロセスの監視
-- [ ] 109. 初期ユーザーフィードバックの収集準備
-
-## CI/CD（オプション）
-- [ ] 110. GitHub Actions ワークフロー設定
-- [ ] 111. 自動ビルドの設定
-- [ ] 112. 自動テストの設定
-- [ ] 113. テスト配布の自動化
-
-# 更新ルール
-
-1. タスク完了時：
-   - タスク番号の横にある `[ ]` を `[x]` に変更
-   - 完了したタスクに関するエラーログがあれば削除
-   - 進捗管理セクションの完了タスク数と進捗率を更新
-   - 最終更新日を更新
-
-2. エラー発生時：
-   - エラー引き継ぎログに構造化された情報を追加
-   - 参考資料があればリンクを追加
-
-3. タスク開始時：
-   - 着手中のタスクを明示するため `[ ]` を `[~]` に変更（任意）
-
-## 進捗管理
-- 完了タスク数: 88/128  # SajuProfileFormの改善完了（トグル削除と海外選択時の表示・動作改善）
-- 進捗率: 68.75%
-- 最終更新日: 2025/4/20 2:15
-
-## 開発コマンド集
-
-### TypeScriptエラーチェック
-```bash
-# TypeScriptコンパイルエラーチェック（コード生成なし）
-cd client && npx tsc --noEmit
-
-# プロジェクトビルド（エラーチェック込み）
-cd client && npm run build
+### データフロー図
+```
+[組織管理(1)] → [課金管理(2)] → [スタイリスト管理(4)] → [クライアント管理(5)]
+                                          ↓                    ↓
+                                  [ログイン・プロフィール(11,12)]  ↓
+                                          ↓                    ↓
+                        [運勢(13)]←[四柱推命データ]            ↓
+                            ↓                              ↓
+[予約管理(8)]←[本日のクライアント(14)]←[クライアントプロフィール(15)]
+        ↓
+[チャット機能(16,17)]
 ```
 
-### アプリ起動
-```bash
-# 開発サーバー起動（ローカルのみ）
-cd client && npm run dev
+### 実装時の注意点
+1. **データの一貫性**:
+   - 組織→スタイリスト→クライアントの階層構造を維持
+   - ID参照の整合性を確保（特にMongoDBでの参照）
 
-# 開発サーバー起動（外部アクセス可能）
-cd client && npm run dev -- --host
+2. **認証とアクセス制御**:
+   - SuperAdmin、サロン管理者、スタイリストの権限階層を明確に実装
+   - 各APIエンドポイントでの権限チェックを徹底
 
-# iOS向けビルドと同期
-cd client && npm run build && npx cap sync ios
+3. **開発効率化のポイント**:
+   - スタイリスト管理とクライアント管理は類似したUIパターンを持つため、共通コンポーネントを活用
+   - チャット機能は汎用コンポーネントとして実装し、一般チャットとクライアント専用チャットで再利用
 
-# Android向けビルドと同期
-cd client && npm run build && npx cap sync android
-```
+4. **リスク要因**:
+   - カレンダー連携（Google/Apple）は技術的複雑性が高い
+   - トークン使用量管理は課金に直結するため慎重に実装
 
-### テスト実行
-```bash
-# ネイティブプロジェクトをXcodeで開く
-cd client && npx cap open ios
+## 5. 次に実装すべき機能
 
-# ネイティブプロジェクトをAndroid Studioで開く
-cd client && npx cap open android
-```
+現状の実装状況を考慮すると、以下の順序で実装を進めることを推奨します：
 
-## 参考資料リンク
+1. **第一優先**: クライアント専用チャット (17) の完成
+   - 既に進行中であり、完了させることで価値を提供できる
+   - 一般チャット機能の拡張として効率的に実装可能
 
-- [ネイティブアプリ実装ガイド](/docs/native-app-implementation-guide.md) - Capacitorを使った実装の詳細ガイド
-- [ネイティブアプリ移行計画](/docs/native-app-migration-plan.md) - 移行全体の計画書
-- [チーム機能と友達機能リファクタリング計画](/docs/team-membership-refactoring-plan.md) - チーム機能の多対多関係と友達機能の実装計画
-- [Capacitor公式ドキュメント](https://capacitorjs.com/docs) - Capacitorの公式リファレンス
-- [Vite+React+TypeScript構成](https://vitejs.dev/guide/) - ビルド設定の参考
-- [Android ビルドガイド](/client/android-build-guide.md) - Android Studio でのビルド手順
-- [Capacitor HTTP Plugin](https://capacitorjs.com/docs/apis/http) - ネイティブHTTPリクエスト実装
-- [Firebase App Distribution](https://firebase.google.com/docs/app-distribution) - テスト版配布システム
+2. **第二優先**: 組織管理画面 (1) とスタイリスト管理 (4)
+   - データフローの上流部分を確立
+   - 他の機能の前提条件となるため早期に完成させるべき
 
-## エラー引き継ぎログ
+3. **第三優先**: クライアント管理 (5) と本日の施術クライアント一覧 (14)
+   - スタイリストが実際に業務で使用する中核機能
+   - 美容サロンの日常業務をサポートする実用的な機能
 
-このセクションには、タスク実行中に発生した問題とその解決策を記録します。タスクが完了したら、そのタスクに関するログは削除して構いません。
+## 6. SuperAdmin管理サイト実装計画
 
-### 記録形式
+### 6.1 ディレクトリ構造
+
+プロジェクトはフロントエンドとバックエンドを分離した構成で実装します。
 
 ```
-【タスク番号】タスク名
-- 問題：遭遇した問題の詳細
-- 試行：試行した解決策
-- 結果：成功または失敗、部分的な成功
-- 解決策：最終的な解決策または回避策
-- メモ：引き継ぎに必要な追加情報
-- 参考：関連する参考資料へのリンク（任意）
+/
+├── superadmin/            # SuperAdmin管理サイト（フロントエンド）
+│   ├── .env               # 環境変数設定
+│   ├── .env.example       # 環境変数サンプル
+│   ├── index.html         # エントリーポイントHTML
+│   ├── package.json       # 依存パッケージ定義
+│   ├── tsconfig.json      # TypeScript設定
+│   ├── vite.config.ts     # Vite設定
+│   ├── src/
+│   │   ├── App.tsx        # メインアプリケーションコンポーネント
+│   │   ├── main.tsx       # アプリケーションエントリーポイント
+│   │   ├── index.css      # グローバルスタイル
+│   │   ├── components/    # 共通コンポーネント
+│   │   │   ├── common/    # 汎用コンポーネント
+│   │   │   │   ├── ConfirmDialog.tsx        # 確認ダイアログ
+│   │   │   │   ├── LoadingIndicator.tsx     # ローディング表示
+│   │   │   │   └── SuperAdminRoute.tsx      # 保護されたルート
+│   │   │   ├── layout/    # レイアウト関連
+│   │   │   │   ├── SuperAdminLayout.tsx     # 管理サイトレイアウト
+│   │   │   │   ├── SuperAdminMenu.tsx       # 左側メニュー
+│   │   │   │   └── SuperAdminUserMenu.tsx   # ユーザーメニュー
+│   │   │   └── dashboard/ # ダッシュボード関連
+│   │   │       ├── StatsCard.tsx            # 統計情報カード
+│   │   │       ├── OrganizationsTable.tsx   # 組織一覧テーブル
+│   │   │       └── StatusBadge.tsx          # ステータスバッジ
+│   │   ├── config/        # 設定
+│   │   │   └── constants.ts                 # 定数定義
+│   │   ├── contexts/      # コンテキスト
+│   │   │   ├── AuthContext.tsx              # 認証コンテキスト
+│   │   │   └── NotificationContext.tsx      # 通知コンテキスト
+│   │   ├── pages/         # ページコンポーネント
+│   │   │   ├── Dashboard/                   # ダッシュボード(組織管理)
+│   │   │   │   ├── index.tsx                # ダッシュボードメイン
+│   │   │   │   ├── OrganizationDetails.tsx  # 組織詳細モーダル
+│   │   │   │   └── CreateOrganization.tsx   # 組織作成フォーム
+│   │   │   ├── Login/                       # ログイン
+│   │   │   │   └── index.tsx                # ログインページ
+│   │   │   ├── BillingManagement/           # 課金・プラン管理
+│   │   │   │   ├── index.tsx                # 課金管理メイン
+│   │   │   │   ├── RevenueSimulation.tsx    # 収益シミュレーション
+│   │   │   │   ├── PlanSettings.tsx         # プラン設定
+│   │   │   │   └── InvoiceManagement.tsx    # 請求書管理
+│   │   │   ├── Support/                     # サポート管理
+│   │   │   │   ├── index.tsx                # サポートチケット一覧
+│   │   │   │   └── TicketDetails.tsx        # チケット詳細・返信
+│   │   │   └── Unauthorized/                # 未認証ページ
+│   │   │       └── index.tsx                # 未認証エラー表示
+│   │   ├── services/      # サービス
+│   │   │   ├── api.service.ts               # API通信
+│   │   │   ├── auth.service.ts              # 認証サービス
+│   │   │   ├── organizations.service.ts     # 組織サービス
+│   │   │   ├── billing.service.ts           # 課金サービス
+│   │   │   └── support.service.ts           # サポートサービス
+│   │   └── types/         # 型定義
+│   │       ├── index.ts                     # 共通型定義
+│   │       ├── api.types.ts                 # API関連型定義
+│   │       └── auth.types.ts                # 認証関連型定義
+│   └── public/           # 静的ファイル
+│       ├── favicon.ico    # ファビコン
+│       └── logo.svg       # ロゴ
+│
+└── server/                # 既存のサーバーサイド実装と統合
+    └── src/
+        ├── controllers/   # 既存コントローラーに追加
+        │   └── superadmin/
+        │       ├── organizations.controller.ts    # 組織管理
+        │       ├── billing.controller.ts          # 課金管理
+        │       └── support.controller.ts          # サポート管理
+        ├── routes/        # 既存ルートに追加
+        │   └── superadmin.routes.ts               # SuperAdmin APIルート
+        ├── models/        # 既存モデルを活用
+        │   └── (Organization, User, etc.)
+        ├── middleware/    # 既存ミドルウェアに追加
+        │   └── superadmin-auth.middleware.ts      # SuperAdmin権限チェック
+        └── services/      # 既存サービスに追加
+            └── superadmin/
+                ├── organization.service.ts        # 組織管理サービス
+                ├── billing.service.ts             # 課金サービス
+                └── support.service.ts             # サポートサービス
 ```
 
-### 現在のエラーログ
+### 6.2 実装計画
 
-【86a】SajuProfileFormの改善
-- 問題1：海外出生の詳細設定用トグルスイッチが不要なUIを複雑化している
-- 問題2：海外選択時の時差調整値が正しく0にならず、19分(東京都と同じ)になっている
-- 調査状況：
-  - トグルスイッチを削除してより直感的なUIにする方針を確認
-  - 海外選択時に時差調整値が19分になる問題はハードコードされた値か、計算ロジックの問題の可能性がある
-- 次のアクション：
-  1. SajuProfileFormから海外出生のトグルスイッチ部分を削除
-  2. LocationSelectorコンポーネントで「海外」選択時に確実に調整値0が設定されるよう修正
-  3. フォールバックデータの「海外」の調整値を確認
-  4. 修正後の動作確認テスト
+1. **基盤構築** (2日) ✅
+   - プロジェクト初期化（React + TypeScript + Vite）✅
+   - ディレクトリ構造セットアップ ✅
+   - 基本的なルーティング設定 ✅
 
-【26】ログイン・ログアウトフローのテスト
-- 問題：iOSシミュレータ上でバックエンドAPIサーバーに直接接続し、フロントエンドUI（ログイン画面）が表示されなかった
-- 試行1：capacitor.config.tsでバックエンドAPI接続先を指定
-- 結果1：API JSON応答は表示されるがUIは表示されない
-- 試行2：capacitor.config.tsでフロントエンド開発サーバー接続先を指定
-- 結果2：接続エラーが発生
-- 試行3：HTTPトラフィック許可の追加と開発サーバー--host設定
-- 結果3：成功。フロントエンド開発サーバーに接続しログイン画面が表示された
-- 解決策：
-  1. capacitor.config.tsで開発サーバーURLと安全でない接続を許可する設定を追加
-  2. iOS Info.plistにNSAppTransportSecurityを追加しHTTP接続を許可
-  3. 開発サーバーを--hostフラグで起動し外部アクセスを許可
-- メモ：Capacitorアプリのテスト時は開発サーバーをIPアドレスで公開する必要がある
-- 参考：https://capacitorjs.com/docs/basics/configuring-your-app
+2. **認証機能実装** (3日) ✅
+   - JWT認証実装 ✅
+   - SuperAdminRouteコンポーネント実装 ✅
+   - ログインページ実装 ✅
 
-【27】セッション管理の最適化
-- 問題：アプリのバックグラウンド/フォアグラウンド切り替え時にセッション状態が適切に管理されていない
-- 試行1：AuthContextでのトークン更新ロジックを見直し
-- 結果1：複数のタイマーが重複して動作し、トークン更新が頻繁に発生
-- 試行2：Capacitor Appプラグインを導入し専用のセッションマネージャーを実装
-- 結果2：成功。アプリライフサイクルイベントと連動したセッション管理を実現
-- 解決策：
-  1. Capacitor Appプラグインをインストール・設定
-  2. session-manager.serviceを実装してアプリライフサイクルを検出
-  3. トークン更新最適化（バックグラウンド時は更新しない）
-  4. App.tsxからセッションマネージャーを初期化
-- メモ：Web環境とネイティブ環境の両方でライフサイクルイベントを適切に処理する必要がある
-- 参考：https://capacitorjs.com/docs/apis/app
+3. **組織管理機能実装** (5日)
+   - ダッシュボード画面実装
+   - 組織一覧表示機能
+   - 組織詳細表示モーダル
+   - 組織作成・編集機能
+   - 組織ステータス管理機能
 
-【72】iOS デバッグビルド生成と配布
-- 問題1：証明書とプロビジョニングプロファイルが未取得
-- 状況：App Store Connectへのアクセス権限が必要
-- 問題2：iOSビルド用の手順とスクリプトが未整備
-- 解決策：ビルド手順書とスクリプトを作成
-- 次のステップ：
-  1. 開発アカウントとプロビジョニングプロファイルの取得
-  2. Xcodeでの署名設定
-  3. テスト用デバイスの登録
+4. **課金・プラン管理実装** (4日)
+   - 収益シミュレーション機能
+   - プラン設定画面
+   - 請求書管理画面
+
+5. **サポート管理実装** (3日)
+   - チケット一覧表示
+   - チケット詳細・会話表示
+   - 返信機能
+
+6. **テストとバグ修正** (3日)
+   - 単体テスト実施
+   - 統合テスト実施
+   - バグ修正
+
+合計: 約3週間（20営業日）
+
+## 7. 参考資料
+
+- [要件定義書](/docs/requirements.md) - プロジェクト全体の要件定義
+- [実装順序計画](/docs/implementation_order.md) - データ依存関係に基づく実装順序
+- [実装タスク詳細計画](/docs/implementation_tasks.md) - 詳細なタスクブレークダウン
+- [技術スタック](/docs/tech_stack.md) - 使用技術とライブラリの概要
+- [データモデル](/docs/data_models.md) - データベースモデルの定義

@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - 本日の担当クライアント</title>
+  
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.15.4/dist/material-ui.min.css" />
+  
+  <style>
+    :root {
+      /* 美容師向けパステルカラーパレット */
+      --primary: #e091e4;          /* メインカラー: パステルパープル */
+      --primary-light: #f8c0fb;    /* ライトカラー: 薄いピンク */
+      --primary-dark: #c26ac7;     /* ダークカラー: 濃いパープル */
+      --primary-bg: #fcf0ff;       /* 背景色: 薄紫背景 */
+      --secondary: #64b5f6;        /* アクセント: パステルブルー */
+      --secondary-light: #9be7ff;  /* ライトアクセント: 薄い水色 */
+      --secondary-dark: #2286c3;   /* ダークアクセント: 濃い青 */
+      --success: #81c784;          /* 成功色: パステルグリーン */
+      --warning: #fff176;          /* 警告色: パステルイエロー */
+      --error: #e57373;            /* エラー色: パステルレッド */
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-800: #424242;
+      --black: #212121;
+      --text-primary: rgba(0, 0, 0, 0.87);
+      --text-secondary: rgba(0, 0, 0, 0.6);
+      --text-disabled: rgba(0, 0, 0, 0.38);
+      
+      /* 陰陽五行属性カラー (パステル調に変更) */
+      --element-wood: #a5d6a7;     /* 木：パステルグリーン */
+      --element-wood-light: #d7ffd9; /* 木：薄いパステルグリーン */
+      --element-wood-dark: #75a478;  /* 木：濃いパステルグリーン */
+      --element-wood-bg: #f1f8e9;    /* 木：背景色 */
+      
+      --element-fire: #ef9a9a;       /* 火：パステルレッド */
+      --element-fire-light: #ffcccb; /* 火：薄いパステルレッド */
+      --element-fire-dark: #ba6b6c;  /* 火：濃いパステルレッド */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ffcc80;      /* 土：パステルオレンジ */
+      --element-earth-light: #ffffb0; /* 土：薄いパステルオレンジ */
+      --element-earth-dark: #ca9b52;  /* 土：濃いパステルオレンジ */
+      --element-earth-bg: #fff8e1;    /* 土：背景色 */
+      
+      --element-metal: #fff59d;       /* 金：パステルイエロー */
+      --element-metal-light: #ffffcf; /* 金：薄いパステルイエロー */
+      --element-metal-dark: #cbc26d;  /* 金：濃いパステルイエロー */
+      --element-metal-bg: #fffde7;    /* 金：背景色 */
+      
+      --element-water: #90caf9;       /* 水：パステルブルー */
+      --element-water-light: #c3fdff; /* 水：薄いパステルブルー */
+      --element-water-dark: #5d99c6;  /* 水：濃いパステルブルー */
+      --element-water-bg: #e3f2fd;    /* 水：背景色 */
+      
+      --border-radius-sm: 16px;
+      --border-radius-md: 24px;
+      --border-radius-lg: 32px;
+      --box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--primary-bg) 0%, var(--gray-100) 100%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      letter-spacing: 0.015em;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 500;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      letter-spacing: 0.02em;
+    }
+    
+    .header-icon {
+      margin-right: 12px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    
+    .page-date {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    
+    .date-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 8px 0;
+    }
+    
+    .date-nav-btn {
+      display: flex;
+      align-items: center;
+      background-color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 8px 16px;
+      color: var(--primary);
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .date-nav-btn:hover {
+      background-color: var(--primary-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .date-nav-btn .material-icons {
+      font-size: 1.2rem;
+    }
+    
+    /* 検索バーと時間フィルター関連のCSSを削除 */
+    
+    .client-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .time-section {
+      margin-bottom: 32px;
+    }
+    
+    .time-heading {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .time-heading .material-icons {
+      margin-right: 8px;
+      color: var(--primary);
+    }
+    
+    .client-card {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: all 0.4s ease;
+      display: flex;
+    }
+    
+    .client-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.1);
+    }
+    
+    /* 五行属性のスタイルを削除 */
+    
+    .client-time {
+      min-width: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--gray-100);
+      padding: 16px 12px;
+    }
+    
+    .time-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .time-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .client-info {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .client-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-right: 16px;
+      object-fit: cover;
+    }
+    
+    .client-details {
+      flex: 1;
+    }
+    
+    .client-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* 五行属性アイコンのスタイルを削除 */
+    
+    .client-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .conversation-tip {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    
+    .registration-badge {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--primary-bg);
+      color: var(--primary-dark);
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+    
+    .registration-badge .material-icons {
+      font-size: 1rem;
+      margin-right: 4px;
+    }
+    
+    .client-actions {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 12px;
+    }
+    
+    .client-action-btn {
+      background-color: transparent;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: var(--text-secondary);
+    }
+    
+    .client-action-btn:hover {
+      background-color: var(--gray-100);
+      color: var(--primary);
+    }
+    
+    /* 相性バッジをチャットボタンに変更 */
+    .chat-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+      background-color: var(--primary-light);
+      border: none;
+      border-radius: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .chat-button:hover {
+      background-color: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .chat-button .material-icons {
+      font-size: 1.1rem;
+      margin-bottom: 3px;
+    }
+    
+    /* サマリー関連のCSSを削除 */
+    
+    /* モーダル関連のスタイル */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .modal.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+    
+    .modal.open .modal-content {
+      transform: translateY(0);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+    }
+    
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .modal-close-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    
+    .client-detail-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .client-detail-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .client-detail-info {
+      flex: 1;
+    }
+    
+    .client-detail-name {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: var(--text-primary);
+    }
+    
+    .client-detail-appointment {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin: 0 0 8px 0;
+    }
+    
+    .client-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .client-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background-color: var(--gray-100);
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .tag-regular {
+      background-color: var(--primary-bg);
+      color: var(--primary-dark);
+    }
+    
+    .tag-preference {
+      background-color: var(--element-wood-bg);
+      color: var(--element-wood-dark);
+    }
+    
+    .detail-section {
+      margin-bottom: 24px;
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      padding: 16px;
+    }
+    
+    .detail-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 16px 0;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    .detail-row {
+      display: flex;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    
+    .detail-label {
+      flex: 0 0 80px;
+      color: var(--text-secondary);
+    }
+    
+    .detail-value {
+      flex: 1;
+      color: var(--text-primary);
+    }
+    
+    /* 時系列メモのスタイル */
+    .memo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .memo-item {
+      background-color: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .memo-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .memo-date {
+      font-weight: 500;
+    }
+    
+    .memo-author {
+      color: var(--primary);
+    }
+    
+    .memo-content {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--text-primary);
+    }
+    
+    .memo-content p {
+      margin: 0;
+    }
+    
+    .conversation-box {
+      background-color: white;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .conversation-box p {
+      margin: 8px 0;
+    }
+    
+    .treatment-notes {
+      width: 100%;
+      height: 80px;
+      padding: 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      resize: none;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s ease;
+    }
+    
+    .cancel-btn {
+      background-color: transparent;
+      border: none;
+      color: var(--text-secondary);
+    }
+    
+    .cancel-btn:hover {
+      background-color: var(--gray-100);
+    }
+    
+    .edit-btn {
+      background-color: var(--gray-100);
+      border: none;
+      color: var(--text-primary);
+    }
+    
+    .edit-btn:hover {
+      background-color: var(--gray-200);
+    }
+    
+    .primary-btn {
+      background-color: var(--primary);
+      border: none;
+      color: white;
+    }
+    
+    .primary-btn:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* 四柱推命情報と AI 提案のスタイル */
+    .saju-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .saju-row {
+      display: flex;
+      align-items: flex-start;
+    }
+    
+    .saju-label {
+      flex: 0 0 100px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .saju-value {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+    
+    .ai-suggestion-section {
+      background-color: var(--primary-bg);
+      border: 1px solid var(--primary-light);
+    }
+    
+    .ai-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .ai-icon {
+      color: var(--primary);
+      margin-right: 6px;
+    }
+    
+    .refresh-btn {
+      width: 32px;
+      height: 32px;
+      background-color: transparent;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--primary);
+      transition: all 0.3s ease;
+    }
+    
+    .refresh-btn:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      transform: rotate(30deg);
+    }
+    
+    .ai-suggestion {
+      background-color: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .ai-message {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .ai-message p {
+      margin: 8px 0;
+    }
+    
+    .ai-message ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    
+    .ai-message li {
+      margin-bottom: 8px;
+    }
+    
+    .fab-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10;
+    }
+    
+    .fab-button {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .fab-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    
+    .fab-button .material-icons {
+      font-size: 32px;
+    }
+    
+    .bottom-navigation {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding: 6px 0;
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      min-width: 72px;
+      flex: 1;
+      color: var(--text-secondary);
+      text-decoration: none;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .bottom-nav-item.active {
+      color: var(--primary);
+    }
+    
+    .bottom-nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .bottom-nav-item .material-icons {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    .bottom-nav-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .page-bottom-padding {
+      padding-bottom: 80px;
+    }
+    
+    /* アニメーション */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    
+    /* レスポンシブデザイン */
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px 16px;
+      }
+      
+      /* サマリー関連のスタイルを削除 */
+      
+      .client-photo {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .client-time {
+        min-width: 60px;
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <div class="header">
+    <h1 class="header-title">
+      <span class="material-icons header-icon">event</span>
+      本日の予約
+    </h1>
+    <div style="display: flex; align-items: center;">
+      <span class="material-icons" style="margin-right: 20px; font-size: 1.4rem;">notifications</span>
+      <span class="material-icons" style="font-size: 1.4rem;">account_circle</span>
+    </div>
+  </div>
+  
+  <div class="container">
+    <h1 class="page-title">本日のクライアント</h1>
+    
+    <!-- 日付セレクター -->
+    <div class="date-navigation">
+      <button class="date-nav-btn">
+        <span class="material-icons">chevron_left</span>
+        前日
+      </button>
+      <p class="page-date">2025年4月25日 (金)</p>
+      <button class="date-nav-btn">
+        翌日
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+    
+    <!-- 午前のクライアント -->
+    <div class="time-section fade-in">
+      <h2 class="time-heading">
+        <span class="material-icons">wb_sunny</span>
+        午前の予約
+      </h2>
+      
+      <div class="client-cards">
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">10:30</div>
+            <div class="time-label">AM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                佐藤 美咲
+              </div>
+              <div class="client-meta">カット+カラー | 60分</div>
+              <div class="conversation-tip">
+                最近のお出かけについて話してみると良いかもしれません
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+        
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">11:45</div>
+            <div class="time-label">AM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                田中 愛子
+              </div>
+              <div class="client-meta">カラー+トリートメント | 90分</div>
+              <div class="conversation-tip">
+                ライブイベントの話題をすると盛り上がりやすいです
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 午後のクライアント -->
+    <div class="time-section fade-in delay-1">
+      <h2 class="time-heading">
+        <span class="material-icons">brightness_5</span>
+        午後の予約
+      </h2>
+      
+      <div class="client-cards">
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">13:30</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                鈴木 葉子
+              </div>
+              <div class="client-meta">カット+パーマ | 120分</div>
+              <div class="conversation-tip">
+                新しい趣味やチャレンジについて聞くと会話が弾むかもしれません
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+        
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">15:00</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/54.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                高橋 恵理
+              </div>
+              <div class="client-meta">カット+カラー | 90分</div>
+              <div class="conversation-tip">
+                イメージチェンジについての考えを聞くと良いかもしれません
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+        
+        <!-- 未登録クライアント -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">16:30</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                山田 優子
+                <div class="registration-badge">
+                  <span class="material-icons">info</span>
+                  未登録
+                </div>
+              </div>
+              <div class="client-meta">カット | 60分</div>
+              <div class="conversation-tip">
+                誕生日情報を登録していただくと、より詳しい提案ができます。
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">add_circle</span>
+            </button>
+            <!-- 新規登録クライアントはプロフィール登録ボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">person_add</span>
+              情報登録
+            </a>
+          </div>
+        </div>
+        
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">18:00</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/23.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                中村 真央
+              </div>
+              <div class="client-meta">フルカラー+トリートメント | 120分</div>
+              <div class="conversation-tip">
+                明るくフレッシュな印象に合わせたメイクアドバイスがおすすめ
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 夜間のクライアント -->
+    <div class="time-section fade-in delay-2">
+      <h2 class="time-heading">
+        <span class="material-icons">nightlight</span>
+        夜間の予約
+      </h2>
+      
+      <div class="client-cards">
+        <!-- 未登録クライアント -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">19:15</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/78.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                伊藤 さやか
+                <div class="registration-badge">
+                  <span class="material-icons">info</span>
+                  未登録
+                </div>
+              </div>
+              <div class="client-meta">カット+カラー | 90分</div>
+              <div class="conversation-tip">
+                誕生日情報の登録で「誕生日クーポン」プレゼント！
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">add_circle</span>
+            </button>
+            <!-- 新規登録クライアントはプロフィール登録ボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">person_add</span>
+              情報登録
+            </a>
+          </div>
+        </div>
+        
+        <!-- クライアントカード -->
+        <div class="client-card">
+          <div class="client-time">
+            <div class="time-value">20:00</div>
+            <div class="time-label">PM</div>
+          </div>
+          
+          <div class="client-info">
+            <img src="https://randomuser.me/api/portraits/women/89.jpg" alt="Client" class="client-photo">
+            <div class="client-details">
+              <div class="client-name">
+                渡辺 麗子
+              </div>
+              <div class="client-meta">トリートメント | 60分</div>
+              <div class="conversation-tip">
+                夕方の時間帯は穏やかな会話がおすすめです
+              </div>
+            </div>
+          </div>
+          
+          <div class="client-actions">
+            <button class="client-action-btn">
+              <span class="material-icons">visibility</span>
+            </button>
+            <!-- 相性バッジをチャットボタンに変更 -->
+            <a href="#" class="chat-button">
+              <span class="material-icons">chat</span>
+              専用チャットへ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="page-bottom-padding"></div>
+  </div>
+  
+  <!-- 新規予約FAB -->
+  <div class="fab-container">
+    <button class="fab-button">
+      <span class="material-icons">add</span>
+    </button>
+  </div>
+  
+  <!-- ボトムナビゲーション -->
+  <div class="bottom-navigation">
+    <a href="#" class="bottom-nav-item">
+      <span class="material-icons">auto_graph</span>
+      <span class="bottom-nav-label">運勢</span>
+    </a>
+    <a href="#" class="bottom-nav-item active">
+      <span class="material-icons">event</span>
+      <span class="bottom-nav-label">予約</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+      <span class="material-icons">auto_awesome</span>
+      <span class="bottom-nav-label">提案</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+      <span class="material-icons">mail</span>
+      <span class="bottom-nav-label">メール</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+      <span class="material-icons">account_circle</span>
+      <span class="bottom-nav-label">アカウント</span>
+    </a>
+  </div>
+  <!-- クライアント詳細モーダル -->
+  <div class="modal" id="clientDetailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">クライアント詳細</h2>
+        <button class="modal-close-btn">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="client-detail-header">
+          <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="client-detail-photo">
+          <div class="client-detail-info">
+            <h3 class="client-detail-name">佐藤 美咲</h3>
+            <p class="client-detail-appointment">10:30 AM | カット+カラー | 60分</p>
+            <div class="client-tags">
+              <span class="client-tag tag-regular">常連</span>
+              <span class="client-tag tag-preference">ショートヘア</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4 class="detail-section-title">基本情報</h4>
+          <div class="detail-row">
+            <div class="detail-label">連絡先</div>
+            <div class="detail-value">090-1234-5678</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">メール</div>
+            <div class="detail-value">misaki.s@example.com</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">誕生日</div>
+            <div class="detail-value">1985年6月15日</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">初回来店</div>
+            <div class="detail-value">2024年1月5日</div>
+          </div>
+        </div>
+        
+        <!-- 施術履歴セクションを削除 -->
+        
+        <div class="detail-section">
+          <h4 class="detail-section-title">クライアントメモ（時系列）</h4>
+          <div class="memo-list">
+            <div class="memo-item">
+              <div class="memo-header">
+                <div class="memo-date">2025/4/25</div>
+                <div class="memo-author">あなた</div>
+              </div>
+              <div class="memo-content">
+                <p>本日メモを入力すると、ここに追加されます。</p>
+              </div>
+            </div>
+            
+            <div class="memo-item">
+              <div class="memo-header">
+                <div class="memo-date">2025/4/5</div>
+                <div class="memo-author">山田優子</div>
+              </div>
+              <div class="memo-content">
+                <p>髪の乾燥が気になると相談あり。しっとりタイプのトリートメントを提案。来月ハワイ旅行の予定があるとのこと。</p>
+              </div>
+            </div>
+            
+            <div class="memo-item">
+              <div class="memo-header">
+                <div class="memo-date">2025/3/2</div>
+                <div class="memo-author">鈴木健太</div>
+              </div>
+              <div class="memo-content">
+                <p>最近ヨガを始めたとのこと。フレンチレストランが好きで、誕生日は高級フレンチに行く予定だそう。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4 class="detail-section-title">四柱推命情報</h4>
+          <div class="saju-info">
+            <div class="saju-row">
+              <div class="saju-label">日柱</div>
+              <div class="saju-value">丁巳 (ひのとみ)</div>
+            </div>
+            <div class="saju-row">
+              <div class="saju-label">五行バランス</div>
+              <div class="saju-value">水: 強い / 木: 普通 / 火: 弱い / 土: 弱い / 金: 普通</div>
+            </div>
+            <div class="saju-row">
+              <div class="saju-label">本日の運勢</div>
+              <div class="saju-value">今日は変化を受け入れやすい日。新しいスタイルにチャレンジするのに適しています。</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-section ai-suggestion-section">
+          <div class="ai-header">
+            <h4 class="detail-section-title">
+              <span class="material-icons ai-icon">auto_awesome</span>
+              AIヘアスタイル提案
+            </h4>
+            <button class="refresh-btn">
+              <span class="material-icons">refresh</span>
+            </button>
+          </div>
+          
+          <div class="ai-suggestion">
+            <div class="ai-message">
+              <p><strong>佐藤様へのおすすめスタイル：</strong></p>
+              <p>本日の日柱「丁巳」の特性と、お客様のメモ情報から、以下のスタイルをおすすめします：</p>
+              <ul>
+                <li><strong>カラー提案：</strong> 水の気を強める青みがかったアッシュカラーがおすすめです。ハワイ旅行を控えていることから、日焼けした肌にも映えるよう、やや明るめの色味が良いでしょう。</li>
+                <li><strong>カット提案：</strong> ヨガを始められたとのことなので、動きやすく手入れが簡単なミディアムレイヤースタイル。乾燥が気になるとのことなので、毛先を軽くして広がりを抑えることも重要です。</li>
+                <li><strong>スタイリング：</strong> 自然な動きを出すゆるふわスタイルで、日常からフレンチレストランにも違和感なく馴染むバランスの良いスタイルがおすすめです。</li>
+              </ul>
+              <p>※ 本提案は四柱推命情報とメモ履歴を元にAIが生成したものです</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h4 class="detail-section-title">新規メモを追加</h4>
+          <textarea class="treatment-notes" placeholder="新しいメモを入力..."></textarea>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn">閉じる</button>
+        <button class="modal-btn edit-btn">
+          <span class="material-icons">edit</span>編集
+        </button>
+        <button class="modal-btn primary-btn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // モーダル機能の実装
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('clientDetailModal');
+      const detailButtons = document.querySelectorAll('.client-action-btn');
+      const closeButton = document.querySelector('.modal-close-btn');
+      const cancelButton = document.querySelector('.cancel-btn');
+      
+      // 詳細ボタンクリックでモーダルを表示
+      detailButtons.forEach(button => {
+        if (button.querySelector('.material-icons').textContent === 'visibility') {
+          button.addEventListener('click', function() {
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden'; // スクロール防止
+          });
+        }
+      });
+      
+      // 閉じるボタンでモーダルを非表示
+      closeButton.addEventListener('click', closeModal);
+      cancelButton.addEventListener('click', closeModal);
+      
+      // モーダル外クリックでも閉じる
+      modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+      
+      function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = ''; // スクロール復活
+      }
+
+      // チャットボタンのクリックイベント - チャット履歴があるクライアント
+      const chatButtons = document.querySelectorAll('.chat-button');
+      chatButtons.forEach(button => {
+        if (button.querySelector('.material-icons').textContent === 'chat') {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            // ここで beauty-client-chat に遷移するロジックを実装
+            alert('専用チャット画面に移動します');
+            // window.location.href = 'beauty-client-chat.html'; // 本番ではコメント解除
+          });
+        }
+      });
+
+      // 情報登録ボタンのクリックイベント - 未登録クライアント
+      const registerButtons = document.querySelectorAll('.chat-button');
+      registerButtons.forEach(button => {
+        if (button.querySelector('.material-icons').textContent === 'person_add') {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            // ここで beauty-client-input に遷移するロジックを実装
+            alert('クライアント情報登録画面に移動します');
+            // window.location.href = 'beauty-client-input.html'; // 本番ではコメント解除
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

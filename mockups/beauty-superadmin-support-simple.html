@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - スーパー管理者 シンプルサポート管理</title>
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/mui-material.min.css" />
+  <style>
+    :root {
+      --primary-color: #673ab7; /* スーパー管理者用の紫色 */
+      --primary-light: #d1c4e9;
+      --background-color: #f5f5f5;
+      --text-color: #424242;
+      --border-color: #e0e0e0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    .header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .logo-img {
+      margin-right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--primary-color);
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+
+    .ticket-list {
+      width: 320px;
+      background-color: white;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+    }
+
+    .ticket-detail {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .search-bar {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      background-color: white;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      padding-left: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path fill="%239e9e9e" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: 8px center;
+      background-size: 16px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .ticket-counter {
+      display: flex;
+      justify-content: center;
+      padding: 8px;
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .ticket-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .ticket-item:hover {
+      background-color: #f9f9f9;
+    }
+
+    .ticket-item.active {
+      background-color: var(--primary-light);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .ticket-item-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #757575;
+    }
+
+    .ticket-item-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ticket-item-salon {
+      font-size: 12px;
+      color: #616161;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-pending {
+      background-color: #ffecb3;
+      color: #ff8f00;
+    }
+
+    .status-answered {
+      background-color: #e8f5e9;
+      color: #43a047;
+    }
+
+    .detail-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background-color: white;
+    }
+
+    .detail-title {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .detail-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+      color: #757575;
+    }
+
+    .message-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background-color: #f9f9f9;
+    }
+
+    .message {
+      margin-bottom: 24px;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .message-sender {
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+
+    .sender-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      margin-right: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #616161;
+    }
+
+    .admin-avatar {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+    }
+
+    .message-time {
+      font-size: 12px;
+      color: #9e9e9e;
+    }
+
+    .message-content {
+      background-color: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      line-height: 1.5;
+    }
+
+    .admin-message .message-content {
+      background-color: var(--primary-light);
+    }
+
+    .reply-container {
+      padding: 16px 24px;
+      background-color: white;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .reply-input {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 14px;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+
+    .reply-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .reply-button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+
+    .reply-button:hover {
+      background-color: #5e35b1;
+    }
+
+    .reply-button .material-icons {
+      font-size: 18px;
+      margin-right: 4px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #9e9e9e;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .empty-state .material-icons {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .ticket-list {
+        width: 100%;
+        height: 40%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .ticket-detail {
+        height: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-img">
+        <span class="material-icons">admin_panel_settings</span>
+      </div>
+      美姫命 スーパー管理者
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- チケット一覧 -->
+    <div class="ticket-list">
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="サポートチケットを検索...">
+      </div>
+      <div class="ticket-counter">
+        未回答のチケット: 3件
+      </div>
+      <div class="ticket-item active">
+        <div class="ticket-item-header">
+          <span>#TK-0041</span>
+          <span class="status-badge status-pending">未回答</span>
+        </div>
+        <div class="ticket-item-title">ログインできません</div>
+        <div class="ticket-item-salon">ビューティーサロンA</div>
+      </div>
+      <div class="ticket-item">
+        <div class="ticket-item-header">
+          <span>#TK-0040</span>
+          <span class="status-badge status-pending">未回答</span>
+        </div>
+        <div class="ticket-item-title">予約機能が動作しません</div>
+        <div class="ticket-item-salon">ビューティーサロンB</div>
+      </div>
+      <div class="ticket-item">
+        <div class="ticket-item-header">
+          <span>#TK-0039</span>
+          <span class="status-badge status-answered">回答済み</span>
+        </div>
+        <div class="ticket-item-title">クライアントデータのインポートについて</div>
+        <div class="ticket-item-salon">ビューティーサロンC</div>
+      </div>
+      <div class="ticket-item">
+        <div class="ticket-item-header">
+          <span>#TK-0038</span>
+          <span class="status-badge status-pending">未回答</span>
+        </div>
+        <div class="ticket-item-title">アプリが突然クラッシュします</div>
+        <div class="ticket-item-salon">ビューティーサロンD</div>
+      </div>
+      <div class="ticket-item">
+        <div class="ticket-item-header">
+          <span>#TK-0037</span>
+          <span class="status-badge status-answered">回答済み</span>
+        </div>
+        <div class="ticket-item-title">請求書の発行方法について</div>
+        <div class="ticket-item-salon">ビューティーサロンE</div>
+      </div>
+    </div>
+
+    <!-- チケット詳細 -->
+    <div class="ticket-detail">
+      <div class="detail-header">
+        <div class="detail-title">ログインできません</div>
+        <div class="detail-meta">
+          <div>チケット番号: TK-0041</div>
+          <div>サロン: ビューティーサロンA</div>
+          <div>作成日: 2025/04/27</div>
+        </div>
+      </div>
+
+      <div class="message-container">
+        <!-- メッセージ -->
+        <div class="message">
+          <div class="message-header">
+            <div class="message-sender">
+              <div class="sender-avatar">YT</div>
+              山田太郎（ビューティーサロンA）
+            </div>
+            <div class="message-time">2025/04/27 09:15</div>
+          </div>
+          <div class="message-content">
+            アプリにログインしようとすると「認証エラー」と表示されます。パスワードは正しいはずです。何度も試しましたが、ログインできません。
+            <br><br>
+            エラーメッセージは「ユーザー認証に失敗しました。メールアドレスとパスワードを確認してください。」と表示されます。
+            <br><br>
+            昨日までは問題なくログインできていました。パスワードリセットも試しましたが、リセットメールが届きません。
+          </div>
+        </div>
+
+        <!-- 管理者返信 -->
+        <div class="message admin-message">
+          <div class="message-header">
+            <div class="message-sender">
+              <div class="sender-avatar admin-avatar">SA</div>
+              スーパー管理者
+            </div>
+            <div class="message-time">2025/04/27 10:30</div>
+          </div>
+          <div class="message-content">
+            山田様、お問い合わせありがとうございます。
+            <br><br>
+            ログインの問題について確認いたしました。現在、一部のアカウントでログイン認証に問題が発生しており、調査・対応を進めております。
+            <br><br>
+            応急処置として、以下の手順をお試しください：
+            <br>
+            1. ブラウザのキャッシュとCookieをクリア
+            <br>
+            2. アプリを完全に閉じてから再起動
+            <br>
+            3. WiFiとモバイルデータの切り替え
+            <br><br>
+            上記の手順でも解決しない場合は、お使いのメールアドレスをご連絡いただければ、アカウントを直接確認させていただきます。
+          </div>
+        </div>
+
+        <!-- ユーザーの返信 -->
+        <div class="message">
+          <div class="message-header">
+            <div class="message-sender">
+              <div class="sender-avatar">YT</div>
+              山田太郎（ビューティーサロンA）
+            </div>
+            <div class="message-time">2025/04/27 11:45</div>
+          </div>
+          <div class="message-content">
+            ご対応ありがとうございます。
+            <br><br>
+            提案いただいた手順を試しましたが、残念ながら問題は解決しませんでした。
+            <br><br>
+            私のメールアドレスは yamada@beauty-a.example.com です。
+            <br>
+            アカウントの確認をお願いいたします。
+          </div>
+        </div>
+      </div>
+
+      <div class="reply-container">
+        <textarea class="reply-input" placeholder="返信メッセージを入力..."></textarea>
+        <button class="reply-button">
+          <span class="material-icons">send</span>
+          返信する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ticketItems = document.querySelectorAll('.ticket-item');
+      
+      // チケット選択時の処理
+      ticketItems.forEach(item => {
+        item.addEventListener('click', () => {
+          // アクティブクラスの切り替え
+          ticketItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          
+          // 実際のアプリではここでチケット詳細を読み込む処理を行う
+        });
+      });
+      
+      // 返信ボタンのクリックイベント
+      const replyButton = document.querySelector('.reply-button');
+      const replyInput = document.querySelector('.reply-input');
+      
+      replyButton.addEventListener('click', () => {
+        const replyText = replyInput.value.trim();
+        if (replyText) {
+          // 実際のアプリではここで返信を送信する処理を行う
+          console.log('返信を送信:', replyText);
+          replyInput.value = '';
+          
+          // デモ用: 送信後に回答済みステータスに変更
+          const activeTicket = document.querySelector('.ticket-item.active');
+          if (activeTicket) {
+            const statusBadge = activeTicket.querySelector('.status-badge');
+            if (statusBadge) {
+              statusBadge.className = 'status-badge status-answered';
+              statusBadge.textContent = '回答済み';
+            }
+          }
+          
+          // デモ用: メッセージ追加
+          const messageContainer = document.querySelector('.message-container');
+          const now = new Date();
+          const timeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          
+          const messageHTML = `
+            <div class="message admin-message">
+              <div class="message-header">
+                <div class="message-sender">
+                  <div class="sender-avatar admin-avatar">SA</div>
+                  スーパー管理者
+                </div>
+                <div class="message-time">${timeStr}</div>
+              </div>
+              <div class="message-content">
+                ${replyText.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+          `;
+          
+          messageContainer.insertAdjacentHTML('beforeend', messageHTML);
+          
+          // 最新のメッセージにスクロール
+          messageContainer.scrollTop = messageContainer.scrollHeight;
+          
+          // カウンター更新
+          updatePendingCounter();
+        }
+      });
+      
+      // Enterキーでの送信（Shift+Enterは改行）
+      replyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          replyButton.click();
+        }
+      });
+      
+      // 未回答チケットカウンターの更新
+      function updatePendingCounter() {
+        const pendingTickets = document.querySelectorAll('.status-badge.status-pending').length;
+        document.querySelector('.ticket-counter').textContent = `未回答のチケット: ${pendingTickets}件`;
+      }
+    });
+  </script>
+</body>
+</html>

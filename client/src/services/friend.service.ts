@@ -1,5 +1,5 @@
 import apiService from './api.service';
-import { FRIENDS } from '../../../shared/index';
+import { FRIENDS, INVITATION } from '../../../shared/index';
 
 /**
  * 友達機能サービス
@@ -351,6 +351,42 @@ class FriendService {
         console.error('フォールバック処理にも失敗しました:', fallbackError);
         throw error; // 元のエラーをスロー
       }
+    }
+  }
+
+  /**
+   * 友達招待リンクを作成する
+   * @param email 招待先メールアドレス (必須)
+   * @returns 招待リンク情報
+   */
+  async createFriendInvitation(email: string) {
+    try {
+      if (!email) {
+        throw new Error('メールアドレスは必須です');
+      }
+
+      console.log('友達招待リンクを作成しています...');
+      
+      const payload = { email };
+      
+      const response = await apiService.post(INVITATION.CREATE_FRIEND, payload);
+      console.log('招待リンク作成レスポンス:', response.data);
+      
+      if (response.data && response.data.data && response.data.data.invitationCode) {
+        // フルURLを構築して返す
+        const invitationCode = response.data.data.invitationCode;
+        const baseUrl = window.location.origin;  // 例: https://example.com
+        return {
+          code: invitationCode,
+          url: `${baseUrl}/invitation/${invitationCode}`,
+          existingUser: response.data.data.existingUser || false
+        };
+      }
+      
+      throw new Error('招待リンクの作成に失敗しました: 無効なレスポンス形式');
+    } catch (error) {
+      console.error('友達招待リンクの作成に失敗しました:', error);
+      throw error;
     }
   }
 }

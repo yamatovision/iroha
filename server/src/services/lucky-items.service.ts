@@ -2,10 +2,10 @@
  * ラッキーアイテム生成サービス
  *
  * ユーザーの四柱推命データに基づいて、その日に適したラッキーアイテム（色、食べ物、飲み物）を
- * 生成するサービスです。Claude AIを使用して、命式データから個人に最適化されたアイテムを提案します。
+ * 生成するサービスです。AI（OpenAI/Claude）を使用して、命式データから個人に最適化されたアイテムを提案します。
  */
 import { FortuneScoreResult } from '../types';
-import { claudeApiClient } from './claude-api-client';
+import { generateLuckyItems as aiGenerateLuckyItems } from './ai-provider-adapter';
 import { User } from '../models/User';
 
 // User型定義 - MongooseのDocumentではなく一般的なオブジェクトとして定義
@@ -105,31 +105,22 @@ export class LuckyItemsService {
       const prompt = this.buildLuckyItemsPrompt(userData.user, dayStem, dayBranch, userData.fortuneDetails);
       console.log('🎯 プロンプト構築完了: 長さ=' + prompt.length);
       
-      // Claude APIを呼び出し
+      // AI APIを呼び出し
       try {
-        const response = await claudeApiClient.simpleCall(prompt, LUCKY_ITEMS_SYSTEM_PROMPT, 1000);
-        console.log('🎯 Claude API呼び出し成功: レスポンス長=' + response.length);
+        // アダプターを使用して生成
+        const luckyItems = await aiGenerateLuckyItems(userData, dayStem, dayBranch);
+        console.log('🎯 AI API呼び出し成功');
+        console.log('🎯 生成結果:', luckyItems);
         
-        if (response && response.length > 0) {
-          console.log('🎯 レスポンスプレビュー:', response.substring(0, 100) + '...');
-          
-          // レスポンスをパース
-          const luckyItems = this.parseLuckyItems(response);
-          console.log('🎯 パース結果:', luckyItems);
-          
-          // パース結果の検証
-          if (!luckyItems.color || !luckyItems.item || !luckyItems.drink) {
-            console.error('🎯 パース結果が不完全です:', luckyItems);
-            throw new Error('ラッキーアイテムのパースに失敗しました');
-          }
-          
+        if (luckyItems.color && luckyItems.item && luckyItems.drink) {
+          console.log('🎯 ラッキーアイテム生成完了');
           return luckyItems;
         } else {
-          console.error('🎯 APIレスポンスが空です');
-          throw new Error('APIレスポンスが空');
+          console.error('🎯 生成されたラッキーアイテムが不完全です');
+          throw new Error('ラッキーアイテムの生成に失敗しました');
         }
       } catch (apiError) {
-        console.error('🎯 Claude API呼び出しエラー:', apiError);
+        console.error('🎯 AI API呼び出しエラー:', apiError);
         throw apiError;
       }
     } catch (error) {

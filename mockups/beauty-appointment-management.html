@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - 予約・担当管理</title>
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.13/dist/material-ui.min.css" />
+  <!-- Custom CSS -->
+  <style>
+    :root {
+      --primary-color: #f48fb1;
+      --primary-light: #ffc1e3;
+      --primary-dark: #bf5f82;
+      --secondary-color: #90caf9;
+      --background-color: #fafafa;
+      --text-color: #424242;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: white;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+    }
+
+    .sidebar-logo {
+      font-size: 20px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .sidebar-menu {
+      padding: 0;
+      list-style: none;
+      margin-top: 0;
+    }
+
+    .sidebar-menu li {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar-menu li:hover {
+      background-color: rgba(244, 143, 177, 0.08);
+    }
+
+    .sidebar-menu li.active {
+      background-color: rgba(244, 143, 177, 0.16);
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .sidebar-menu i {
+      margin-right: 12px;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 240px;
+      padding: 20px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.3s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(244, 143, 177, 0.08);
+    }
+
+    .btn-small {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .gender-icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      font-size: 12px;
+    }
+
+    .date-navigator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .date-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-selector button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      border-radius: 50%;
+    }
+
+    .date-selector button:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .current-date {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .day-summary {
+      display: flex;
+      gap: 16px;
+    }
+
+    .summary-item {
+      padding: 8px 16px;
+      border-radius: 16px;
+      background-color: #f5f5f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .summary-item.highlight {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+
+    .time-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .time-slot {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      position: relative;
+    }
+
+    .time-slot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .time-slot-time {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .time-slot-appointments {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .appointment-card {
+      min-width: 280px;
+      max-width: 300px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: all 0.3s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .appointment-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .appointment-header {
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .appointment-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+      background-color: var(--primary-color);
+    }
+
+    .appointment-info {
+      flex: 1;
+    }
+
+    .appointment-name {
+      font-weight: 500;
+      margin: 0 0 4px 0;
+    }
+
+    .appointment-details {
+      color: #757575;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .appointment-body {
+      padding: 0 12px 12px;
+      flex: 1;
+    }
+
+    .appointment-service {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .appointment-footer {
+      padding: 12px;
+      background-color: #f9f9f9;
+      border-top: 1px solid #eee;
+    }
+
+    .element-tag {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 20px;
+      height: 100%;
+    }
+
+    .card-female {
+      border-left: 4px solid #f48fb1;
+    }
+
+    .card-male {
+      border-left: 4px solid #90caf9;
+    }
+
+    .compatibility-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .compatibility-high {
+      background-color: #4caf50;
+    }
+
+    .compatibility-medium {
+      background-color: #ff9800;
+    }
+
+    .compatibility-low {
+      background-color: #f44336;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #757575;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .stylist-list {
+      margin-top: 16px;
+    }
+
+    .stylist-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background-color 0.3s;
+    }
+
+    .stylist-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .stylist-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin-right: 12px;
+    }
+
+    .stylist-info {
+      flex: 1;
+    }
+
+    .stylist-name {
+      font-weight: 500;
+      margin: 0 0 4px 0;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-4 {
+      margin-top: 16px;
+    }
+
+    .unassigned-tag {
+      background-color: #ffccbc;
+      color: #e64a19;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .assigned-tag {
+      background-color: #c8e6c9;
+      color: #2e7d32;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .draggable-card {
+      cursor: grab;
+    }
+
+    .draggable-card:active {
+      cursor: grabbing;
+    }
+
+    .drop-target {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      color: #757575;
+      margin-bottom: 16px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: #f9f9f9;
+    }
+
+    .drop-target:hover {
+      background-color: rgba(244, 143, 177, 0.1);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .drop-target.hover {
+      background-color: rgba(244, 143, 177, 0.2);
+      border-color: var(--primary-color);
+      border-width: 3px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 64px;
+        overflow: hidden;
+      }
+      
+      .sidebar-header {
+        padding: 16px 8px;
+        justify-content: center;
+      }
+      
+      .sidebar-logo {
+        display: none;
+      }
+      
+      .sidebar-menu li span {
+        display: none;
+      }
+      
+      .sidebar-menu li {
+        padding: 16px 8px;
+        justify-content: center;
+      }
+      
+      .sidebar-menu i {
+        margin-right: 0;
+      }
+      
+      .main-content {
+        margin-left: 64px;
+      }
+
+      .time-slot-appointments {
+        flex-direction: column;
+      }
+
+      .appointment-card {
+        min-width: auto;
+        max-width: none;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- サイドバー -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="sidebar-logo">美姫命</h1>
+      </div>
+      <ul class="sidebar-menu">
+        <li>
+          <i class="material-icons">dashboard</i>
+          <span>ダッシュボード</span>
+        </li>
+        <li>
+          <i class="material-icons">people</i>
+          <span>クライアント管理</span>
+        </li>
+        <li>
+          <i class="material-icons">cloud_upload</i>
+          <span>データインポート</span>
+        </li>
+        <li>
+          <i class="material-icons">content_cut</i>
+          <span>スタイリスト管理</span>
+        </li>
+        <li class="active">
+          <i class="material-icons">event</i>
+          <span>予約・担当管理</span>
+        </li>
+        <li>
+          <i class="material-icons">assessment</i>
+          <span>分析・レポート</span>
+        </li>
+        <li>
+          <i class="material-icons">settings</i>
+          <span>設定</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title">予約・担当管理</h1>
+        <div class="top-actions">
+          <button class="btn btn-outline" onclick="toggleSyncModal()">
+            <i class="material-icons">sync</i>
+            カレンダー同期
+          </button>
+          <button class="btn btn-outline">
+            <i class="material-icons">print</i>
+            シフト表印刷
+          </button>
+          <button class="btn btn-primary">
+            <i class="material-icons">add</i>
+            新規予約登録
+          </button>
+        </div>
+      </div>
+
+      <!-- 日付ナビゲーター -->
+      <div class="date-navigator">
+        <div class="date-selector">
+          <button>
+            <i class="material-icons">chevron_left</i>
+          </button>
+          <div class="current-date">2025年 4月 26日(土)</div>
+          <button>
+            <i class="material-icons">chevron_right</i>
+          </button>
+          <button class="btn btn-outline btn-small" style="margin-left: 12px;">
+            <i class="material-icons" style="font-size: 16px;">today</i>
+            日付選択
+          </button>
+        </div>
+        <div class="day-summary">
+          <div class="summary-item">
+            <i class="material-icons">event</i>
+            予約数: 12
+          </div>
+          <div class="summary-item highlight">
+            <i class="material-icons">person_off</i>
+            未担当: 3
+          </div>
+          <div class="summary-item" style="background-color: #e3f2fd; color: #1976d2;">
+            <i class="material-icons">sync</i>
+            同期済み
+          </div>
+        </div>
+      </div>
+
+
+      <!-- タイムスロット -->
+      <div class="time-slots">
+        <!-- 10:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">10:00 - 11:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 女性クライアント - 未担当 -->
+            <div class="appointment-card card-female draggable-card" onclick="toggleAssignStylistModal('佐藤 花子', '女性')">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #f48fb1;">SK</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">佐藤 花子</h3>
+                  <p class="appointment-details">初回 | 38歳 | 女性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カット + カラー (60分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="unassigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person_off</i>
+                    未担当
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-primary" style="width: 100%;">
+                  <i class="material-icons">person_add</i>
+                  スタイリスト割り当て
+                </button>
+              </div>
+            </div>
+
+            <!-- 女性クライアント - 担当あり -->
+            <div class="appointment-card card-female draggable-card">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #f48fb1;">TM</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">田中 美咲</h3>
+                  <p class="appointment-details">リピート2回 | 35歳 | 女性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カット + パーマ (90分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="assigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person</i>
+                    担当: 山本 健太
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-outline" style="width: 100%;" onclick="toggleEditAppointmentModal(this.closest('.appointment-card'))">
+                  <i class="material-icons">edit</i>
+                  変更
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">11:00 - 12:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 空き予約枠 -->
+            <div class="drop-target" id="drop-target-11" onclick="toggleAddAppointmentModal('11:00 - 12:00')">
+              <div>
+                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px; color: var(--primary-color);">add_circle_outline</i>
+                <div>クリックして新規予約追加</div>
+                <div style="margin-top: 8px; font-size: 12px; color: #757575;">(または予約をドラッグして移動)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 12:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">12:00 - 13:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 女性クライアント - 未担当 -->
+            <div class="appointment-card card-female draggable-card" onclick="toggleAssignStylistModal('小林 愛', '女性')">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #f48fb1;">KA</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">小林 愛</h3>
+                  <p class="appointment-details">初回 | 33歳 | 女性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カット (45分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="unassigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person_off</i>
+                    未担当
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-primary" style="width: 100%;">
+                  <i class="material-icons">person_add</i>
+                  スタイリスト割り当て
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 13:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">13:00 - 14:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 女性クライアント - 担当あり -->
+            <div class="appointment-card card-female draggable-card">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #f48fb1;">SY</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">鈴木 優子</h3>
+                  <p class="appointment-details">リピート5回 | 37歳 | 女性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カラー + トリートメント (90分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="assigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person</i>
+                    担当: 中村 美香
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-outline" style="width: 100%;" onclick="toggleEditAppointmentModal(this.closest('.appointment-card'))">
+                  <i class="material-icons">edit</i>
+                  変更
+                </button>
+              </div>
+            </div>
+
+            <!-- 女性クライアント - 担当あり -->
+            <div class="appointment-card card-female draggable-card">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #f48fb1;">YR</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">山田 里奈</h3>
+                  <p class="appointment-details">リピート3回 | 30歳 | 女性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カット + ヘッドスパ (60分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="assigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person</i>
+                    担当: 佐々木 翔太
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-outline" style="width: 100%;" onclick="toggleEditAppointmentModal(this.closest('.appointment-card'))">
+                  <i class="material-icons">edit</i>
+                  変更
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 14:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">14:00 - 15:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 男性クライアント - 未担当 -->
+            <div class="appointment-card card-male draggable-card" onclick="toggleAssignStylistModal('中島 健太', '男性')">
+              <div class="appointment-header">
+                <div class="appointment-avatar" style="background-color: #90caf9;">NK</div>
+                <div class="appointment-info">
+                  <h3 class="appointment-name">中島 健太</h3>
+                  <p class="appointment-details">初回 | 35歳 | 男性</p>
+                </div>
+              </div>
+              <div class="appointment-body">
+                <div class="appointment-service">
+                  <i class="material-icons">content_cut</i>
+                  カット + ヘッドスパ (60分)
+                </div>
+                <div style="margin-top: 12px;">
+                  <span class="unassigned-tag">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">person_off</i>
+                    未担当
+                  </span>
+                </div>
+              </div>
+              <div class="appointment-footer">
+                <button class="btn btn-primary" style="width: 100%;">
+                  <i class="material-icons">person_add</i>
+                  スタイリスト割り当て
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 15:00 -->
+        <div class="time-slot">
+          <div class="time-slot-header">
+            <div class="time-slot-time">15:00 - 16:00</div>
+            <div>
+              <button class="btn btn-outline btn-small" onclick="toggleAddAppointmentModal(this.closest('.time-slot').querySelector('.time-slot-time').textContent)">
+                <i class="material-icons" style="font-size: 16px;">add</i>
+                枠追加
+              </button>
+            </div>
+          </div>
+          <div class="time-slot-appointments">
+            <!-- 空き予約枠 -->
+            <div class="drop-target" id="drop-target-15" onclick="toggleAddAppointmentModal('15:00 - 16:00')">
+              <div>
+                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px; color: var(--primary-color);">add_circle_outline</i>
+                <div>クリックして新規予約追加</div>
+                <div style="margin-top: 8px; font-size: 12px; color: #757575;">(または予約をドラッグして移動)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- スタイリスト割り当てモーダル -->
+  <div id="assignStylistModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">スタイリスト割り当て</h2>
+        <button class="modal-close" onclick="toggleAssignStylistModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <div id="clientAvatar" class="appointment-avatar" style="width: 60px; height: 60px; font-size: 24px; margin-right: 16px;">SK</div>
+          <div>
+            <h3 id="clientName" style="margin: 0 0 4px 0;">佐藤 花子</h3>
+            <p style="margin: 0; display: flex; align-items: center;">
+              <i class="material-icons" style="font-size: 18px; margin-right: 4px;">person</i>
+              <span id="clientGenderText">女性</span>
+            </p>
+          </div>
+        </div>
+        
+        <p>予約内容: カット + カラー (60分)</p>
+        <p>予約時間: 2025/04/26 10:00-11:00</p>
+
+        <div style="background-color: #e8f5e9; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+          <h3 style="margin: 0 0 8px; font-size: 16px; display: flex; align-items: center;">
+            <i class="material-icons" style="font-size: 20px; margin-right: 8px; color: #388e3c;">assistant</i>
+            おすすめスタイリスト
+          </h3>
+          <p style="margin: 0 0 8px; color: #388e3c;">
+            女性のカット・カラーの施術に最適なスタイリストを自動で提案しました
+          </p>
+          <div class="stylist-item" style="background-color: white; border-radius: 8px; margin-top: 12px;">
+            <div class="stylist-avatar" style="background-color: #f48fb1;">MN</div>
+            <div class="stylist-info">
+              <h4 class="stylist-name">中村 美香</h4>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">女性 | カラー・トリートメント得意</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-small">割り当て</button>
+          </div>
+        </div>
+
+        <h3 style="margin: 24px 0 12px; font-size: 16px;">その他の担当可能なスタイリスト</h3>
+        
+        <div class="stylist-list">
+          <!-- スタイリスト1 -->
+          <div class="stylist-item">
+            <div class="stylist-avatar" style="background-color: #90caf9;">YK</div>
+            <div class="stylist-info">
+              <h4 class="stylist-name">山本 健太</h4>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">男性 | カット・カラー得意</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-small">割り当て</button>
+          </div>
+
+          <!-- スタイリスト3 -->
+          <div class="stylist-item">
+            <div class="stylist-avatar" style="background-color: #90caf9;">SS</div>
+            <div class="stylist-info">
+              <h4 class="stylist-name">佐々木 翔太</h4>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">男性 | メンズカット得意</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-small">割り当て</button>
+          </div>
+
+          <!-- スタイリスト4 -->
+          <div class="stylist-item">
+            <div class="stylist-avatar" style="background-color: #f48fb1;">KY</div>
+            <div class="stylist-info">
+              <h4 class="stylist-name">高橋 裕子</h4>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">女性 | パーマ・縮毛矯正得意</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-small">割り当て</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 新規予約登録モーダル -->
+  <div id="addAppointmentModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+      <div class="modal-header">
+        <h2 class="modal-title">新規予約登録</h2>
+        <button class="modal-close" onclick="toggleAddAppointmentModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 16px;">予約情報</h3>
+          
+          <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">日付</label>
+              <input type="date" class="form-control" value="2025-04-26" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">時間枠</label>
+              <select id="appointmentTimeSlot" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <option>10:00 - 11:00</option>
+                <option>11:00 - 12:00</option>
+                <option>12:00 - 13:00</option>
+                <option>13:00 - 14:00</option>
+                <option>14:00 - 15:00</option>
+                <option>15:00 - 16:00</option>
+                <option>16:00 - 17:00</option>
+                <option>17:00 - 18:00</option>
+              </select>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">施術内容</label>
+            <select class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              <option>カット (45分)</option>
+              <option>カラー (60分)</option>
+              <option>パーマ (90分)</option>
+              <option>縮毛矯正 (120分)</option>
+              <option>カット + カラー (90分)</option>
+              <option>カット + パーマ (120分)</option>
+              <option>カット + トリートメント (60分)</option>
+              <option>ヘッドスパ (30分)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 16px;">クライアント情報</h3>
+          
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+            <div style="flex: 1;">
+              <input type="text" placeholder="クライアント検索" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <button class="btn btn-outline" style="white-space: nowrap;">
+              <i class="material-icons">person_add</i>
+              新規登録
+            </button>
+          </div>
+          
+          <div style="background-color: #f5f5f5; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+              <div style="width: 50px; height: 50px; border-radius: 50%; background-color: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px;">新規</div>
+              <div>
+                <p style="margin: 0 0 4px; font-weight: 500;">新規クライアント</p>
+                <span style="font-size: 14px; color: #757575;">以下に基本情報を入力してください</span>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">お名前 <span style="color: #f44336;">*</span></label>
+                <input type="text" class="form-control" placeholder="例：山田 花子" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">性別</label>
+                <select class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option>女性</option>
+                  <option>男性</option>
+                  <option>その他</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">電話番号</label>
+                <input type="tel" class="form-control" placeholder="例：090-1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">メールアドレス</label>
+                <input type="email" class="form-control" placeholder="例：example@mail.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">生年月日 <span style="color: #f44336;">※四柱推命情報の取得に必要</span></label>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 120px;">
+                  <input type="date" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                  <select class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">生まれた時間（わかれば）</option>
+                    <option>0:00 - 0:59</option>
+                    <option>1:00 - 1:59</option>
+                    <option>2:00 - 2:59</option>
+                    <option>3:00 - 3:59</option>
+                    <option>4:00 - 4:59</option>
+                    <option>5:00 - 5:59</option>
+                    <option>6:00 - 6:59</option>
+                    <option>7:00 - 7:59</option>
+                    <option>8:00 - 8:59</option>
+                    <option>9:00 - 9:59</option>
+                    <option>10:00 - 10:59</option>
+                    <option>11:00 - 11:59</option>
+                    <option>12:00 - 12:59</option>
+                    <option>13:00 - 13:59</option>
+                    <option>14:00 - 14:59</option>
+                    <option>15:00 - 15:59</option>
+                    <option>16:00 - 16:59</option>
+                    <option>17:00 - 17:59</option>
+                    <option>18:00 - 18:59</option>
+                    <option>19:00 - 19:59</option>
+                    <option>20:00 - 20:59</option>
+                    <option>21:00 - 21:59</option>
+                    <option>22:00 - 22:59</option>
+                    <option>23:00 - 23:59</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label style="display: block; margin-bottom: 8px; font-weight: 500;">備考</label>
+              <textarea class="form-control" placeholder="特記事項があればご記入ください" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 16px;">担当スタイリスト</h3>
+          
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; flex: 1; min-width: 200px; background-color: #f5f5f5;">
+              <input type="radio" name="stylist" checked style="margin-right: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #90caf9; color: white; display: flex; align-items: center; justify-content: center;">YK</div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">山本 健太</p>
+                  <span style="font-size: 12px; color: #757575;">男性 | カット・カラー得意</span>
+                </div>
+              </div>
+            </label>
+            
+            <label style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; flex: 1; min-width: 200px;">
+              <input type="radio" name="stylist" style="margin-right: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f48fb1; color: white; display: flex; align-items: center; justify-content: center;">MN</div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">中村 美香</p>
+                  <span style="font-size: 12px; color: #757575;">女性 | カラー・トリートメント得意</span>
+                </div>
+              </div>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+            <label style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; flex: 1; min-width: 200px;">
+              <input type="radio" name="stylist" style="margin-right: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #90caf9; color: white; display: flex; align-items: center; justify-content: center;">SS</div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">佐々木 翔太</p>
+                  <span style="font-size: 12px; color: #757575;">男性 | メンズカット得意</span>
+                </div>
+              </div>
+            </label>
+            
+            <label style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; flex: 1; min-width: 200px;">
+              <input type="radio" name="stylist" style="margin-right: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f48fb1; color: white; display: flex; align-items: center; justify-content: center;">KY</div>
+                <div>
+                  <p style="margin: 0; font-weight: 500;">高橋 裕子</p>
+                  <span style="font-size: 12px; color: #757575;">女性 | パーマ・縮毛矯正得意</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 24px;">
+          <button class="btn btn-outline" style="margin-right: 12px;" onclick="toggleAddAppointmentModal()">
+            キャンセル
+          </button>
+          <button class="btn btn-primary" onclick="addNewAppointment()">
+            <i class="material-icons">save</i>
+            予約を登録
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Googleカレンダー同期モーダル -->
+  <div id="syncModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+      <div class="modal-header">
+        <h2 class="modal-title">カレンダーと予約データの同期</h2>
+        <button class="modal-close" onclick="toggleSyncModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/512px-Google_Calendar_icon_%282020%29.svg.png" alt="Google Calendar" style="width: 80px; height: 80px;">
+        </div>
+        
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; margin-bottom: 8px;">接続済みカレンダー</h3>
+          <div style="display: flex; align-items: center; padding: 12px; background-color: #f5f5f5; border-radius: 8px;">
+            <i class="material-icons" style="color: #4285F4; margin-right: 12px;">event</i>
+            <div style="flex: 1">
+              <div style="font-weight: 500;">美姫命サロン予約カレンダー</div>
+              <div style="font-size: 14px; color: #757575;">最終同期: 2025/04/26 09:15</div>
+            </div>
+            <span style="background-color: #e8f5e9; color: #388e3c; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+              <i class="material-icons" style="font-size: 12px; vertical-align: middle;">check_circle</i>
+              接続中
+            </span>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 8px;">同期状況</h3>
+          <div style="padding: 12px; background-color: #f9f9f9; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span>総予約数</span>
+              <span style="font-weight: 500;">152</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span>クライアント自動紐付け成功</span>
+              <span style="font-weight: 500; color: #388e3c;">143 (94%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span>スタイリスト自動紐付け成功</span>
+              <span style="font-weight: 500; color: #388e3c;">149 (98%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>手動紐付け待ち</span>
+              <span style="font-weight: 500; color: #f57c00;">9件</span>
+            </div>
+          </div>
+          
+          <button class="btn btn-outline" style="width: 100%; margin-bottom: 8px;">
+            <i class="material-icons">data_object</i>
+            未紐付けデータの確認と手動紐付け
+          </button>
+        </div>
+        
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; margin-bottom: 8px;">同期設定</h3>
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <label style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>自動同期を有効にする</span>
+              </label>
+              <select style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;">
+                <option>15分ごと</option>
+                <option selected>30分ごと</option>
+                <option>1時間ごと</option>
+                <option>手動のみ</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <input type="checkbox" checked style="margin-right: 8px;">
+              <span>新規予約の自動担当割り当てを有効にする</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <input type="checkbox" checked style="margin-right: 8px;">
+              <span>予約変更を自動反映する</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <input type="checkbox" checked style="margin-right: 8px;">
+              <span>自動紐付け成功率を機械学習で向上させる</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="font-size: 16px; margin-bottom: 8px;">紐付けルール設定</h3>
+          <div style="padding: 12px; background-color: #f9f9f9; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>クライアント名で照合</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>電話番号で照合</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>メールアドレスで照合</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>スタイリスト名で照合</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                <span>未登録クライアントの自動登録</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 16px;">
+          <button class="btn btn-primary" style="margin-right: 8px;">
+            <i class="material-icons">sync</i>
+            今すぐ同期
+          </button>
+          <button class="btn btn-outline">
+            <i class="material-icons">settings</i>
+            詳細設定
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // モーダル表示切り替え
+    function toggleAssignStylistModal(clientName, gender) {
+      const modal = document.getElementById('assignStylistModal');
+      
+      if (clientName && gender) {
+        // モーダルを開く時にクライアント情報を設定
+        document.getElementById('clientName').textContent = clientName;
+        document.getElementById('clientAvatar').textContent = getInitials(clientName);
+        
+        // 性別によって表示を変更
+        let avatarColor = '#f48fb1'; // 女性のデフォルト色
+        document.getElementById('clientGenderText').textContent = gender;
+        
+        if (gender === '男性') {
+          avatarColor = '#90caf9'; // 男性の色
+        }
+        
+        document.getElementById('clientAvatar').style.backgroundColor = avatarColor;
+      }
+      
+      modal.classList.toggle('show');
+    }
+    
+    // Googleカレンダー同期モーダル表示切り替え
+    function toggleSyncModal() {
+      const modal = document.getElementById('syncModal');
+      modal.classList.toggle('show');
+    }
+
+    // 名前からイニシャルを取得
+    function getInitials(name) {
+      const parts = name.split(' ');
+      if (parts.length >= 2) {
+        return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    }
+
+
+    // 新規予約登録モーダル表示切り替え
+    function toggleAddAppointmentModal(timeSlot) {
+      const modal = document.getElementById('addAppointmentModal');
+      
+      // タイトルを「新規予約登録」に設定
+      document.querySelector('#addAppointmentModal .modal-title').textContent = '新規予約登録';
+      
+      // 保存ボタンのテキストを「予約を登録」に設定
+      const saveButton = document.querySelector('#addAppointmentModal .btn-primary');
+      saveButton.innerHTML = '<i class="material-icons">save</i> 予約を登録';
+      saveButton.onclick = addNewAppointment;
+      
+      if (timeSlot && typeof timeSlot === 'string') {
+        // モーダルを開く時に選択された時間枠を設定
+        const timeSlotSelect = document.getElementById('appointmentTimeSlot');
+        
+        // セレクトボックスのオプションをループして一致するものを選択
+        for (let i = 0; i < timeSlotSelect.options.length; i++) {
+          if (timeSlotSelect.options[i].text === timeSlot.trim()) {
+            timeSlotSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      
+      // フォームをリセット
+      resetAppointmentForm();
+      
+      modal.classList.toggle('show');
+    }
+    
+    // 予約編集モーダル表示切り替え
+    function toggleEditAppointmentModal(appointmentCard) {
+      const modal = document.getElementById('addAppointmentModal');
+      
+      // タイトルを「予約編集」に設定
+      document.querySelector('#addAppointmentModal .modal-title').textContent = '予約編集';
+      
+      // 保存ボタンのテキストを「変更を保存」に設定
+      const saveButton = document.querySelector('#addAppointmentModal .btn-primary');
+      saveButton.innerHTML = '<i class="material-icons">save</i> 変更を保存';
+      saveButton.onclick = updateAppointment;
+      
+      if (appointmentCard) {
+        // 予約カードから情報を取得して入力欄に設定
+        loadAppointmentData(appointmentCard);
+      }
+      
+      modal.classList.toggle('show');
+    }
+    
+    // 予約フォームをリセット
+    function resetAppointmentForm() {
+      // 入力欄をクリア
+      document.querySelector('#addAppointmentModal input[type="text"]').value = '';
+      document.querySelector('#addAppointmentModal input[type="date"]').value = '2025-04-26';
+      document.querySelector('#addAppointmentModal textarea').value = '';
+      
+      // セレクトボックスをデフォルト値に
+      const selects = document.querySelectorAll('#addAppointmentModal select');
+      selects.forEach(select => select.selectedIndex = 0);
+      
+      // スタイリスト選択をリセット
+      document.querySelectorAll('#addAppointmentModal input[name="stylist"]')[0].checked = true;
+    }
+    
+    // 予約カードからデータを読み込み
+    function loadAppointmentData(appointmentCard) {
+      // 名前を取得
+      const name = appointmentCard.querySelector('.appointment-name').textContent;
+      document.querySelector('#addAppointmentModal input[type="text"]').value = name;
+      
+      // 性別を取得（女性/男性をクラスから判断）
+      const gender = appointmentCard.classList.contains('card-female') ? '女性' : '男性';
+      const genderSelect = document.querySelector('#addAppointmentModal select');
+      for (let i = 0; i < genderSelect.options.length; i++) {
+        if (genderSelect.options[i].text === gender) {
+          genderSelect.selectedIndex = i;
+          break;
+        }
+      }
+      
+      // 施術内容を取得
+      const service = appointmentCard.querySelector('.appointment-service').textContent.trim();
+      const serviceSelect = document.querySelectorAll('#addAppointmentModal select')[2];
+      for (let i = 0; i < serviceSelect.options.length; i++) {
+        if (serviceSelect.options[i].text.includes(service)) {
+          serviceSelect.selectedIndex = i;
+          break;
+        }
+      }
+      
+      // 担当スタイリストを取得
+      const assignedStylist = appointmentCard.querySelector('.assigned-tag');
+      if (assignedStylist) {
+        const stylistName = assignedStylist.textContent.replace('担当:', '').trim();
+        const stylistRadios = document.querySelectorAll('#addAppointmentModal input[name="stylist"]');
+        
+        for (let i = 0; i < stylistRadios.length; i++) {
+          const label = stylistRadios[i].closest('label');
+          if (label.textContent.includes(stylistName)) {
+            stylistRadios[i].checked = true;
+            break;
+          }
+        }
+      }
+      
+      // 予約時間を取得（親のタイムスロットから）
+      const timeSlot = appointmentCard.closest('.time-slot').querySelector('.time-slot-time').textContent;
+      const timeSlotSelect = document.getElementById('appointmentTimeSlot');
+      for (let i = 0; i < timeSlotSelect.options.length; i++) {
+        if (timeSlotSelect.options[i].text === timeSlot) {
+          timeSlotSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // 既存予約の更新処理
+    function updateAppointment() {
+      // 本来はここでフォームのバリデーションと送信処理を行う
+      // モックアップなので、成功メッセージを表示するだけ
+      
+      // モーダルを閉じる
+      document.getElementById('addAppointmentModal').classList.remove('show');
+      
+      // 成功メッセージを表示
+      const successMessage = document.createElement('div');
+      successMessage.style.position = 'fixed';
+      successMessage.style.top = '20px';
+      successMessage.style.left = '50%';
+      successMessage.style.transform = 'translateX(-50%)';
+      successMessage.style.backgroundColor = '#2196f3';
+      successMessage.style.color = 'white';
+      successMessage.style.padding = '12px 24px';
+      successMessage.style.borderRadius = '4px';
+      successMessage.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+      successMessage.style.zIndex = '9999';
+      successMessage.style.display = 'flex';
+      successMessage.style.alignItems = 'center';
+      successMessage.style.gap = '8px';
+      
+      const icon = document.createElement('i');
+      icon.className = 'material-icons';
+      icon.textContent = 'check_circle';
+      
+      const text = document.createElement('span');
+      text.textContent = '予約情報が更新されました';
+      
+      successMessage.appendChild(icon);
+      successMessage.appendChild(text);
+      document.body.appendChild(successMessage);
+      
+      // 3秒後にメッセージを消す
+      setTimeout(() => {
+        document.body.removeChild(successMessage);
+      }, 3000);
+    }
+    
+    // 新規予約の追加処理
+    function addNewAppointment() {
+      // 本来はここでフォームのバリデーションと送信処理を行う
+      // モックアップなので、成功メッセージを表示するだけ
+      
+      // モーダルを閉じる
+      document.getElementById('addAppointmentModal').classList.remove('show');
+      
+      // 成功メッセージを表示
+      const successMessage = document.createElement('div');
+      successMessage.style.position = 'fixed';
+      successMessage.style.top = '20px';
+      successMessage.style.left = '50%';
+      successMessage.style.transform = 'translateX(-50%)';
+      successMessage.style.backgroundColor = '#4caf50';
+      successMessage.style.color = 'white';
+      successMessage.style.padding = '12px 24px';
+      successMessage.style.borderRadius = '4px';
+      successMessage.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+      successMessage.style.zIndex = '9999';
+      successMessage.style.display = 'flex';
+      successMessage.style.alignItems = 'center';
+      successMessage.style.gap = '8px';
+      
+      const icon = document.createElement('i');
+      icon.className = 'material-icons';
+      icon.textContent = 'check_circle';
+      
+      const text = document.createElement('span');
+      text.textContent = '新規予約が登録されました';
+      
+      successMessage.appendChild(icon);
+      successMessage.appendChild(text);
+      document.body.appendChild(successMessage);
+      
+      // 3秒後にメッセージを消す
+      setTimeout(() => {
+        document.body.removeChild(successMessage);
+      }, 3000);
+    }
+
+    // ドラッグ&ドロップのシミュレーション
+    const dropTargets = document.querySelectorAll('.drop-target');
+    const draggableCards = document.querySelectorAll('.draggable-card');
+
+    dropTargets.forEach(target => {
+      target.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('hover');
+      });
+
+      target.addEventListener('dragleave', function() {
+        this.classList.remove('hover');
+      });
+
+      target.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('hover');
+        alert('予約が移動されました！');
+      });
+    });
+
+    draggableCards.forEach(card => {
+      card.setAttribute('draggable', true);
+      
+      card.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', 'dragging');
+      });
+    });
+  </script>
+</body>
+</html>

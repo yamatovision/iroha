@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - クライアントプロフィール</title>
+  
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.15.4/dist/material-ui.min.css" />
+  
+  <!-- マークダウン処理用ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- Chart.js for visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <style>
+    :root {
+      /* 美容師向けパステルカラーパレット */
+      --primary: #e091e4;          /* メインカラー: パステルパープル */
+      --primary-light: #f8c0fb;    /* ライトカラー: 薄いピンク */
+      --primary-dark: #c26ac7;     /* ダークカラー: 濃いパープル */
+      --primary-bg: #fcf0ff;       /* 背景色: 薄紫背景 */
+      --secondary: #64b5f6;        /* アクセント: パステルブルー */
+      --secondary-light: #9be7ff;  /* ライトアクセント: 薄い水色 */
+      --secondary-dark: #2286c3;   /* ダークアクセント: 濃い青 */
+      --success: #81c784;          /* 成功色: パステルグリーン */
+      --warning: #fff176;          /* 警告色: パステルイエロー */
+      --error: #e57373;            /* エラー色: パステルレッド */
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-800: #424242;
+      --black: #212121;
+      --text-primary: rgba(0, 0, 0, 0.87);
+      --text-secondary: rgba(0, 0, 0, 0.6);
+      --text-disabled: rgba(0, 0, 0, 0.38);
+      
+      /* 陰陽五行属性カラー (パステル調に変更) */
+      --element-wood: #a5d6a7;     /* 木：パステルグリーン */
+      --element-wood-light: #d7ffd9; /* 木：薄いパステルグリーン */
+      --element-wood-dark: #75a478;  /* 木：濃いパステルグリーン */
+      --element-wood-bg: #f1f8e9;    /* 木：背景色 */
+      
+      --element-fire: #ef9a9a;       /* 火：パステルレッド */
+      --element-fire-light: #ffcccb; /* 火：薄いパステルレッド */
+      --element-fire-dark: #ba6b6c;  /* 火：濃いパステルレッド */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ffcc80;      /* 土：パステルオレンジ */
+      --element-earth-light: #ffffb0; /* 土：薄いパステルオレンジ */
+      --element-earth-dark: #ca9b52;  /* 土：濃いパステルオレンジ */
+      --element-earth-bg: #fff8e1;    /* 土：背景色 */
+      
+      --element-metal: #fff59d;       /* 金：パステルイエロー */
+      --element-metal-light: #ffffcf; /* 金：薄いパステルイエロー */
+      --element-metal-dark: #cbc26d;  /* 金：濃いパステルイエロー */
+      --element-metal-bg: #fffde7;    /* 金：背景色 */
+      
+      --element-water: #90caf9;       /* 水：パステルブルー */
+      --element-water-light: #c3fdff; /* 水：薄いパステルブルー */
+      --element-water-dark: #5d99c6;  /* 水：濃いパステルブルー */
+      --element-water-bg: #e3f2fd;    /* 水：背景色 */
+      
+      --border-radius-sm: 16px;
+      --border-radius-md: 24px;
+      --border-radius-lg: 32px;
+      --box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--primary-bg) 0%, var(--gray-100) 100%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      letter-spacing: 0.015em;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--element-water) 0%, var(--element-water-dark) 100%);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .header-back-btn {
+      display: flex;
+      align-items: center;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .profile-header {
+      position: relative;
+      padding-bottom: 80px;
+      background: linear-gradient(135deg, var(--element-water) 0%, var(--element-water-dark) 100%);
+      color: white;
+    }
+    
+    .profile-details {
+      padding: 20px 24px 0;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .client-name {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .element-tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 12px;
+    }
+    
+    .element-tag .material-icons {
+      font-size: 1rem;
+      margin-right: 6px;
+    }
+    
+    .profile-photo-container {
+      position: absolute;
+      bottom: -60px;
+      left: 24px;
+      z-index: 5;
+    }
+    
+    .profile-photo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      object-fit: cover;
+      background-color: white;
+    }
+    
+    .profile-actions {
+      position: absolute;
+      right: 24px;
+      bottom: 20px;
+      display: flex;
+      gap: 16px;
+    }
+    
+    .profile-action-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: white;
+      color: var(--element-water-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .profile-action-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+    }
+    
+    .container {
+      padding: 80px 24px 32px;
+      margin: 0 auto;
+      max-width: 800px;
+    }
+    
+    .info-section {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .section-title .material-icons {
+      margin-right: 10px;
+      color: var(--primary);
+      font-size: 1.3rem;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .info-item {
+      margin-bottom: 16px;
+    }
+    
+    .info-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .info-value {
+      font-weight: 500;
+    }
+    
+    .saju-chart {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .pillar-card {
+      flex: 1;
+      min-width: calc(25% - 12px);
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .pillar-title {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .pillar-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--element-water-dark);
+      margin-bottom: 4px;
+    }
+    
+    .pillar-description {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .element-distribution {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .element-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .element-name {
+      width: 60px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    
+    .element-progress {
+      flex: 1;
+      height: 8px;
+      background-color: var(--gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .element-bar {
+      height: 100%;
+      border-radius: 4px;
+    }
+    
+    .element-bar-water {
+      background-color: var(--element-water);
+    }
+    
+    .element-bar-fire {
+      background-color: var(--element-fire);
+    }
+    
+    .element-bar-wood {
+      background-color: var(--element-wood);
+    }
+    
+    .element-bar-metal {
+      background-color: var(--element-metal);
+    }
+    
+    .element-bar-earth {
+      background-color: var(--element-earth);
+    }
+    
+    .element-percentage {
+      width: 40px;
+      text-align: right;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gray-200) 15%, var(--gray-200) 85%, transparent);
+      margin: 20px 0;
+    }
+    
+    .history-entry {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .history-entry::before {
+      content: '';
+      position: absolute;
+      top: 30px;
+      bottom: -16px;
+      left: 12px;
+      width: 2px;
+      background-color: var(--gray-300);
+      z-index: 0;
+    }
+    
+    .history-entry:last-child::before {
+      display: none;
+    }
+    
+    .history-date-container {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .history-date {
+      width: 24px;
+      height: 24px;
+      background-color: var(--element-water);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    
+    .history-content {
+      flex: 1;
+    }
+    
+    .history-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .history-description {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .treatment-services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    
+    .service-tag {
+      background-color: var(--element-water-bg);
+      color: var(--element-water-dark);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .color-sample {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    
+    .personality-traits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .trait-tag {
+      background-color: var(--element-water-bg);
+      color: var(--element-water-dark);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    .trait-tag .material-icons {
+      font-size: 1rem;
+      margin-right: 6px;
+    }
+    
+    .compatibility-chart-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+    
+    .compatibility-chart {
+      width: 100px;
+      height: 100px;
+      position: relative;
+    }
+    
+    .chart-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .compat-score {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--element-water-dark);
+      line-height: 1;
+    }
+    
+    .compat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .compatibility-details {
+      flex: 1;
+      margin-left: 20px;
+    }
+    
+    .compat-description {
+      margin-bottom: 12px;
+    }
+    
+    .style-recommendations {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .style-card {
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .style-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+    
+    .style-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+    
+    .style-details {
+      padding: 12px;
+    }
+    
+    .style-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .style-description {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .color-recommendations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .color-card {
+      flex: 1;
+      min-width: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .color-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+    
+    .color-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .color-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    
+    .color-description {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    .action-button {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 50px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .action-button .material-icons {
+      font-size: 1.2rem;
+      margin-right: 8px;
+    }
+    
+    .action-button-primary {
+      background-color: var(--element-water);
+      color: white;
+    }
+    
+    .action-button-primary:hover {
+      background-color: var(--element-water-dark);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+    
+    .action-button-secondary {
+      background-color: white;
+      color: var(--element-water-dark);
+      border: 1px solid var(--element-water);
+    }
+    
+    .action-button-secondary:hover {
+      background-color: var(--element-water-bg);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+    
+    .tab-container {
+      display: flex;
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 14px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-weight: 500;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .tab.active {
+      color: var(--element-water-dark);
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 25%;
+      width: 50%;
+      height: 3px;
+      background-color: var(--element-water);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .page-bottom-padding {
+      padding-bottom: 32px;
+    }
+    
+    /* アニメーション */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    /* レスポンシブデザイン */
+    @media (max-width: 600px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .saju-chart {
+        flex-direction: column;
+      }
+      
+      .pillar-card {
+        min-width: 100%;
+      }
+      
+      .compatibility-chart-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .compatibility-details {
+        margin-left: 0;
+        margin-top: 20px;
+        text-align: center;
+      }
+      
+      .style-recommendations {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <div class="header">
+    <a href="#" class="header-back-btn">
+      <span class="material-icons" style="margin-right: 8px;">arrow_back</span>
+      戻る
+    </a>
+    <div>
+      <span class="material-icons" style="font-size: 1.4rem;">more_vert</span>
+    </div>
+  </div>
+  
+  <!-- プロフィールヘッダー -->
+  <div class="profile-header">
+    <div class="profile-details">
+      <h1 class="client-name">佐藤 美咲</h1>
+      <div class="element-tag">
+        <span class="material-icons">water_drop</span>
+        水の命式 (甲子)
+      </div>
+      <p>最終来店: 2025年3月15日</p>
+    </div>
+    
+    <div class="profile-photo-container">
+      <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="profile-photo">
+    </div>
+    
+    <div class="profile-actions">
+      <button class="profile-action-button">
+        <span class="material-icons">call</span>
+      </button>
+      <button class="profile-action-button">
+        <span class="material-icons">mail</span>
+      </button>
+      <button class="profile-action-button">
+        <span class="material-icons">edit</span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="container">
+    <!-- タブ -->
+    <div class="tab-container">
+      <div class="tab active">プロフィール</div>
+      <div class="tab">命式詳細</div>
+      <div class="tab">施術履歴</div>
+      <div class="tab">スタイル提案</div>
+    </div>
+    
+    <!-- 基本情報セクション -->
+    <div class="info-section fade-in">
+      <h2 class="section-title">
+        <span class="material-icons">person</span>
+        基本情報
+      </h2>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">電話番号</div>
+          <div class="info-value">090-1234-5678</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">メールアドレス</div>
+          <div class="info-value">misaki.sato@example.com</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">生年月日</div>
+          <div class="info-value">1988年2月15日</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">職業</div>
+          <div class="info-value">マーケティング</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 四柱推命プロフィール -->
+    <div class="info-section fade-in">
+      <h2 class="section-title">
+        <span class="material-icons">psychology</span>
+        四柱推命プロフィール
+      </h2>
+      
+      <div class="saju-chart">
+        <div class="pillar-card">
+          <div class="pillar-title">年柱</div>
+          <div class="pillar-value">戊辰</div>
+          <div class="pillar-description">土の龍</div>
+        </div>
+        
+        <div class="pillar-card">
+          <div class="pillar-title">月柱</div>
+          <div class="pillar-value">甲寅</div>
+          <div class="pillar-description">陽の木</div>
+        </div>
+        
+        <div class="pillar-card">
+          <div class="pillar-title">日柱</div>
+          <div class="pillar-value">甲子</div>
+          <div class="pillar-description">陽の水</div>
+        </div>
+        
+        <div class="pillar-card">
+          <div class="pillar-title">時柱</div>
+          <div class="pillar-value">丙午</div>
+          <div class="pillar-description">陽の火</div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--element-water-dark);">五行バランス</h3>
+      
+      <div class="element-distribution">
+        <div class="element-progress-container">
+          <div class="element-name">水</div>
+          <div class="element-progress">
+            <div class="element-bar element-bar-water" style="width: 40%;"></div>
+          </div>
+          <div class="element-percentage">40%</div>
+        </div>
+        
+        <div class="element-progress-container">
+          <div class="element-name">木</div>
+          <div class="element-progress">
+            <div class="element-bar element-bar-wood" style="width: 25%;"></div>
+          </div>
+          <div class="element-percentage">25%</div>
+        </div>
+        
+        <div class="element-progress-container">
+          <div class="element-name">火</div>
+          <div class="element-progress">
+            <div class="element-bar element-bar-fire" style="width: 15%;"></div>
+          </div>
+          <div class="element-percentage">15%</div>
+        </div>
+        
+        <div class="element-progress-container">
+          <div class="element-name">土</div>
+          <div class="element-progress">
+            <div class="element-bar element-bar-earth" style="width: 10%;"></div>
+          </div>
+          <div class="element-percentage">10%</div>
+        </div>
+        
+        <div class="element-progress-container">
+          <div class="element-name">金</div>
+          <div class="element-progress">
+            <div class="element-bar element-bar-metal" style="width: 10%;"></div>
+          </div>
+          <div class="element-percentage">10%</div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--element-water-dark);">性格特性</h3>
+      
+      <div class="personality-traits">
+        <div class="trait-tag">
+          <span class="material-icons">water_drop</span>
+          柔軟性
+        </div>
+        <div class="trait-tag">
+          <span class="material-icons">water_drop</span>
+          直感力
+        </div>
+        <div class="trait-tag">
+          <span class="material-icons">water_drop</span>
+          共感性
+        </div>
+        <div class="trait-tag">
+          <span class="material-icons">water_drop</span>
+          協調性
+        </div>
+        <div class="trait-tag">
+          <span class="material-icons">water_drop</span>
+          深い感情
+        </div>
+      </div>
+    </div>
+    
+    <!-- スタイリスト相性 -->
+    <div class="info-section fade-in">
+      <h2 class="section-title">
+        <span class="material-icons">favorite</span>
+        スタイリスト相性
+      </h2>
+      
+      <div class="compatibility-chart-container">
+        <div class="compatibility-chart">
+          <canvas id="compatibilityChart"></canvas>
+          <div class="chart-center-text">
+            <div class="compat-score">92</div>
+            <div class="compat-label">相性</div>
+          </div>
+        </div>
+        
+        <div class="compatibility-details">
+          <p class="compat-description">
+            あなたの「土」の五行と、クライアントの「水」の五行は相生関係です。クライアントの細やかな感性を尊重し、共感的なコミュニケーションが効果的です。
+          </p>
+          
+          <p class="compat-description">
+            直感的な提案を好む傾向がありますが、具体的な説明も添えるとより信頼関係が深まります。
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- スタイル提案 -->
+    <div class="info-section fade-in">
+      <h2 class="section-title">
+        <span class="material-icons">auto_awesome</span>
+        おすすめヘアスタイル
+      </h2>
+      
+      <div class="style-recommendations">
+        <div class="style-card">
+          <img src="https://source.unsplash.com/9G_oJBKwi1c/300x300" alt="Hairstyle" class="style-image">
+          <div class="style-details">
+            <div class="style-name">流れるボブ</div>
+            <div class="style-description">水の流れのような柔らかなラインが特徴</div>
+          </div>
+        </div>
+        
+        <div class="style-card">
+          <img src="https://source.unsplash.com/Young-sang-Cho/300x300" alt="Hairstyle" class="style-image">
+          <div class="style-details">
+            <div class="style-name">ウェーブミディアム</div>
+            <div class="style-description">女性らしい柔らかな印象に</div>
+          </div>
+        </div>
+        
+        <div class="style-card">
+          <img src="https://source.unsplash.com/IYYZH3jI4T0/300x300" alt="Hairstyle" class="style-image">
+          <div class="style-details">
+            <div class="style-name">ナチュラルショート</div>
+            <div class="style-description">水の命式に合う清涼感</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--element-water-dark);">ラッキーカラー</h3>
+      
+      <div class="color-recommendations">
+        <div class="color-card">
+          <div class="color-circle" style="background-color: #5d99c6;"></div>
+          <div class="color-name">ブルー</div>
+          <div class="color-description">相性：⭐⭐⭐⭐⭐</div>
+        </div>
+        
+        <div class="color-card">
+          <div class="color-circle" style="background-color: #a5d6a7;"></div>
+          <div class="color-name">グリーン</div>
+          <div class="color-description">相性：⭐⭐⭐⭐</div>
+        </div>
+        
+        <div class="color-card">
+          <div class="color-circle" style="background-color: #9575cd;"></div>
+          <div class="color-name">パープル</div>
+          <div class="color-description">相性：⭐⭐⭐</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 施術履歴 -->
+    <div class="info-section fade-in">
+      <h2 class="section-title">
+        <span class="material-icons">history</span>
+        施術履歴
+      </h2>
+      
+      <div class="history-entry">
+        <div class="history-date-container">
+          <div class="history-date">3</div>
+        </div>
+        <div class="history-content">
+          <div class="history-title">2025年3月15日</div>
+          <div class="history-description">ボブカットとインナーカラー</div>
+          <div class="treatment-services">
+            <div class="service-tag">
+              <span class="color-sample" style="background-color: #5d99c6;"></span>
+              ブルーアッシュ
+            </div>
+            <div class="service-tag">カット</div>
+            <div class="service-tag">トリートメント</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="history-entry">
+        <div class="history-date-container">
+          <div class="history-date">2</div>
+        </div>
+        <div class="history-content">
+          <div class="history-title">2025年1月20日</div>
+          <div class="history-description">カラーリングとトリートメント</div>
+          <div class="treatment-services">
+            <div class="service-tag">
+              <span class="color-sample" style="background-color: #9575cd;"></span>
+              ラベンダーアッシュ
+            </div>
+            <div class="service-tag">トリートメント</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="history-entry">
+        <div class="history-date-container">
+          <div class="history-date">1</div>
+        </div>
+        <div class="history-content">
+          <div class="history-title">2024年12月5日</div>
+          <div class="history-description">初回カット</div>
+          <div class="treatment-services">
+            <div class="service-tag">カット</div>
+            <div class="service-tag">ブロー</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- アクションボタン -->
+    <div class="action-buttons">
+      <button class="action-button action-button-primary">
+        <span class="material-icons">event</span>
+        予約追加
+      </button>
+      <button class="action-button action-button-secondary">
+        <span class="material-icons">mail</span>
+        メッセージ送信
+      </button>
+    </div>
+    
+    <div class="page-bottom-padding"></div>
+  </div>
+  
+  <script>
+    // 相性チャート
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('compatibilityChart').getContext('2d');
+      
+      const compatibilityChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [92, 8],
+            backgroundColor: [
+              '#5d99c6',
+              '#f5f5f5',
+            ],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          cutout: '75%',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 1500,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

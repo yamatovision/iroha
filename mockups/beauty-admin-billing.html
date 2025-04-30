@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>請求・支払い管理 | 美姫命</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      --primary-color: #e91e63;
+      --primary-light: #f48fb1;
+      --primary-dark: #c2185b;
+      --secondary-color: #9c27b0;
+      --text-color: #333333;
+      --background-light: #f5f5f5;
+      --card-color: #ffffff;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+    
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    .sidebar {
+      width: 240px;
+      background-color: var(--card-color);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      z-index: 10;
+      position: fixed;
+      height: 100%;
+      overflow-y: auto;
+    }
+    
+    .logo-container {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--primary-color);
+    }
+    
+    .main-content {
+      flex: 1;
+      margin-left: 240px;
+      padding: 20px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px;
+      color: var(--text-color);
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+    
+    .nav-item:hover {
+      background-color: rgba(233, 30, 99, 0.05);
+    }
+    
+    .nav-item.active {
+      background-color: rgba(233, 30, 99, 0.1);
+      color: var(--primary-color);
+      border-left: 3px solid var(--primary-color);
+    }
+    
+    .nav-item i {
+      margin-right: 15px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .card-container {
+      margin-bottom: 30px;
+    }
+    
+    .card-title {
+      color: var(--primary-color);
+    }
+    
+    .plan-info {
+      background-color: var(--primary-light);
+      color: white;
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    
+    .plan-name {
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .plan-details {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    
+    .plan-detail-item {
+      margin-bottom: 5px;
+      flex: 1 0 50%;
+    }
+    
+    .payment-method {
+      display: flex;
+      align-items: center;
+      background-color: white;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    
+    .payment-method-info {
+      margin-left: 15px;
+      flex: 1;
+    }
+    
+    .payment-method-actions {
+      display: flex;
+    }
+    
+    .card-logo {
+      font-size: 36px;
+      color: #666;
+    }
+    
+    .invoice-list {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    .invoice-list th {
+      border-bottom: 2px solid #ddd;
+      text-align: left;
+      padding: 12px 15px;
+      font-weight: 500;
+    }
+    
+    .invoice-list td {
+      border-bottom: 1px solid #ddd;
+      padding: 12px 15px;
+    }
+    
+    .invoice-list tr:hover {
+      background-color: rgba(0,0,0,0.02);
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-paid {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .status-pending {
+      background-color: #fff8e1;
+      color: #f57f17;
+    }
+    
+    .status-overdue {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    
+    .action-btn {
+      color: var(--primary-color);
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    
+    .summary-card {
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    
+    .summary-value {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    
+    .summary-label {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .payment-status-filter {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    
+    .filter-item {
+      margin-right: 15px;
+      padding: 8px 15px;
+      border-radius: 20px;
+      background-color: white;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .filter-item.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .modal {
+      max-width: 600px;
+    }
+    
+    .modal-content {
+      padding: 24px;
+    }
+    
+    .modal-footer {
+      padding: 16px 24px;
+    }
+    
+    .row {
+      margin-bottom: 0;
+    }
+    
+    .btn-flat {
+      color: var(--primary-color);
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+    }
+    
+    .btn:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .invoice-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .invoice-detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .invoice-detail-label {
+      color: #666;
+    }
+    
+    .invoice-detail-value {
+      font-weight: 500;
+    }
+    
+    .invoice-items {
+      margin-top: 20px;
+    }
+    
+    .invoice-total {
+      font-size: 18px;
+      font-weight: 500;
+      text-align: right;
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 2px solid #eee;
+    }
+    
+    .dropdown-content {
+      min-width: 150px;
+    }
+    
+    .tab {
+      text-transform: none;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 60px;
+        overflow: hidden;
+      }
+      
+      .sidebar .nav-item span {
+        display: none;
+      }
+      
+      .logo {
+        font-size: 18px;
+      }
+      
+      .main-content {
+        margin-left: 60px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .sidebar {
+        width: 0;
+        display: none;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .mobile-nav {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- サイドバー -->
+    <div class="sidebar">
+      <div class="logo-container">
+        <div class="logo">美姫命</div>
+      </div>
+      <div class="nav-wrapper">
+        <div class="nav-item">
+          <i class="material-icons">dashboard</i>
+          <span>ダッシュボード</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">people</i>
+          <span>クライアント管理</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">event</i>
+          <span>予約・担当管理</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">person</i>
+          <span>スタイリスト管理</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">cloud_upload</i>
+          <span>データインポート</span>
+        </div>
+        <div class="nav-item active">
+          <i class="material-icons">payment</i>
+          <span>請求・支払い管理</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">help</i>
+          <span>サポート</span>
+        </div>
+        <div class="nav-item">
+          <i class="material-icons">settings</i>
+          <span>設定</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <div class="header">
+        <h1 class="page-title">請求・支払い管理</h1>
+        <div>
+          <a class="btn" href="#payment-method-modal"><i class="material-icons left">add</i>支払い方法の追加</a>
+        </div>
+      </div>
+      
+      <!-- 概要カード -->
+      <div class="row">
+        <div class="col s12 m3">
+          <div class="summary-card">
+            <div class="summary-title">現在のプラン</div>
+            <div class="summary-value">プロフェッショナル</div>
+            <div class="summary-label">次回更新日: 2025年5月31日</div>
+          </div>
+        </div>
+        <div class="col s12 m3">
+          <div class="summary-card">
+            <div class="summary-title">月額料金</div>
+            <div class="summary-value">¥18,000</div>
+            <div class="summary-label">税込 (¥19,800)</div>
+          </div>
+        </div>
+        <div class="col s12 m3">
+          <div class="summary-card">
+            <div class="summary-title">次回請求日</div>
+            <div class="summary-value">2025年5月1日</div>
+            <div class="summary-label">自動更新</div>
+          </div>
+        </div>
+        <div class="col s12 m3">
+          <div class="summary-card">
+            <div class="summary-title">APIトークン使用状況</div>
+            <div class="summary-value">3,250 / 5,000</div>
+            <div class="progress" style="background-color: rgba(233, 30, 99, 0.2); height: 8px;">
+              <div class="determinate" style="width: 65%; background-color: var(--primary-color);"></div>
+            </div>
+            <div class="summary-label">今月の使用率: 65%</div>
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+              追加チャージ: <span style="font-weight: 500;">2,000,000</span> トークン
+            </div>
+            <div style="font-size: 12px; color: #666;">
+              残り約 <span style="font-weight: 500;">2,000</span> 会話分
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- プラン情報 -->
+      <div class="card-container">
+        <div class="card">
+          <div class="card-content">
+            <span class="card-title">プラン詳細</span>
+            <div class="plan-info">
+              <div class="plan-name">プロフェッショナルプラン</div>
+              <div class="plan-details">
+                <div class="plan-detail-item">
+                  <strong>スタイリスト数：</strong> 最大10名
+                </div>
+                <div class="plan-detail-item">
+                  <strong>クライアント数：</strong> 無制限
+                </div>
+                <div class="plan-detail-item">
+                  <strong>APIリクエスト：</strong> 月間5,000回
+                </div>
+                <div class="plan-detail-item" style="margin-top: 10px; width: 100%;">
+                  <strong>現在のAPIトークン使用状況：</strong> 
+                  <span>3,250 / 5,000 (65%)</span>
+                  <div class="progress" style="background-color: rgba(255, 255, 255, 0.3); height: 6px; margin-top: 5px;">
+                    <div class="determinate" style="width: 65%; background-color: white;"></div>
+                  </div>
+                  <div style="margin-top: 15px; text-align: center;">
+                    <a class="waves-effect waves-light btn" href="#token-purchase-modal"><i class="material-icons left">add_circle</i>APIトークンをチャージ購入</a>
+                  </div>
+                  <div style="margin-top: 5px; font-size: 12px; color: rgba(255, 255, 255, 0.7); text-align: center;">
+                    ※プラン上限に到達しそうな場合は、追加でトークンをチャージできます
+                  </div>
+                </div>
+                <div class="plan-detail-item">
+                  <strong>カレンダー連携：</strong> 利用可能
+                </div>
+                <div class="plan-detail-item">
+                  <strong>データエクスポート：</strong> 毎日
+                </div>
+              </div>
+            </div>
+            <p>プラン変更をご希望の場合は、以下のボタンからプラン変更ページへ移動してください。</p>
+            <div class="center-align" style="margin-top: 20px;">
+              <a class="btn" href="#plan-upgrade-modal">プランを変更する</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 支払い方法 -->
+      <div class="card-container">
+        <div class="card">
+          <div class="card-content">
+            <span class="card-title">支払い方法</span>
+            <div class="payment-method">
+              <i class="material-icons card-logo">credit_card</i>
+              <div class="payment-method-info">
+                <div style="font-weight: 500;">Visa •••• 4242</div>
+                <div style="color: #666; font-size: 14px;">有効期限: 11/26</div>
+              </div>
+              <div class="payment-method-actions">
+                <i class="material-icons action-btn">edit</i>
+                <i class="material-icons action-btn">delete</i>
+              </div>
+            </div>
+            <div class="payment-method">
+              <i class="material-icons card-logo">credit_card</i>
+              <div class="payment-method-info">
+                <div style="font-weight: 500;">MasterCard •••• 5678</div>
+                <div style="color: #666; font-size: 14px;">有効期限: 08/27</div>
+              </div>
+              <div class="payment-method-actions">
+                <i class="material-icons action-btn">edit</i>
+                <i class="material-icons action-btn">delete</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 請求書一覧 -->
+      <div class="card-container">
+        <div class="card">
+          <div class="card-content">
+            <span class="card-title">請求書履歴</span>
+            
+            <div class="payment-status-filter">
+              <div class="filter-item active" data-filter="all">すべて</div>
+              <div class="filter-item" data-filter="paid">支払い済み</div>
+              <div class="filter-item" data-filter="pending">未払い</div>
+              <div class="filter-item" data-filter="overdue">延滞中</div>
+            </div>
+            
+            <table class="invoice-list">
+              <thead>
+                <tr>
+                  <th>請求書番号</th>
+                  <th>発行日</th>
+                  <th>請求金額</th>
+                  <th>支払期限</th>
+                  <th>ステータス</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2025-0010</a></td>
+                  <td>2025年4月1日</td>
+                  <td>¥19,800</td>
+                  <td>2025年4月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2025-0009</a></td>
+                  <td>2025年3月1日</td>
+                  <td>¥19,800</td>
+                  <td>2025年3月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2025-0008</a></td>
+                  <td>2025年2月1日</td>
+                  <td>¥19,800</td>
+                  <td>2025年2月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2025-0007</a></td>
+                  <td>2025年1月1日</td>
+                  <td>¥19,800</td>
+                  <td>2025年1月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2024-0006</a></td>
+                  <td>2024年12月1日</td>
+                  <td>¥19,800</td>
+                  <td>2024年12月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+                <tr>
+                  <td><a href="#invoice-detail-modal" class="modal-trigger">INV-2024-0005</a></td>
+                  <td>2024年11月1日</td>
+                  <td>¥16,500</td>
+                  <td>2024年11月15日</td>
+                  <td><span class="status-badge status-paid">支払い済み</span></td>
+                  <td>
+                    <i class="material-icons action-btn">download</i>
+                    <i class="material-icons action-btn">print</i>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 請求書詳細モーダル -->
+  <div id="invoice-detail-modal" class="modal">
+    <div class="modal-content">
+      <h4>請求書詳細</h4>
+      <div class="row">
+        <div class="col s12">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div>
+              <div><strong>請求書番号：</strong> INV-2025-0010</div>
+              <div><strong>発行日：</strong> 2025年4月1日</div>
+              <div><strong>支払期限：</strong> 2025年4月15日</div>
+            </div>
+            <div>
+              <div><strong>ステータス：</strong> <span class="status-badge status-paid">支払い済み</span></div>
+              <div><strong>支払日：</strong> 2025年4月3日</div>
+              <div><strong>支払い方法：</strong> Visa **** 4242</div>
+            </div>
+          </div>
+          
+          <div class="invoice-items">
+            <table>
+              <thead>
+                <tr>
+                  <th>項目</th>
+                  <th>単価</th>
+                  <th>数量</th>
+                  <th>金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>プロフェッショナルプラン（月額）</td>
+                  <td>¥18,000</td>
+                  <td>1</td>
+                  <td>¥18,000</td>
+                </tr>
+                <tr>
+                  <td>追加APIリクエスト</td>
+                  <td>¥0</td>
+                  <td>0</td>
+                  <td>¥0</td>
+                </tr>
+                <tr>
+                  <td>APIトークン使用状況</td>
+                  <td colspan="3">
+                    <div style="margin-bottom: 5px;">基本枠：3,250 / 5,000 (65%)</div>
+                    <div class="progress" style="background-color: rgba(233, 30, 99, 0.1); height: 6px; margin-bottom: 10px;">
+                      <div class="determinate" style="width: 65%; background-color: var(--primary-color);"></div>
+                    </div>
+                    <div style="font-size: 12px; color: #666;">※プランの範囲内で利用中のため追加料金はありません</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="invoice-detail-row">
+            <div class="invoice-detail-label">小計</div>
+            <div class="invoice-detail-value">¥18,000</div>
+          </div>
+          <div class="invoice-detail-row">
+            <div class="invoice-detail-label">消費税（10%）</div>
+            <div class="invoice-detail-value">¥1,800</div>
+          </div>
+          <div class="invoice-total">
+            <div>合計：¥19,800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">閉じる</a>
+      <a href="#!" class="btn"><i class="material-icons left">download</i>PDFダウンロード</a>
+    </div>
+  </div>
+  
+  <!-- 支払い方法追加モーダル -->
+  <div id="payment-method-modal" class="modal">
+    <div class="modal-content">
+      <h4>支払い方法の追加</h4>
+      <div class="row">
+        <form class="col s12">
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="card_name" type="text" class="validate">
+              <label for="card_name">カード名義</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="card_number" type="text" class="validate">
+              <label for="card_number">カード番号</label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s6">
+              <input id="card_expiry" type="text" class="validate" placeholder="MM/YY">
+              <label for="card_expiry">有効期限</label>
+            </div>
+            <div class="input-field col s6">
+              <input id="card_cvc" type="text" class="validate">
+              <label for="card_cvc">セキュリティコード</label>
+            </div>
+          </div>
+          <div class="row">
+            <p>
+              <label>
+                <input type="checkbox" class="filled-in" />
+                <span>この支払い方法をデフォルトに設定する</span>
+              </label>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">キャンセル</a>
+      <a href="#!" class="btn">保存</a>
+    </div>
+  </div>
+  
+  <!-- APIトークンチャージ購入モーダル -->
+  <div id="token-purchase-modal" class="modal">
+    <div class="modal-content">
+      <h4>APIトークンチャージ購入</h4>
+      <p>現在のAPIトークン残量: <strong>1,750</strong> (月間制限: 5,000)</p>
+      <p>追加チャージでトークンを購入すると、月間制限に関わらず利用できます。今月中のみ有効です。</p>
+      
+      <div class="row" style="margin-top: 30px;">
+        <div class="col s12 m6">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">スタンダードチャージ</span>
+              <div style="font-size: 28px; font-weight: 500; margin: 15px 0;">
+                <span style="color: var(--primary-color);">¥980</span>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <span style="font-size: 18px; font-weight: 500;">1,000,000トークン</span>
+              </div>
+              <ul style="list-style-type: disc; margin-left: 20px;">
+                <li>約1,000回分の通常チャット</li>
+                <li>即時チャージ反映</li>
+                <li>今月末まで有効</li>
+              </ul>
+              <div style="margin-top: 20px; text-align: center;">
+                <a href="#!" class="btn waves-effect waves-light">購入する</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col s12 m6">
+          <div class="card" style="border: 2px solid var(--primary-color);">
+            <div class="card-content">
+              <span class="card-title">プレミアムチャージ <span class="new badge" style="background-color: var(--primary-color);">お得</span></span>
+              <div style="font-size: 28px; font-weight: 500; margin: 15px 0;">
+                <span style="color: var(--primary-color);">¥8,000</span>
+              </div>
+              <div style="margin-bottom: 20px;">
+                <span style="font-size: 18px; font-weight: 500;">10,000,000トークン</span>
+              </div>
+              <ul style="list-style-type: disc; margin-left: 20px;">
+                <li>約10,000回分の通常チャット</li>
+                <li>即時チャージ反映</li>
+                <li>今月末まで有効</li>
+                <li><strong>18%お得</strong>（1トークンあたり）</li>
+              </ul>
+              <div style="margin-top: 20px; text-align: center;">
+                <a href="#!" class="btn waves-effect waves-light">購入する</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 20px; font-size: 13px; color: #666;">
+        <p>※チャージ購入したトークンは、プラン上限に追加されます（今月のみ有効、翌月への繰り越しはできません）</p>
+        <p>※購入後すぐに利用可能です。料金は請求書に自動的に追加されます。</p>
+        <p>※1回の会話あたり約800-1,200トークンを消費します（質問や回答の長さによって変動します）</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">キャンセル</a>
+    </div>
+  </div>
+  
+  <!-- プラン変更モーダル -->
+  <div id="plan-upgrade-modal" class="modal">
+    <div class="modal-content">
+      <h4>プラン変更</h4>
+      
+      <ul class="tabs">
+        <li class="tab col s4"><a class="active" href="#monthly">月額プラン</a></li>
+        <li class="tab col s4"><a href="#yearly">年間プラン（16%お得）</a></li>
+      </ul>
+      
+      <div id="monthly" class="col s12" style="padding: 20px 0;">
+        <div class="row">
+          <div class="col s12 m4">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">スタンダード</span>
+                <div style="font-size: 24px; margin: 15px 0;">¥9,800<small>/月</small></div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：最大3名</li>
+                  <li>クライアント数：300名まで</li>
+                  <li>APIリクエスト：月間2,000回</li>
+                  <li>カレンダー連携：基本機能のみ</li>
+                  <li>データエクスポート：週1回</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn-flat">選択する</a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col s12 m4">
+            <div class="card" style="border: 2px solid var(--primary-color);">
+              <div class="card-content">
+                <span class="card-title">プロフェッショナル<small style="background-color: var(--primary-color); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">現在</small></span>
+                <div style="font-size: 24px; margin: 15px 0;">¥18,000<small>/月</small></div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：最大10名</li>
+                  <li>クライアント数：無制限</li>
+                  <li>APIリクエスト：月間5,000回</li>
+                  <li>カレンダー連携：利用可能</li>
+                  <li>データエクスポート：毎日</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn" disabled>現在のプラン</a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col s12 m4">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">エンタープライズ</span>
+                <div style="font-size: 24px; margin: 15px 0;">¥36,000<small>/月</small></div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：無制限</li>
+                  <li>クライアント数：無制限</li>
+                  <li>APIリクエスト：無制限</li>
+                  <li>カレンダー連携：高度な機能</li>
+                  <li>データエクスポート：リアルタイム</li>
+                  <li>優先サポート</li>
+                  <li>カスタマイズ機能</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn-flat">選択する</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="yearly" class="col s12" style="padding: 20px 0; display: none;">
+        <div class="row">
+          <div class="col s12 m4">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">スタンダード</span>
+                <div style="font-size: 24px; margin: 15px 0;">¥98,784<small>/年</small></div>
+                <div style="color: #4caf50; margin-bottom: 15px;">16% OFF - 月額換算 ¥8,232</div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：最大3名</li>
+                  <li>クライアント数：300名まで</li>
+                  <li>APIリクエスト：月間2,000回</li>
+                  <li>カレンダー連携：基本機能のみ</li>
+                  <li>データエクスポート：週1回</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn-flat">選択する</a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col s12 m4">
+            <div class="card" style="border: 2px solid var(--primary-color);">
+              <div class="card-content">
+                <span class="card-title">プロフェッショナル<small style="background-color: var(--primary-color); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">現在</small></span>
+                <div style="font-size: 24px; margin: 15px 0;">¥181,440<small>/年</small></div>
+                <div style="color: #4caf50; margin-bottom: 15px;">16% OFF - 月額換算 ¥15,120</div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：最大10名</li>
+                  <li>クライアント数：無制限</li>
+                  <li>APIリクエスト：月間5,000回</li>
+                  <li>カレンダー連携：利用可能</li>
+                  <li>データエクスポート：毎日</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn" disabled>現在のプラン</a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col s12 m4">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">エンタープライズ</span>
+                <div style="font-size: 24px; margin: 15px 0;">¥362,880<small>/年</small></div>
+                <div style="color: #4caf50; margin-bottom: 15px;">16% OFF - 月額換算 ¥30,240</div>
+                <ul style="list-style-type: disc; margin-left: 20px;">
+                  <li>スタイリスト数：無制限</li>
+                  <li>クライアント数：無制限</li>
+                  <li>APIリクエスト：無制限</li>
+                  <li>カレンダー連携：高度な機能</li>
+                  <li>データエクスポート：リアルタイム</li>
+                  <li>優先サポート</li>
+                  <li>カスタマイズ機能</li>
+                </ul>
+              </div>
+              <div class="card-action center-align">
+                <a href="#!" class="btn-flat">選択する</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <p class="center-align">
+          プランの変更は次回請求日から反映されます。プラン変更によるアップグレード・ダウングレードには制限が適用される場合があります。
+        </p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat">キャンセル</a>
+    </div>
+  </div>
+  
+  <!-- JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // モーダル初期化
+      var elems = document.querySelectorAll('.modal');
+      var instances = M.Modal.init(elems, {
+        dismissible: true,
+        opacity: 0.8,
+        inDuration: 300,
+        outDuration: 200
+      });
+      
+      // タブ初期化
+      var tabs = document.querySelectorAll('.tabs');
+      var tabsInstances = M.Tabs.init(tabs);
+      
+      // フィルター機能
+      const filterItems = document.querySelectorAll('.filter-item');
+      filterItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // アクティブクラスの削除
+          filterItems.forEach(fi => fi.classList.remove('active'));
+          // クリックされた項目をアクティブに
+          this.classList.add('active');
+          
+          // ここにフィルター処理を実装
+          const filterType = this.dataset.filter;
+          console.log('Filter by:', filterType);
+          // 実際の実装では行をフィルターする処理を追加
+        });
+      });
+      
+      // トークン購入ボタンのイベントリスナー
+      const purchaseButtons = document.querySelectorAll('#token-purchase-modal .btn');
+      purchaseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // 購入処理のシミュレーション
+          M.toast({html: 'トークンを購入しました！請求書に追加されます', displayLength: 3000, classes: 'rounded'});
+          // モーダルを閉じる
+          M.Modal.getInstance(document.getElementById('token-purchase-modal')).close();
+        });
+      });
+    });
+    
+    // 支払い方法の追加ボタンクリック時
+    function addPaymentMethod() {
+      // 実際の実装ではここで支払い情報を処理
+      alert('支払い方法が追加されました！');
+    }
+  </script>
+</body>
+</html>

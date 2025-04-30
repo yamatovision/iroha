@@ -20,13 +20,6 @@ type AuthContextType = {
   isSuperAdmin: boolean
   activeTeamId: string | null
   setActiveTeamId: (teamId: string) => void
-  // JWT移行関連のプロパティ
-  shouldPromptMigration: boolean
-  setShouldPromptMigration: (value: boolean) => void
-  migrateToJwt: (password: string) => Promise<any>
-  // 認証モード
-  authMode: 'firebase' | 'jwt'
-  setAuthMode: (mode: 'firebase' | 'jwt') => Promise<void>
   // 認証状態関連
   verifyAuthStatus: () => Promise<boolean>
   tokenError: string | null
@@ -44,8 +37,7 @@ type AuthProviderProps = {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [userProfile, setUserProfile] = useState<IUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [shouldPromptMigration, setShouldPromptMigration] = useState(false)
-  const [authMode, setAuthMode] = useState<'firebase' | 'jwt'>('jwt')
+  // 認証関連の状態
   const [tokenError, setTokenError] = useState<string | null>(null)
   
   // アクティブチームIDの初期化は空文字列から始めて非同期で更新
@@ -59,12 +51,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const savedTeamId = await storageService.get('activeTeamId');
         if (savedTeamId) {
           setActiveTeamId(savedTeamId);
-        }
-        
-        // 認証モードを読み込み
-        const savedAuthMode = await storageService.get('df_auth_mode') as 'firebase' | 'jwt' | null;
-        if (savedAuthMode && (savedAuthMode === 'firebase' || savedAuthMode === 'jwt')) {
-          setAuthMode(savedAuthMode);
         }
       } catch (error) {
         console.error('初期設定読み込みエラー:', error);
@@ -437,29 +423,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // JWT認証に移行
-  const migrateToJwt = async (password: string) => {
-    try {
-      // JWT移行処理はサーバー側で実装されていると仮定
-      console.log('JWT認証に移行中、パスワード長:', password.length);
-      return null;
-    } catch (error) {
-      console.error('JWT認証移行エラー:', error);
-      throw error;
-    }
-  };
-  
-  // 認証モード変更のラッパー（非同期対応）
-  const handleSetAuthMode = async (mode: 'firebase' | 'jwt') => {
-    setAuthMode(mode);
-    try {
-      // ストレージに認証モードを保存
-      await storageService.set('df_auth_mode', mode);
-      console.log(`認証モードを変更: ${mode}`);
-    } catch (error) {
-      console.error('認証モード保存エラー:', error);
-    }
-  };
+  // 認証関連の補助関数（必要に応じて追加）
 
   const value = {
     userProfile,
@@ -475,11 +439,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isSuperAdmin,
     activeTeamId,
     setActiveTeamId: handleSetActiveTeamId,
-    shouldPromptMigration,
-    setShouldPromptMigration,
-    migrateToJwt,
-    authMode,
-    setAuthMode: handleSetAuthMode,
     verifyAuthStatus,
     tokenError
   };

@@ -1,0 +1,480 @@
+{
+  "startTime": "2025-04-11T02:28:43.519Z",
+  "userCount": 2,
+  "usersWithFirebaseId": 0,
+  "teamMemberCardCount": 2,
+  "chatHistoryCount": 113,
+  "migratedTeamMemberCards": 0,
+  "migratedChatHistories": 0,
+  "failedMigrations": {
+    "teamMemberCards": [
+      {
+        "id": "67f71c03b9c28b1d99ffd1d9",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f732a7b9c28b1d99ffd1da",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      }
+    ],
+    "chatHistories": [
+      {
+        "id": "67f7122eb24269b1a55c6a9a",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7122eb24269b1a55c6a9c",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f733cffe27c1b84b1b6325",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f733cffe27c1b84b1b6327",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f733f1b78dba3858e1f262",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7364ab78dba3858e1f280",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7364ab78dba3858e1f282",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7367bb78dba3858e1f286",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7367bb78dba3858e1f288",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73683b78dba3858e1f28b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f736bab78dba3858e1f297",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f736bab78dba3858e1f299",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f736d3b78dba3858e1f29f",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f736d3b78dba3858e1f2a1",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73729b78dba3858e1f2a5",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73729b78dba3858e1f2a7",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73735b78dba3858e1f2af",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73735b78dba3858e1f2b1",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7373ab78dba3858e1f2b4",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7373fb78dba3858e1f2b7",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f737c0b78dba3858e1f2c3",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f737c0b78dba3858e1f2c5",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f737e6b78dba3858e1f2d6",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7388eb78dba3858e1f2de",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7388eb78dba3858e1f2e0",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7388eb78dba3858e1f2e4",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7388eb78dba3858e1f2e6",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f738ebb78dba3858e1f34d",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f738ebb78dba3858e1f34f",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73bf5b78dba3858e1f355",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73bf5b78dba3858e1f357",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73c0eb78dba3858e1f35d",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73c0eb78dba3858e1f35f",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ded56a6a08285ef57f9",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ded56a6a08285ef57fb",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ded56a6a08285ef5801",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ded56a6a08285ef5803",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e7b56a6a08285ef5809",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e7b56a6a08285ef580b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e7c56a6a08285ef5811",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e7c56a6a08285ef5813",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e8656a6a08285ef5819",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e8656a6a08285ef581b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e8656a6a08285ef5821",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73e8656a6a08285ef5823",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73eb956a6a08285ef5829",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73eb956a6a08285ef582b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73eb956a6a08285ef5831",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73eb956a6a08285ef5833",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ec056a6a08285ef5839",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ec056a6a08285ef583b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ec156a6a08285ef5841",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ec156a6a08285ef5843",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73efe56a6a08285ef5849",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73eff56a6a08285ef584b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73f0956a6a08285ef5852",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f73ffe141fc701a4c27eaf",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f742335fd781433572325e",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f742335fd7814335723260",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f751845fd7814335723292",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f751845fd7814335723294",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f753b05fd781433572329e",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f753b05fd78143357232a0",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f753ff5fd78143357232a8",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f753ff5fd78143357232aa",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f758d55fd78143357232d4",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f758d55fd78143357232d6",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7592758bc5ba096f21f3a",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7608494ce83c840971e68",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7608494ce83c840971e6a",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7612294ce83c840971e6d",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7613094ce83c840971e73",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7613094ce83c840971e75",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f761ba38db08d8d0430cc5",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f761c038db08d8d0430cc8",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f761c838db08d8d0430cce",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f761c838db08d8d0430cd0",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7620c8203155a8ae67728",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7620c8203155a8ae6772a",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762827d3d11cb63b16805",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762881020a7d24a2f9288",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7628b7d3d11cb63b16808",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762917d3d11cb63b1680b",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762991020a7d24a2f9292",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762c07d3d11cb63b16811",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762c07d3d11cb63b16813",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f762e61020a7d24a2f9297",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f767b4f864e9a7274ed194",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f767b4f864e9a7274ed196",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7693cfdeb26c3fdced737",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7693cfdeb26c3fdced739",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7693ffdeb26c3fdced73f",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7693ffdeb26c3fdced741",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76973fdeb26c3fdced744",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76996fdeb26c3fdced747",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f769d0ed03b35e3168b530",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f769d0ed03b35e3168b532",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76a1bed03b35e3168b56e",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76a1bed03b35e3168b570",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b1e1f6c87c5b0cc6fb7",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b1e1f6c87c5b0cc6fb9",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b511f6c87c5b0cc6fbf",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b511f6c87c5b0cc6fc1",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b731f6c87c5b0cc6fe5",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f76b731f6c87c5b0cc6fe7",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f770741f6c87c5b0cc70ac",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f770741f6c87c5b0cc70ae",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f77cfe1f6c87c5b0cc70fd",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f77cfe1f6c87c5b0cc70ff",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f78be33a8e79715c12e660",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f78be33a8e79715c12e662",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7b2f13a8e79715c12e697",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      },
+      {
+        "id": "67f7b2f13a8e79715c12e699",
+        "error": "input must be a 24 character hex string, 12 byte Uint8Array, or an integer"
+      }
+    ]
+  },
+  "idMappings": {
+    "Bs2MacLtK1Z1fVnau2dYPpsWRpa2": "Bs2MacLtK1Z1fVnau2dYPpsWRpa2",
+    "E83YThG9lwZIef1eirBJJ9Wujht2": "E83YThG9lwZIef1eirBJJ9Wujht2"
+  },
+  "endTime": "2025-04-11T02:28:44.046Z"
+}

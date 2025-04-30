@@ -1,0 +1,21 @@
+{
+  "startTime": "2025-04-13T11:32:44.636Z",
+  "userCount": 5,
+  "usersWithFirebaseId": 0,
+  "teamMemberCardCount": 3,
+  "chatHistoryCount": 52,
+  "migratedTeamMemberCards": 0,
+  "migratedChatHistories": 0,
+  "failedMigrations": {
+    "teamMemberCards": [],
+    "chatHistories": []
+  },
+  "idMappings": {
+    "67f87e86a7d83fb995de0ee6": "67f87e86a7d83fb995de0ee6",
+    "67f87e86a7d83fb995de0ee7": "67f87e86a7d83fb995de0ee7",
+    "67f8809bbf09e224e993684f": "67f8809bbf09e224e993684f",
+    "67f880f15c1f897b22c681e2": "67f880f15c1f897b22c681e2",
+    "67f880f15c1f897b22c681e5": "67f880f15c1f897b22c681e5"
+  },
+  "endTime": "2025-04-13T11:32:45.407Z"
+}

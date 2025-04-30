@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - クライアントチャット</title>
+  
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.15.4/dist/material-ui.min.css" />
+  
+  <style>
+    :root {
+      /* メインカラー */
+      --primary: #e091e4;          /* メインカラー: パステルパープル */
+      --primary-light: #f8c0fb;    /* ライトカラー: 薄いピンク */
+      --primary-dark: #c26ac7;     /* ダークカラー: 濃いパープル */
+      --background: #f8f8f8;
+      --text-primary: rgba(0, 0, 0, 0.87);
+      --text-secondary: rgba(0, 0, 0, 0.54);
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-800: #424242;
+      --black: #212121;
+      
+      /* その他 */
+      --border-radius: 8px;
+      --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 60px;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .header-back {
+      color: white;
+      margin-right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    
+    .client-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+      border: 2px solid white;
+    }
+    
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    
+    .header-right {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .header-icon {
+      color: white;
+      cursor: pointer;
+    }
+    
+    /* チャットコンテナ */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding-top: 60px;
+      padding-bottom: 70px;
+    }
+    
+    /* メッセージリスト */
+    .message-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    /* ユーザーメッセージ */
+    .user-message {
+      align-self: flex-end;
+      max-width: 75%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .user-bubble {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border-top-right-radius: 4px;
+      box-shadow: var(--box-shadow);
+    }
+    
+    .message-time {
+      font-size: 0.7rem;
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.7);
+      align-self: flex-end;
+    }
+    
+    /* AIメッセージ (枠なし) */
+    .ai-response {
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+    
+    .ai-response p {
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    
+    .ai-response p:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* スタイル提案 */
+    .style-suggestion {
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius);
+      border-left: 3px solid var(--primary-light);
+      padding: 12px;
+      margin: 12px 0 16px 0;
+    }
+    
+    .suggestion-title {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+    }
+    
+    .suggestion-icon {
+      font-size: 1rem;
+      margin-right: 6px;
+      color: var(--primary);
+    }
+    
+    .suggestion-content {
+      font-size: 0.85rem;
+    }
+    
+    .suggestion-content p {
+      margin-bottom: 8px;
+    }
+    
+    .suggestion-content p:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* リストスタイル */
+    .check-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 16px 0;
+    }
+    
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding-left: 24px;
+      position: relative;
+    }
+    
+    .check-list li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: bold;
+    }
+    
+    /* 入力エリア */
+    .input-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      padding: 12px;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    
+    .input-field {
+      flex: 1;
+      border: 1px solid var(--gray-300);
+      border-radius: 24px;
+      padding: 12px;
+      padding-right: 56px;
+      font-size: 0.95rem;
+      resize: none;
+      outline: none;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    
+    .input-actions {
+      position: absolute;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .mic-btn, .send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+    
+    .mic-btn {
+      background-color: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .send-btn {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .mic-btn.active {
+      background-color: #f44336;
+      color: white;
+    }
+    
+    /* アニメーション */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 600px) {
+      .user-message {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-back">
+        <span class="material-icons">arrow_back</span>
+      </div>
+      <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Client" class="client-avatar">
+      <div class="header-title">佐藤 美咲</div>
+    </div>
+    <div class="header-right">
+      <span class="material-icons header-icon">more_vert</span>
+    </div>
+  </div>
+  
+  <!-- チャットコンテナ -->
+  <div class="chat-container">
+    <!-- メッセージリスト -->
+    <div class="message-list">
+      <!-- ユーザーメッセージ -->
+      <div class="user-message fade-in">
+        <div class="user-bubble">
+          佐藤さんの髪質に合うカラーを教えてください
+        </div>
+        <div class="message-time">14:25</div>
+      </div>
+      
+      <!-- AIレスポンス (枠なし) -->
+      <div class="ai-response fade-in">
+        <p>佐藤様の四柱推命情報（丁巳の日柱）と五行バランスを分析しますと、水の気が強く、火の気が弱い傾向にあります。理想的なのは、弱い火の気を補うようなカラーリングです。</p>
+        
+        <div class="style-suggestion">
+          <div class="suggestion-title">
+            <span class="material-icons suggestion-icon">auto_awesome</span>
+            おすすめカラー
+          </div>
+          <div class="suggestion-content">
+            <p><strong>ベースカラー：</strong> 明るめの温かみのあるカラー（アプリコットブラウン、ハニーゴールド、オレンジブラウン）</p>
+            <p><strong>ハイライト：</strong> キャラメルやコッパーのハイライトを入れることで、さらに火の気を強調できます</p>
+            <p><strong>理由：</strong> 来月のハワイ旅行を控えていることからも、日焼けした肌に映える暖色系が調和します。また髪の乾燥が気になるとのことなので、ダメージを抑えるセミマットな仕上がりがおすすめです。</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ユーザーメッセージ -->
+      <div class="user-message fade-in">
+        <div class="user-bubble">
+          いいですね！ヨガをしているので、扱いやすいヘアスタイルも提案してもらえますか？
+        </div>
+        <div class="message-time">14:26</div>
+      </div>
+      
+      <!-- AIレスポンス (枠なし) -->
+      <div class="ai-response fade-in">
+        <p>佐藤様がヨガをされているとのこと、活動的な生活に合わせた扱いやすいスタイルをご提案します。</p>
+        
+        <div class="style-suggestion">
+          <div class="suggestion-title">
+            <span class="material-icons suggestion-icon">content_cut</span>
+            おすすめヘアスタイル
+          </div>
+          <div class="suggestion-content">
+            <p><strong>カット：</strong> ミディアムレイヤー（鎖骨ラインで、表面に軽さを出すレイヤー）</p>
+            <p><strong>特徴：</strong> 前髪は長めのサイドパート、顔まわりは小顔効果のある流し前髪</p>
+            <p><strong>スタイリング：</strong> 乾かすだけで決まる簡単スタイル、ヨガ中も邪魔にならず一つに束ねやすい長さ</p>
+            <p><strong>ケア方法：</strong> 乾燥対策として、ココナッツオイルベースのヘアオイルがおすすめです。ヨガ後の汗をかいた状態でもベタつきにくく、自然な潤いをキープできます。</p>
+          </div>
+        </div>
+        
+        <p>このスタイルは、ヨガのような動きのある活動でも扱いやすく、同時に火の命式を持つ佐藤様の活発なエネルギーを引き立てます。また、フレンチレストランなどのお出かけにも違和感なく合わせられるバランスの良いスタイルです。</p>
+      </div>
+      
+      <!-- ユーザーメッセージ -->
+      <div class="user-message fade-in">
+        <div class="user-bubble">
+          ありがとうございます。ハワイ旅行中のヘアケアについてもアドバイスいただけますか？
+        </div>
+        <div class="message-time">14:30</div>
+      </div>
+      
+      <!-- AIレスポンス (枠なし) -->
+      <div class="ai-response fade-in">
+        <p>佐藤様のハワイ旅行中のヘアケアについて、四柱推命情報と髪質を考慮したアドバイスをご提案します。</p>
+        
+        <div class="style-suggestion">
+          <div class="suggestion-title">
+            <span class="material-icons suggestion-icon">beach_access</span>
+            ハワイ旅行中のヘアケアポイント
+          </div>
+          <div class="suggestion-content">
+            <ul class="check-list">
+              <li><strong>旅行前ケア：</strong> 出発1週間前に保湿トリートメントを施すことをおすすめします。火の気を補う意味でも、旅行前のケアは運気向上につながります。</li>
+              
+              <li><strong>日中の紫外線対策：</strong> 水の気が強いため、特に強い日差しには注意が必要です。UVカット成分配合のヘアミストを持参し、外出時には必ず使用してください。</li>
+              
+              <li><strong>海水・プールの塩素対策：</strong> 海やプールに入る前に、髪に少量のリーブインコンディショナーをつけておくと良いでしょう。</li>
+              
+              <li><strong>夜のケアルーティン：</strong> シャワー後は必ず洗い流さないトリートメントを使用し、特に毛先まで丁寧に塗布してください。</li>
+            </ul>
+          </div>
+        </div>
+        
+        <p>海辺の風と湿度に合わせてビーチウェーブやルーズアップスタイルなど、あえて少し崩れ感を楽しむスタイリングもおすすめです。これらは火の気を持つ佐藤様の個性を引き立てます。</p>
+      </div>
+    </div>
+    
+    <!-- 入力エリア -->
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea class="input-field" placeholder="メッセージを入力..." rows="1"></textarea>
+        <div class="input-actions">
+          <button class="mic-btn">
+            <span class="material-icons">mic</span>
+          </button>
+          <button class="send-btn">
+            <span class="material-icons">send</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // テキストエリアの高さ自動調整
+      const textarea = document.querySelector('.input-field');
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        // 最大高さを制限
+        if (this.scrollHeight > 100) {
+          this.style.overflowY = 'auto';
+        } else {
+          this.style.overflowY = 'hidden';
+        }
+      });
+      
+      // マイクボタンの切り替え
+      const micBtn = document.querySelector('.mic-btn');
+      micBtn.addEventListener('click', function() {
+        this.classList.toggle('active');
+        if (this.classList.contains('active')) {
+          this.querySelector('.material-icons').textContent = 'stop';
+          // 実際のアプリでは、ここに音声認識開始コードが入る
+          
+          // デモ用：2秒後に音声認識を停止し、テキストを入れる
+          setTimeout(() => {
+            this.classList.remove('active');
+            this.querySelector('.material-icons').textContent = 'mic';
+            textarea.value = 'ハワイ旅行中のヘアケア方法を教えてください';
+            textarea.dispatchEvent(new Event('input'));
+          }, 2000);
+        } else {
+          this.querySelector('.material-icons').textContent = 'mic';
+          // 実際のアプリでは、ここに音声認識停止コードが入る
+        }
+      });
+      
+      // 送信ボタン
+      const sendBtn = document.querySelector('.send-btn');
+      sendBtn.addEventListener('click', function() {
+        const message = textarea.value.trim();
+        if (message) {
+          // 実際のアプリでは、ここにメッセージ送信コードが入る
+          alert('メッセージを送信します: ' + message);
+          textarea.value = '';
+          textarea.style.height = 'auto';
+        }
+      });
+      
+      // Enterキーでの送信
+      textarea.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

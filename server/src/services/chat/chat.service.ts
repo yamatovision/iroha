@@ -2,9 +2,10 @@ import mongoose, { Types } from 'mongoose';
 import { ChatMode, IContextItem } from '../../types';
 import { ChatHistory, IChatHistoryDocument } from '../../models/ChatHistory';
 import { User } from '../../models/User';
-import { claudeApiClient } from '../claude-api-client';
+import { generateChatResponse, ChatMessage } from '../ai-provider-adapter'; 
 import { buildChatContext, contextBuilderService } from './context-builder.service';
 import { CHAT_SYSTEM_PROMPT, createContextPrompt, formatChatHistory } from './chat-contexts';
+import { claudeApiClient } from '../claude-api-client'; // 一時的に残す（ストリーミング用）
 import logger from '../../utils/logger';
 
 /**

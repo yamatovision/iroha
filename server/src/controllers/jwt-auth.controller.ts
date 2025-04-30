@@ -9,6 +9,56 @@ import jwt from 'jsonwebtoken';
  */
 export class JwtAuthController {
   /**
+   * Firebase認証からJWT認証へ移行する
+   * @param req リクエスト
+   * @param res レスポンス
+   */
+  static async migrateToJwt(req: Request, res: Response): Promise<void> {
+    try {
+      const { user } = req as any;
+      
+      if (!user || !user.id) {
+        res.status(401).json({ message: '認証が必要です' });
+        return;
+      }
+      
+      // データベースからユーザー情報を取得
+      const userData = await User.findById(user.id);
+      
+      if (!userData) {
+        res.status(404).json({ message: 'ユーザーが見つかりません' });
+        return;
+      }
+      
+      // トークンを生成
+      const accessToken = JwtService.generateAccessToken(userData);
+      const refreshToken = JwtService.generateRefreshToken(userData);
+      
+      // リフレッシュトークンをデータベースに保存
+      userData.refreshToken = refreshToken;
+      userData.lastLogin = new Date();
+      await userData.save();
+      
+      res.status(200).json({
+        message: 'JWTへの移行が完了しました',
+        user: {
+          id: userData._id,
+          email: userData.email,
+          displayName: userData.displayName,
+          role: userData.role
+        },
+        tokens: {
+          accessToken,
+          refreshToken
+        }
+      });
+    } catch (error) {
+      console.error('JWT移行エラー:', error);
+      res.status(500).json({ message: 'JWT認証への移行中にエラーが発生しました' });
+    }
+  }
+
+  /**
    * ユーザープロフィールを取得
    * @param req リクエスト
    * @param res レスポンス
@@ -338,68 +388,6 @@ export class JwtAuthController {
     } catch (error) {
       console.error('ログアウトエラー:', error);
       res.status(500).json({ message: 'ログアウト中にエラーが発生しました' });
-    }
-  }
-
-  /**
-   * JWT認証へのユーザー移行
-   * @param req リクエスト
-   * @param res レスポンス
-   * @deprecated Firebase移行は完了しました。このメソッドは互換性のために維持されています。
-   */
-  static async migrateToJwt(req: Request, res: Response): Promise<void> {
-    try {
-      // 認証情報の確認
-      const { user } = req as any;
-      const { password } = req.body; // firebaseUid パラメータは不要になりました
-
-      if (!user || !user.id) {
-        res.status(401).json({ message: '認証が必要です' });
-        return;
-      }
-
-      if (!password) {
-        res.status(400).json({ message: '新しいパスワードが必要です' });
-        return;
-      }
-
-      // ユーザーを検索
-      const existingUser = await User.findById(user.id);
-
-      if (!existingUser) {
-        res.status(404).json({ message: 'ユーザーが見つかりません' });
-        return;
-      }
-
-      // ユーザー情報を更新
-      existingUser.password = password;
-      existingUser.tokenVersion = 0; // 初期トークンバージョン
-
-      // JWTトークンを生成
-      const accessToken = JwtService.generateAccessToken(existingUser);
-      const refreshToken = JwtService.generateRefreshToken(existingUser);
-      existingUser.refreshToken = refreshToken;
-
-      // 変更を保存
-      await existingUser.save();
-
-      // レスポンスを返す
-      res.status(200).json({
-        message: 'JWT認証への移行が完了しました',
-        user: {
-          id: existingUser._id,
-          email: existingUser.email,
-          displayName: existingUser.displayName,
-          role: existingUser.role
-        },
-        tokens: {
-          accessToken,
-          refreshToken
-        }
-      });
-    } catch (error) {
-      console.error('JWT認証移行エラー:', error);
-      res.status(500).json({ message: 'JWT認証への移行中にエラーが発生しました' });
     }
   }
 }

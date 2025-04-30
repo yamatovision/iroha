@@ -4,7 +4,7 @@
  * ユーザーの四柱推命データに基づいて「調和のコンパス」と呼ばれる
  * 包括的な性格分析と人生指針を生成するサービスです。
  */
-import { claudeApiClient } from './claude-api-client';
+import { generateHarmonyCompass as aiGenerateHarmonyCompass } from './ai-provider-adapter';
 import { User } from '../models/User';
 
 // User型定義 - MongooseのDocumentではなく一般的なオブジェクトとして定義
@@ -124,11 +124,13 @@ export class HarmonyCompassService {
       const prompt = this.createHarmonyCompassPrompt(user);
       console.log('🔮 プロンプト構築完了: 長さ=' + prompt.length);
       
-      // Claude APIを呼び出し
-      console.log('🔮 Claude API呼び出し開始');
+      // AI APIを呼び出し
+      console.log('🔮 AI API呼び出し開始');
       try {
-        const response = await claudeApiClient.simpleCall(prompt, HARMONY_COMPASS_SYSTEM_PROMPT, 4096);
-        console.log('🔮 Claude API呼び出し成功: レスポンス長=' + response.length);
+        // アダプターを使用して生成
+        const result = await aiGenerateHarmonyCompass({ user });
+        const response = result.content;
+        console.log('🔮 AI API呼び出し成功: レスポンス長=' + response.length);
         
         if (response && response.length > 0) {
           console.log('🔮 レスポンスプレビュー:', response.substring(0, 100) + '...');

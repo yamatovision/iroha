@@ -12,6 +12,19 @@
           "dailyfortune-admin"
         ]
       }
+    },
+    "yamatovision-blue-lamp": {
+      "hosting": {
+        "client": [
+          "iroha-app"
+        ],
+        "admin": [
+          "iroha-admin"
+        ],
+        "superadmin": [
+          "iroha-superadmin"
+        ]
+      }
     }
   },
   "etags": {}

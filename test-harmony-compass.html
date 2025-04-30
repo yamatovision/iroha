@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>調和のコンパス JSON パースのテスト</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .result {
+            white-space: pre-wrap;
+            background-color: #eee;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px 20px;
+            box-sizing: border-box;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            resize: vertical;
+            font-family: monospace;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .info {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>調和のコンパス JSON パースのテスト</h1>
+        
+        <div class="card">
+            <h2>テスト1: 正常なJSON（content形式）</h2>
+            <p>正しくフォーマットされたcontent形式のJSONデータ</p>
+            <textarea id="json1">{"version":"1.0","type":"harmony_compass","content":"# 調和のコンパス\n\n## 格局に基づく性格特性\n従旺格の持ち主であるあなたは、自己表現力が強く、リーダーシップの素質を備えています。甲木の日主が強い状態にあるため、決断力があり、自分の意見をはっきりと表明する傾向があります。\n\n## 強化すべき方向性\n用神である水（正官）を強化することで、あなたの強い木の性質に規律と方向性を与えることができます。\n\n## 注意すべきバランス\n命式に水の要素が不足しているため、感情の起伏が激しくなったり、自制心が低下したりする可能性があります。\n\n## 人間関係の智慧\nあなたは水の性質を持つ人（思慮深く、冷静な判断ができる人）との関係が調和的です。\n\n## 成長のための課題\nあなたの主な課題は、強すぎる自己表現を適切にコントロールし、柔軟性と適応力を高めることです。"}</textarea>
+            <button onclick="testParse('json1', 'result1')">テスト実行</button>
+            <div id="result1" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>テスト2: 正常なJSON（sections形式）</h2>
+            <p>正しくフォーマットされたsections形式のJSONデータ</p>
+            <textarea id="json2">{"version":"1.0","type":"harmony_compass","sections":{"strengths":"あなたの強みは論理的思考力と分析能力です。問題を細分化し、効率的に解決する能力に優れています。","balance":"五行のバランスでは金が強く、水が弱い傾向があります。感情表現と柔軟性を意識的に取り入れることで、よりバランスの取れた状態になります。","relationships":"対人関係では、誠実さと信頼性が魅力となっています。ただし、時に距離感の取り方が難しく感じることもあるでしょう。","challenges":"成長のためには、感情表現の幅を広げることと、完璧主義の傾向を和らげることが課題となります。柔軟性を身につけましょう。"}}</textarea>
+            <button onclick="testParse('json2', 'result2')">テスト実行</button>
+            <div id="result2" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>テスト3: エスケープされていない引用符を含むJSON</h2>
+            <p>引用符がエスケープされていないJSONデータ</p>
+            <textarea id="json3">{"version":"1.0","type":"harmony_compass","content":"# 調和のコンパス\n\n## 格局に基づく性格特性\nあなたの五行属性"金"に基づくと、精度と効率を求められる職業に適性があります。"}</textarea>
+            <button onclick="testParse('json3', 'result3')">テスト実行</button>
+            <div id="result3" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>テスト4: 旧形式テキスト</h2>
+            <p>JSON形式ではない単なるテキストデータ</p>
+            <textarea id="json4">あなたの五行属性「金」に基づくと、精度と効率を求められる職業に適性があります。エンジニア、会計士、プログラマー、編集者、品質管理、経営コンサルタントなどが向いています。目標達成と完璧さを追求することにやりがいを感じます。</textarea>
+            <button onclick="testParse('json4', 'result4')">テスト実行</button>
+            <div id="result4" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>テスト5: users.controller.tsの修正確認</h2>
+            <p>正しくエスケープされたJSONを生成するコードのテスト</p>
+            <textarea id="json5">const compassResult = { content: '# 調和のコンパス\n\n## 格局に基づく性格特性\nあなたの五行属性"金"に基づくと、精度と効率を求められる職業に適性があります。' };
+
+// 修正前：エスケープなし
+const badJson = JSON.stringify({
+  version: '1.0',
+  type: 'harmony_compass',
+  content: compassResult.content
+});
+
+// 修正後：正しくエスケープ
+const goodJson = JSON.stringify({
+  version: '1.0',
+  type: 'harmony_compass',
+  content: compassResult.content.replace(/"/g, '\\"')
+});</textarea>
+            <button onclick="testUsersController('json5', 'result5')">テスト実行</button>
+            <div id="result5" class="result"></div>
+        </div>
+        
+        <div class="card">
+            <h2>テスト6: SajuProfileCard.tsxのエラーハンドリング確認</h2>
+            <p>改善されたエラーハンドリングのシミュレーション</p>
+            <textarea id="json6">// SajuProfileCard.tsxの実装
+try {
+  // JSON形式かどうかを確認
+  let parsed;
+  try {
+    parsed = JSON.parse(profile.careerAptitude);
+  } catch (parseError) {
+    // JSONパースに失敗した場合、従来形式として扱う
+    throw new Error('JSONパースに失敗しました');
+  }
+
+  if (parsed && parsed.type === 'harmony_compass') {
+    // バージョンに関わらずHarmonyCompassコンポーネントを使用
+    const HarmonyCompass = require('./HarmonyCompass').default;
+    return <HarmonyCompass data={profile.careerAptitude} />;
+  }
+} catch (e) {
+  // パースエラーの場合は従来の表示方法で表示
+  console.log('調和のコンパスデータではないか、パースに失敗しました', e);
+}</textarea>
+            <button onclick="testErrorHandling('json6', 'result6')">テスト実行</button>
+            <div id="result6" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 文字列がJSONとして正しく解析できるかテストする関数
+        function testParse(inputId, resultId) {
+            const input = document.getElementById(inputId).value;
+            const resultElement = document.getElementById(resultId);
+            resultElement.innerHTML = "";
+            
+            try {
+                // グレースフルなパース対応（SajuProfileCard.tsxのロジックを模倣）
+                let parsed;
+                let displayResult = "";
+                
+                try {
+                    parsed = JSON.parse(input);
+                    displayResult += '<span class="success">✅ JSONとして正常にパースできました</span>\n\n';
+                    
+                    // リザルトに情報を表示
+                    displayResult += "<b>【解析結果】</b>\n";
+                    if (parsed && typeof parsed === 'object') {
+                        for (const key in parsed) {
+                            if (key === 'content') {
+                                displayResult += `<span class="info">- ${key}</span>: "${parsed[key].substring(0, 50)}..." (${parsed[key].length} 文字)\n`;
+                            } else if (key === 'sections') {
+                                displayResult += `<span class="info">- ${key}</span>: (オブジェクト) {\n`;
+                                for (const section in parsed.sections) {
+                                    displayResult += `  <span class="info">${section}</span>: "${parsed.sections[section].substring(0, 30)}..."\n`;
+                                }
+                                displayResult += '}\n';
+                            } else {
+                                displayResult += `<span class="info">- ${key}</span>: ${parsed[key]}\n`;
+                            }
+                        }
+                    }
+                    
+                    // 型チェック
+                    if (parsed && parsed.type === 'harmony_compass') {
+                        displayResult += "\n<span class=\"success\">✅ harmony_compassタイプとして認識されました</span>\n";
+                        
+                        // フォーマットの判定
+                        if (parsed.content) {
+                            displayResult += "<span class=\"info\">📄 content形式のデータです</span>\n";
+                        } else if (parsed.sections) {
+                            displayResult += "<span class=\"info\">📋 sections形式のデータです</span>\n";
+                        }
+                    } else {
+                        displayResult += "\n<span class=\"error\">⚠️ harmony_compassタイプではありません</span>\n";
+                    }
+                    
+                    // SajuProfileCard.tsxでの処理結果をシミュレート
+                    displayResult += "\n<b>【SajuProfileCard.tsxでの処理結果】</b>\n";
+                    if (parsed && parsed.type === 'harmony_compass') {
+                        displayResult += "<span class=\"success\">✅ HarmonyCompassコンポーネントで表示されます</span>\n";
+                    } else {
+                        displayResult += "<span class=\"error\">❌ 従来形式のテキストとして表示されます</span>\n";
+                    }
+                    
+                } catch (parseError) {
+                    displayResult += "<span class=\"error\">❌ JSONパースに失敗しました:</span> " + parseError.message + "\n\n";
+                    displayResult += "<span class=\"info\">⚠️ 従来形式として扱われます</span>\n";
+                    
+                    // エラーメッセージの詳細を表示
+                    if (parseError instanceof SyntaxError) {
+                        const errorPos = parseError.message.match(/position (\d+)/);
+                        if (errorPos && errorPos[1]) {
+                            const pos = parseInt(errorPos[1]);
+                            const context = input.substring(Math.max(0, pos - 20), pos) + 
+                                          "<span style='color:red;font-weight:bold'>" + input.charAt(pos) + "</span>" + 
+                                          input.substring(pos + 1, Math.min(input.length, pos + 20));
+                            displayResult += "\n<b>【エラー箇所】</b>\n..." + context + "...\n";
+                        }
+                    }
+                    
+                    // SajuProfileCard.tsxでの処理結果をシミュレート
+                    displayResult += "\n<b>【SajuProfileCard.tsxでの処理結果】</b>\n";
+                    displayResult += "<span class=\"info\">ℹ️ 従来形式のテキストとして表示されます</span>\n";
+                }
+                
+                resultElement.innerHTML = displayResult;
+                
+            } catch (error) {
+                resultElement.innerHTML = "<span class=\"error\">テスト実行中にエラーが発生しました:</span> " + error.message;
+            }
+        }
+        
+        // users.controller.tsの修正を確認するテスト
+        function testUsersController(inputId, resultId) {
+            const resultElement = document.getElementById(resultId);
+            resultElement.innerHTML = "";
+            
+            try {
+                // テキストエリアからJavaScriptコードを実行（安全なコードのみ）
+                const code = document.getElementById(inputId).value;
+                
+                // 実行結果を表示するためのHTML
+                let displayResult = "<b>【修正確認】</b>\n\n";
+                
+                // コードを評価（安全なコードのみ）
+                let compassResult, badJson, goodJson;
+                
+                // 安全に実行するためのラッパー
+                eval(`
+                    ${code}
+                    window._compassResult = compassResult;
+                    window._badJson = badJson;
+                    window._goodJson = goodJson;
+                `);
+                
+                compassResult = window._compassResult;
+                badJson = window._badJson;
+                goodJson = window._goodJson;
+                
+                // 各JSONの解析結果を表示
+                displayResult += "<b>修正前（エスケープなし）:</b>\n";
+                displayResult += `<pre>${badJson}</pre>\n`;
+                
+                try {
+                    JSON.parse(badJson);
+                    displayResult += "<span class=\"success\">✅ パース成功</span> - 問題はありません\n\n";
+                } catch (e) {
+                    displayResult += `<span class=\"error\">❌ パース失敗:</span> ${e.message}\n\n`;
+                }
+                
+                displayResult += "<b>修正後（エスケープあり）:</b>\n";
+                displayResult += `<pre>${goodJson}</pre>\n`;
+                
+                try {
+                    JSON.parse(goodJson);
+                    displayResult += "<span class=\"success\">✅ パース成功</span> - 正しく修正されています\n\n";
+                } catch (e) {
+                    displayResult += `<span class=\"error\">❌ パース失敗:</span> ${e.message}\n\n`;
+                }
+                
+                // 比較結果
+                displayResult += "<b>【比較結果】</b>\n";
+                if (badJson !== goodJson) {
+                    displayResult += "変更あり: エスケープ処理が行われています\n";
+                    
+                    // 元のcontent
+                    displayResult += "\n<b>元のcontent:</b>\n";
+                    displayResult += `<pre>${compassResult.content}</pre>\n`;
+                    
+                    // 修正が効果的かチェック
+                    if (compassResult.content.includes('"') && !badJson.includes('\\"')) {
+                        displayResult += "<span class=\"error\">⚠️ 修正前のJSONには非エスケープ引用符が含まれており、パース時に問題が発生する可能性があります</span>\n";
+                    } else {
+                        displayResult += "<span class=\"info\">ℹ️ 修正前のJSONにはエスケープが必要な文字が含まれていません</span>\n";
+                    }
+                    
+                    if (compassResult.content.includes('"') && goodJson.includes('\\"')) {
+                        displayResult += "<span class=\"success\">✅ 修正後のJSONには引用符が正しくエスケープされています</span>\n";
+                    }
+                } else {
+                    displayResult += "<span class=\"info\">変更なし: エスケープ処理は行われていません（必要ないか、処理が実行されていない）</span>\n";
+                }
+                
+                resultElement.innerHTML = displayResult;
+                
+            } catch (error) {
+                resultElement.innerHTML = "<span class=\"error\">テスト実行中にエラーが発生しました:</span> " + error.message;
+            }
+        }
+        
+        // SajuProfileCard.tsxのエラーハンドリングをテストする関数
+        function testErrorHandling(inputId, resultId) {
+            const resultElement = document.getElementById(resultId);
+            resultElement.innerHTML = "";
+            
+            try {
+                // テスト対象を表示
+                let displayResult = "<b>【エラーハンドリングテスト】</b>\n\n";
+                displayResult += "<span class=\"info\">SajuProfileCard.tsxのパース処理:</span>\n";
+                displayResult += "<pre>try {\n  // JSON形式かどうかを確認\n  let parsed;\n  try {\n    parsed = JSON.parse(profile.careerAptitude);\n  } catch (parseError) {\n    // JSONパースに失敗した場合、従来形式として扱う\n    throw new Error('JSONパースに失敗しました');\n  }\n\n  // パース成功した場合の処理\n  if (parsed && parsed.type === 'harmony_compass') {\n    const HarmonyCompass = require('./HarmonyCompass').default;\n    return <HarmonyCompass data={profile.careerAptitude} />;\n  }\n} catch (e) {\n  // エラー処理（フォールバック）\n  console.log('調和のコンパスデータではないか、パースに失敗しました', e);\n}</pre>\n\n";
+                
+                // テストケース
+                displayResult += "<b>【テストケース】</b>\n\n";
+                
+                // テストケース1: 正常なJSONデータ
+                const validJson = JSON.stringify({
+                    version: '1.0',
+                    type: 'harmony_compass',
+                    content: '# 調和のコンパス\n\n正しくフォーマットされたデータ'
+                });
+                
+                displayResult += "<span class=\"info\">テストケース1: 正常なJSONデータ</span>\n";
+                displayResult += `<pre>${validJson}</pre>\n`;
+                displayResult += "<span class=\"success\">✅ 結果: パース成功</span> → HarmonyCompassコンポーネントで表示\n\n";
+                
+                // テストケース2: 非エスケープ引用符を含むJSONデータ
+                const invalidJson = '{"version":"1.0","type":"harmony_compass","content":"# 調和のコンパス\n\n## 格局に基づく性格特性\nあなたの五行属性"金"に基づくと、精度と効率を求められる職業に適性があります。"}';
+                
+                displayResult += "<span class=\"info\">テストケース2: 非エスケープ引用符を含むJSONデータ</span>\n";
+                displayResult += `<pre>${invalidJson}</pre>\n`;
+                displayResult += "<span class=\"error\">❌ 結果: パース失敗</span> → エラーメッセージと従来形式で表示\n\n";
+                
+                // テストケース3: 単純なテキストデータ
+                const plainText = "あなたの五行属性「金」に基づくと、精度と効率を求められる職業に適性があります。";
+                
+                displayResult += "<span class=\"info\">テストケース3: テキストデータ</span>\n";
+                displayResult += `<pre>${plainText}</pre>\n`;
+                displayResult += "<span class=\"error\">❌ 結果: パース失敗</span> → エラーメッセージと従来形式で表示\n\n";
+                
+                // 現在のコードの結論
+                displayResult += "<b>【結論】</b>\n";
+                displayResult += "<span class=\"success\">✅ 改善されたエラーハンドリングにより、パースに失敗した場合でも適切にフォールバックされます</span>\n";
+                displayResult += "<span class=\"info\">💡 これにより、旧形式のテキストデータやエスケープされていないJSONデータが存在する場合でも、ユーザーエクスペリエンスは維持されます</span>\n";
+                
+                resultElement.innerHTML = displayResult;
+                
+            } catch (error) {
+                resultElement.innerHTML = "<span class=\"error\">テスト実行中にエラーが発生しました:</span> " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - サロン設定</title>
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/mui-material.min.css" />
+  <style>
+    :root {
+      --primary-color: #f48fb1;
+      --primary-light: #ffc1e3;
+      --primary-dark: #bf5f82;
+      --secondary-color: #90caf9;
+      --background-color: #fafafa;
+      --text-color: #424242;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    .header {
+      background-color: #f8bbd0;
+      color: #880e4f;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .logo-img {
+      margin-right: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #f48fb1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e91e63;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .container {
+      display: flex;
+      min-height: calc(100vh - 76px);
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: white;
+      box-shadow: 1px 0 5px rgba(0,0,0,0.1);
+      padding: 24px 0;
+    }
+
+    .sidebar-item {
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      color: #616161;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar-item.active {
+      background-color: #fce4ec;
+      color: #c2185b;
+      border-left: 4px solid #c2185b;
+    }
+
+    .sidebar-item:hover {
+      background-color: #f8bbd0;
+    }
+
+    .sidebar-item-icon {
+      margin-right: 12px;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 24px;
+    }
+
+    .page-title {
+      margin-bottom: 24px;
+      color: #c2185b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #eeeeee;
+      font-size: 18px;
+      font-weight: 500;
+      color: #424242;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-header-icon {
+      margin-right: 12px;
+      color: #e91e63;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #616161;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #e91e63;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 14px;
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-textarea:focus {
+      outline: none;
+      border-color: #e91e63;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      transition: background-color 0.3s;
+    }
+
+    .btn-primary {
+      background-color: #e91e63;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #c2185b;
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #e91e63;
+      color: #e91e63;
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(233, 30, 99, 0.05);
+    }
+
+    .avatar-upload {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #9e9e9e;
+      overflow: hidden;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-controls {
+      flex: 1;
+    }
+
+    .upload-button {
+      display: inline-block;
+      background-color: #f5f5f5;
+      color: #616161;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .upload-button:hover {
+      background-color: #e0e0e0;
+    }
+
+    .upload-info {
+      font-size: 12px;
+      color: #9e9e9e;
+    }
+
+    .business-hours {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .business-hours th, .business-hours td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .business-hours th {
+      font-weight: 500;
+      color: #616161;
+      width: 120px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #e91e63;
+    }
+
+    input:focus + .slider {
+      box-shadow: 0 0 1px #e91e63;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .time-input {
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      width: 80px;
+    }
+
+    .holiday-text {
+      color: #e53935;
+      font-size: 14px;
+      font-style: italic;
+    }
+
+    .tabs {
+      display: flex;
+      background-color: white;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 16px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #757575;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab.active {
+      color: #e91e63;
+      background-color: #fff;
+      border-bottom: 2px solid #e91e63;
+    }
+
+    .tab:hover {
+      background-color: #fce4ec;
+    }
+
+    .settings-divider {
+      margin: 24px 0;
+      height: 1px;
+      background-color: #eeeeee;
+    }
+
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      padding: 16px 24px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 32px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .form-help {
+      font-size: 12px;
+      color: #757575;
+      margin-top: 4px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 14px;
+      background-color: white;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .social-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #616161;
+    }
+
+    .notification-setting {
+      margin-bottom: 16px;
+    }
+
+    .subscription-info {
+      font-size: 14px;
+      color: #757575;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #eeeeee;
+    }
+
+    .subscription-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    .badge-success {
+      background-color: #e8f5e9;
+      color: #43a047;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .status-active {
+      background-color: #43a047;
+    }
+
+    .calendar-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .calendar-icon {
+      width: 48px;
+      height: 48px;
+      background-color: #fce4ec;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #e91e63;
+    }
+
+    .calendar-info {
+      flex: 1;
+    }
+
+    .calendar-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .calendar-email {
+      font-size: 14px;
+      color: #757575;
+      margin-bottom: 8px;
+    }
+
+    .calendar-status {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        flex-direction: column;
+      }
+
+      .main-content {
+        padding: 16px;
+      }
+
+      .tabs {
+        overflow-x: auto;
+      }
+
+      .tab {
+        padding: 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-img">
+        <span class="material-icons">spa</span>
+      </div>
+      美姫命
+    </div>
+    <div class="avatar">
+      <span class="material-icons">person</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">dashboard</span>
+        ダッシュボード
+      </div>
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">people</span>
+        クライアント管理
+      </div>
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">upload_file</span>
+        データインポート
+      </div>
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">groups</span>
+        スタイリスト管理
+      </div>
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">event</span>
+        予約・担当管理
+      </div>
+      <div class="sidebar-item active">
+        <span class="material-icons sidebar-item-icon">settings</span>
+        サロン設定
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="page-title">
+        <h1>サロン設定</h1>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="basic">基本情報</div>
+        <div class="tab" data-tab="hours">営業時間</div>
+        <div class="tab" data-tab="integration">外部連携</div>
+        <div class="tab" data-tab="account">アカウント</div>
+      </div>
+
+      <div class="tab-content active" id="basic-tab">
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">business</span>
+            サロン基本情報
+          </div>
+          <div class="card-body">
+            <div class="avatar-upload">
+              <div class="avatar-preview">
+                <img src="https://picsum.photos/id/1/200" alt="サロンロゴ">
+              </div>
+              <div class="avatar-controls">
+                <label class="upload-button">
+                  <input type="file" style="display: none;">
+                  ロゴをアップロード
+                </label>
+                <div class="upload-info">
+                  推奨サイズ: 500x500px、最大ファイルサイズ: 2MB<br>
+                  ※ロゴはアプリ内のサロン表示やクライアントへの通知などに使用されます
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-divider"></div>
+
+            <div class="form-group">
+              <label class="form-label">サロン名 <span style="color: red;">*</span></label>
+              <input type="text" class="form-input" value="美容室さくら">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">電話番号 <span style="color: red;">*</span></label>
+                <input type="tel" class="form-input" value="03-1234-5678">
+              </div>
+              <div class="form-group">
+                <label class="form-label">メールアドレス <span style="color: red;">*</span></label>
+                <input type="email" class="form-input" value="info@sakura-salon.example.com">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">住所 <span style="color: red;">*</span></label>
+              <input type="text" class="form-input" placeholder="郵便番号" value="160-0022">
+              <div style="height: 8px;"></div>
+              <input type="text" class="form-input" placeholder="都道府県・市区町村" value="東京都新宿区新宿">
+              <div style="height: 8px;"></div>
+              <input type="text" class="form-input" placeholder="番地・建物名" value="3-1-13 サクラビル 2F">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">サロン紹介</label>
+              <textarea class="form-textarea">美容室さくらは、お客様一人ひとりの個性と魅力を引き出す施術を心がけています。最新のトレンドと確かな技術で、あなたにぴったりのスタイルをご提案いたします。明るく落ち着いた空間で、日常から離れた贅沢なひとときをお過ごしください。</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ウェブサイト</label>
+              <input type="url" class="form-input" value="https://sakura-salon.example.com">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">SNSリンク</label>
+              <div class="social-link">
+                <div class="social-icon">
+                  <span class="material-icons">language</span>
+                </div>
+                <input type="url" class="form-input" placeholder="Instagram URL" value="https://instagram.com/sakura_salon">
+              </div>
+              <div class="social-link">
+                <div class="social-icon">
+                  <span class="material-icons">language</span>
+                </div>
+                <input type="url" class="form-input" placeholder="Twitter URL" value="https://twitter.com/sakura_salon">
+              </div>
+              <div class="social-link">
+                <div class="social-icon">
+                  <span class="material-icons">language</span>
+                </div>
+                <input type="url" class="form-input" placeholder="Facebook URL" value="https://facebook.com/sakura.salon">
+              </div>
+              <div class="social-link">
+                <div class="social-icon">
+                  <span class="material-icons">add</span>
+                </div>
+                <input type="url" class="form-input" placeholder="その他のSNS URL">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <button class="btn btn-outline" style="margin-right: auto;">
+            <span class="material-icons">restore</span>
+            変更を破棄
+          </button>
+          <button class="btn btn-primary">
+            <span class="material-icons">save</span>
+            変更を保存
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="hours-tab" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">schedule</span>
+            営業時間設定
+          </div>
+          <div class="card-body">
+            <table class="business-hours">
+              <tr>
+                <th>月曜日</th>
+                <td style="width: 80px;">
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="10:00"> 〜 
+                  <input type="time" class="time-input" value="19:00">
+                </td>
+              </tr>
+              <tr>
+                <th>火曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="10:00"> 〜 
+                  <input type="time" class="time-input" value="19:00">
+                </td>
+              </tr>
+              <tr>
+                <th>水曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <span class="holiday-text">定休日</span>
+                </td>
+              </tr>
+              <tr>
+                <th>木曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="10:00"> 〜 
+                  <input type="time" class="time-input" value="19:00">
+                </td>
+              </tr>
+              <tr>
+                <th>金曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="10:00"> 〜 
+                  <input type="time" class="time-input" value="20:00">
+                </td>
+              </tr>
+              <tr>
+                <th>土曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="09:00"> 〜 
+                  <input type="time" class="time-input" value="20:00">
+                </td>
+              </tr>
+              <tr>
+                <th>日曜日</th>
+                <td>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                  </label>
+                </td>
+                <td>
+                  <input type="time" class="time-input" value="09:00"> 〜 
+                  <input type="time" class="time-input" value="19:00">
+                </td>
+              </tr>
+            </table>
+
+            <div class="settings-divider"></div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">デフォルト施術時間</label>
+                <div style="display: flex; align-items: center;">
+                  <input type="number" class="form-input" value="60" style="width: 100px;">
+                  <span style="margin-left: 8px;">分</span>
+                </div>
+                <div class="form-help">予約時のデフォルト時間枠として使用されます</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">休憩時間</label>
+                <div style="display: flex; align-items: center;">
+                  <input type="number" class="form-input" value="15" style="width: 100px;">
+                  <span style="margin-left: 8px;">分</span>
+                </div>
+                <div class="form-help">施術間の標準休憩時間として使用されます</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">特別営業日・休業日</label>
+              <div class="form-help" style="margin-bottom: 12px;">特別な営業日や休業日を設定できます</div>
+              
+              <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                <input type="date" class="form-input" style="max-width: 200px;">
+                <select class="form-select" style="max-width: 200px;">
+                  <option>営業日</option>
+                  <option>休業日</option>
+                </select>
+                <button class="btn btn-outline" style="max-width: 100px;">
+                  <span class="material-icons">add</span>
+                  追加
+                </button>
+              </div>
+              
+              <div style="font-size: 14px; color: #757575;">特別営業日・休業日が設定されていません</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <button class="btn btn-outline" style="margin-right: auto;">
+            <span class="material-icons">restore</span>
+            変更を破棄
+          </button>
+          <button class="btn btn-primary">
+            <span class="material-icons">save</span>
+            変更を保存
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="integration-tab" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">event</span>
+            カレンダー連携
+          </div>
+          <div class="card-body">
+            <p style="margin-top: 0;">外部カレンダーと連携して予約情報を自動同期します。</p>
+            
+            <div class="calendar-card">
+              <div class="calendar-icon">
+                <span class="material-icons">event</span>
+              </div>
+              <div class="calendar-info">
+                <div class="calendar-name">Google カレンダー</div>
+                <div class="calendar-email">tanaka.m@example.com</div>
+                <div class="calendar-status">
+                  <span class="status-indicator status-active"></span>
+                  連携中
+                </div>
+              </div>
+              <div>
+                <button class="btn btn-outline">再連携</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">カレンダー同期設定</label>
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                  <input type="checkbox" checked style="margin-right: 8px;">
+                  カレンダーに予約が追加されたら自動的にクライアント情報を作成する
+                </label>
+                <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                  <input type="checkbox" checked style="margin-right: 8px;">
+                  予約キャンセル時にカレンダーイベントも削除する
+                </label>
+                <label style="display: flex; align-items: center; font-size: 14px;">
+                  <input type="checkbox" checked style="margin-right: 8px;">
+                  カレンダー同期時にスタイリストの自動割り当てを行う
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">同期頻度</label>
+              <select class="form-select" style="max-width: 200px;">
+                <option>5分ごと</option>
+                <option selected>15分ごと</option>
+                <option>30分ごと</option>
+                <option>1時間ごと</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <button class="btn btn-outline">
+                <span class="material-icons">sync</span>
+                今すぐ同期
+              </button>
+              <div class="form-help">最終同期: 2025年4月28日 12:45</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">cloud_upload</span>
+            外部サービス連携
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 16px;">ホットペッパービューティー</h3>
+                  <p style="margin: 4px 0 0; font-size: 14px; color: #757575;">ホットペッパービューティーから予約情報を取得します。</p>
+                </div>
+                <button class="btn btn-outline">連携する</button>
+              </div>
+              <div class="form-help">
+                ※連携するにはGoogleカレンダーとホットペッパービューティーをあらかじめ連携させておく必要があります。
+              </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 16px;">LINE公式アカウント</h3>
+                  <p style="margin: 4px 0 0; font-size: 14px; color: #757575;">LINE公式アカウントと連携してクライアントへの通知を送信します。</p>
+                </div>
+                <button class="btn btn-outline">連携する</button>
+              </div>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 16px;">サロンアンサー</h3>
+                  <p style="margin: 4px 0 0; font-size: 14px; color: #757575;">サロンアンサーからクライアント情報や予約履歴を取得します。</p>
+                </div>
+                <button class="btn btn-outline">連携する</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="account-tab" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">notifications</span>
+            通知設定
+          </div>
+          <div class="card-body">
+            <div class="notification-setting">
+              <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                新規予約の通知を受け取る
+              </label>
+              <div class="form-help">新しい予約が入った時にメールで通知します</div>
+            </div>
+
+            <div class="notification-setting">
+              <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                予約変更・キャンセルの通知を受け取る
+              </label>
+              <div class="form-help">予約の変更やキャンセルがあった時にメールで通知します</div>
+            </div>
+
+            <div class="notification-setting">
+              <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                <input type="checkbox" checked style="margin-right: 8px;">
+                クライアントのバースデーメール通知を送信する
+              </label>
+              <div class="form-help">クライアントの誕生日にお祝いメールを自動送信します</div>
+            </div>
+
+            <div class="notification-setting">
+              <label style="display: flex; align-items: center; margin-bottom: 8px; font-size: 14px;">
+                <input type="checkbox" style="margin-right: 8px;">
+                マーケティングメールを受け取る
+              </label>
+              <div class="form-help">新機能や活用方法などの情報を受け取ります</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">payments</span>
+            サブスクリプション情報
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom: 20px;">
+              <h3 style="margin: 0 0 8px; font-size: 16px;">現在のプラン: スタンダードプラン <span class="badge badge-success">有効</span></h3>
+              <p style="margin: 0; font-size: 14px;">月額 ¥9,800（税込）</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <h3 style="margin: 0 0 8px; font-size: 16px;">プラン詳細</h3>
+              <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                <li>スタイリスト数無制限</li>
+                <li>クライアント 500名まで</li>
+                <li>カレンダー連携機能</li>
+                <li>データインポート機能</li>
+                <li>チームチャット機能</li>
+              </ul>
+            </div>
+
+            <div class="subscription-info">
+              <div class="subscription-item">
+                <div>次回の請求日</div>
+                <div>2025年5月15日</div>
+              </div>
+              <div class="subscription-item">
+                <div>支払い方法</div>
+                <div>クレジットカード（**** **** **** 4321）</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button class="btn btn-outline">
+                <span class="material-icons">upgrade</span>
+                プランを変更する
+              </button>
+              <button class="btn btn-outline" style="margin-left: 12px;">
+                <span class="material-icons">credit_card</span>
+                支払い方法を変更
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="material-icons card-header-icon">delete</span>
+            サロンデータの削除
+          </div>
+          <div class="card-body">
+            <p style="margin-top: 0; color: #e53935; font-size: 14px;">
+              ※削除を実行すると、すべてのサロンデータ（スタイリスト情報、クライアント情報、予約データなど）が完全に削除され、復元することはできません。
+            </p>
+            <button class="btn btn-outline" style="color: #e53935; border-color: #e53935;">
+              <span class="material-icons">delete_forever</span>
+              サロンデータを削除する
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // タブ切り替えの処理
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // すべてのタブからactiveクラスを削除
+        tabs.forEach(t => t.classList.remove('active'));
+        // クリックしたタブにactiveクラスを追加
+        tab.classList.add('active');
+        
+        // すべてのタブコンテンツを非表示
+        tabContents.forEach(content => {
+          content.style.display = 'none';
+        });
+        
+        // 対応するタブコンテンツを表示
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(tabId + '-tab').style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>

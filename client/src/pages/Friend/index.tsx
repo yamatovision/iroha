@@ -65,9 +65,10 @@ const FriendList: React.FC = () => {
   const [selectedFriend, setSelectedFriend] = useState<any>(null);
   
   // 招待リンク状態
-  const [inviteLink] = useState<string>(
-    `${window.location.origin}/invitation/${Math.random().toString(36).substring(2, 10)}`
-  );
+  const [inviteLink, setInviteLink] = useState<string>('');
+  const [inviteLinkLoading, setInviteLinkLoading] = useState<boolean>(false);
+  const [inviteEmail, setInviteEmail] = useState<string>('');
+  const [emailError, setEmailError] = useState<string>('');
 
   // 五行属性の色とラベルマッピング
   const elementLabels: Record<string, { name: string, bg: string, color: string }> = {
@@ -351,7 +352,46 @@ const FriendList: React.FC = () => {
 
   // アプリ招待モーダル表示
   const handleOpenInviteModal = () => {
+    // モーダルを開くだけで、リンク生成はボタンクリック時に行う
+    setInviteEmail('');
+    setInviteLink('');
+    setEmailError('');
     setShowInviteModal(true);
+  };
+  
+  // 招待リンク生成
+  const handleGenerateInviteLink = async () => {
+    // メールアドレスの検証
+    if (!inviteEmail) {
+      setEmailError('メールアドレスを入力してください');
+      return;
+    }
+    
+    // 基本的なメールアドレス形式チェック
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail)) {
+      setEmailError('有効なメールアドレスを入力してください');
+      return;
+    }
+    
+    setEmailError('');
+    
+    try {
+      setInviteLinkLoading(true);
+      
+      // APIを呼び出して招待リンクを生成
+      const invitation = await friendService.createFriendInvitation(inviteEmail);
+      if (invitation && invitation.url) {
+        setInviteLink(invitation.url);
+      } else {
+        console.error('招待リンクの生成に失敗しました');
+      }
+    } catch (error) {
+      console.error('招待リンクの取得に失敗しました:', error);
+      setEmailError('招待リンクの生成に失敗しました。もう一度お試しください。');
+    } finally {
+      setInviteLinkLoading(false);
+    }
   };
 
   // 常に何かしら表示するようにする
@@ -1105,44 +1145,80 @@ const FriendList: React.FC = () => {
             </Typography>
             
             <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-              以下のリンクを共有して、友達をアプリに招待できます。招待された友達はあなたとの相性を確認できます。
+              友達のメールアドレスを入力して、招待リンクを生成できます。招待された友達はあなたとの相性を確認できます。
             </Typography>
             
-            <Box sx={{ 
-              mb: 3, 
-              display: 'flex', 
-              alignItems: 'center', 
-              bgcolor: 'grey.100', 
-              p: 2, 
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-            }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  flex: 1, 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis',
-                  color: 'text.secondary'
-                }}
-              >
-                {inviteLink}
-              </Typography>
-              <IconButton 
-                onClick={handleCopyInviteLink} 
+            {/* メールアドレス入力フォーム */}
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="友達のメールアドレス"
+                placeholder="例: friend@example.com"
+                variant="outlined"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                error={!!emailError}
+                helperText={emailError}
+                disabled={inviteLinkLoading}
+                sx={{ mb: 2 }}
+              />
+              
+              <Button
+                fullWidth
+                variant="contained"
                 color="primary"
-                sx={{
-                  bgcolor: 'primary.light',
-                  color: 'white',
-                  '&:hover': {
-                    bgcolor: 'primary.main'
-                  }
-                }}
+                onClick={handleGenerateInviteLink}
+                disabled={inviteLinkLoading || !inviteEmail}
+                startIcon={inviteLinkLoading ? <CircularProgress size={20} color="inherit" /> : null}
+                sx={{ borderRadius: 2, mb: 3 }}
               >
-                <ContentCopyIcon />
-              </IconButton>
+                {inviteLinkLoading ? '生成中...' : '招待リンクを生成'}
+              </Button>
             </Box>
+            
+            {/* 生成された招待リンク表示 */}
+            {inviteLink && (
+              <>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                  生成された招待リンク:
+                </Typography>
+                <Box sx={{ 
+                  mb: 3, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  bgcolor: 'grey.100', 
+                  p: 2, 
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      flex: 1, 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis',
+                      color: 'text.secondary'
+                    }}
+                  >
+                    {inviteLink}
+                  </Typography>
+                  <IconButton 
+                    onClick={handleCopyInviteLink} 
+                    color="primary"
+                    sx={{
+                      bgcolor: 'primary.light',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'primary.main'
+                      }
+                    }}
+                  >
+                    <ContentCopyIcon />
+                  </IconButton>
+                </Box>
+              </>
+            )}
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button 

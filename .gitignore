@@ -1,141 +1,97 @@
-# 環境変数・シークレット
+# 環境変数ファイル
 .env
-.env.*
-*.pem
-*.key
-service-account*.json
-*firebase-adminsdk*.json
-sys-*-firebase-adminsdk-*.json
+.env.local
+.env.development
+.env.test
+.env.production
 
-# APIキーなどの機密情報
-CLAUDE.md
+# 依存関係ディレクトリ
+node_modules/
+dist/
+build/
+coverage/
+
+# ログファイル
+*.log
+logs/
+
+# OSが生成する一時ファイル
+.DS_Store
+Thumbs.db
+
+# エディタ固有のファイル
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 機密情報を含む可能性のあるファイル
+**/config/secrets.js
+**/credentials.json
+firebase-config.json
+gcp-service-account.json
+server/firebase-service-account.json
+docs/cicd-setup.md
+server/deploy-command.sh
 server/src/tests/services/claude-api.test.ts
+server/test-claude-debug.js
+docs/scopes/sys-*.json
+firebase-adminsdk-*.json
+*service-account*.json
 deploy-history.md
 deploy.md
 
-# ビルド出力
-dist/
-build/
-*.tsbuildinfo
-
-# 依存関係
-node_modules/
-
-# ログ
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# キャッシュ/一時ファイル
+# 一時ファイル
+.tmp/
 .temp/
-.cache/
-.parcel-cache/
-.next/
-.nuxt/
-.vuepress/dist
-.fusebox/
-.dynamodb/
-.tern-port
-
-# システム固有
-.DS_Store
-Thumbs.db
-.vercel
-.netlify
-.firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-
-# IDE / エディタ
-.idea/
-.vscode/
-*.code-workspace
-.project
-.classpath
-.c9/
-*.launch
-*.sublime-workspace
-
-# テスト・カバレッジ
-coverage/
-.nyc_output/
-jest-report/
-
-# 機密情報を含むスクリプト
-server/scripts/check-mongodb.js
-server/scripts/check-user-detail.js
-server/scripts/cleanup-team-members.js
-server/scripts/check-jwt-status.js
-server/scripts/check-test-users.js
-server/scripts/prepare-test-user.js
-server/scripts/sync-firebase-users.js
-server/scripts/saju-profile-purge.js
-server/scripts/check-daily-fortunes.js
-server/scripts/check-mongodb-collections.js
-server/scripts/migrate-users-to-jwt.js
-server/scripts/check-team-info.js
-server/scripts/create-jwt-user.js
-server/scripts/create-objectid-users.js
-server/scripts/create-sample-data.js
-server/scripts/create-test-user.js
-server/scripts/check-mongo-state.js
-server/scripts/test-jwt-login.js
-server/scripts/test-jwt-objectid.js
-server/scripts/verify-migration.js
-server/deploy-command.sh
-server/scripts/check-invalid-memberships.js
-server/scripts/check-specific-team.js
-server/scripts/check-team-by-id.js
-server/scripts/check-user-email.js
-server/scripts/fix-team-members-issue.js
-server/scripts/get-jwt-for-test-simple.js
-server/scripts/test-compatibility/
-server/scripts/test-team-members-api.js
-
-# ローカルツール
+*.tmp
+tmp/
+temp/
 .appgenius_temp/
-.claude_data/
-temp/firebase-service-account.json
-/server/firebase-service-account.json
 
-# バックアップとテストファイル
-backup/
-server/scripts/migration-logs/
-temp/check-yojin.js
-server/check-current-user.js
-server/test-*.js
-server/scripts/test-kakukyoku-yojin-custom.js
-test-harmony-compass.html
-temp/db/test-connection.js
-temp/db/
-docs/cicd-setup.md
+# iOS特有のファイル
+*.pbxuser
+\!default.pbxuser
+*.mode1v3
+\!default.mode1v3
+*.mode2v3
+\!default.mode2v3
+*.perspectivev3
+\!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
 
-# サービスアカウントと設定ファイル（機密情報）
-*-service-account*.json
-*-config.json
-firebase-config.json
-gcp-service-account.json
-*.key
-*.pem
+# Android特有のファイル
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+.gradle/
+.idea/
+local.properties
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.keystore
+\!debug.keystore
 
-# 追加のテストスクリプト
-debug-team-context-fortune.js
-server/check-mongoose.js
-server/scripts/check-and-clean-fortune.js
-server/scripts/check-existing-team-context-fortune.js
-server/scripts/check-team-context-fortune.js
-server/scripts/delete-team-context-fortune.js
-server/scripts/generate-test-fortune.js
-server/scripts/migrate-team-context-fortune.js
-server/scripts/test-claude-response.js
-server/scripts/test-team-context-fortune.js
-server/server_logs.txt
-server/team-context-*
-EOF < /dev/null★ 12test_managerのコピー.md
+# capacitor
+capacitor.config.json
+ios/App/App/capacitor.config.json
+ios/App/App/public/
+ios/App/Pods/
+ios/Pods/
 
-# コピーファイル
-*のコピー.*
-EOF < /dev/null
+# その他
+*.iml
+*.hprof
+.project
+.settings/

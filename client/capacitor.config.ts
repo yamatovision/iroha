@@ -4,9 +4,9 @@ const config: CapacitorConfig = {
   appId: 'jp.dailyfortune.app',
   appName: 'DailyFortune',
   // バージョン情報（表示用）
-  appVersion: '1.0.1-debug',
+  appVersion: '1.0.2',
   // ビルド番号（内部管理用）
-  appBuildNumber: '1001',
+  appBuildNumber: '1002',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

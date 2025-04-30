@@ -1,0 +1,2727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美姫命 - スーパー管理者 課金・プラン管理</title>
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/mui-material.min.css" />
+  <style>
+    :root {
+      --primary-color: #f48fb1;
+      --primary-light: #ffc1e3;
+      --primary-dark: #bf5f82;
+      --secondary-color: #90caf9;
+      --background-color: #fafafa;
+      --text-color: #424242;
+      --element-water: #90caf9; /* 水 - 青 */
+      --element-wood: #a5d6a7; /* 木 - 緑 */
+      --element-fire: #ef9a9a; /* 火 - 赤 */
+      --element-earth: #ffe082; /* 土 - 黄 */
+      --element-metal: #e0e0e0; /* 金 - 白/銀 */
+      --super-admin-color: #673ab7; /* スーパー管理者用の色 */
+      --super-admin-light: #d1c4e9;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    .header {
+      background-color: var(--super-admin-color);
+      color: white;
+      padding: 16px 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .logo-img {
+      margin-right: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--super-admin-color);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      color: var(--super-admin-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .container {
+      display: flex;
+      min-height: calc(100vh - 76px);
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: white;
+      box-shadow: 1px 0 5px rgba(0,0,0,0.1);
+      padding: 24px 0;
+    }
+
+    .sidebar-item {
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      color: #616161;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .sidebar-item.active {
+      background-color: var(--super-admin-light);
+      color: var(--super-admin-color);
+      border-left: 4px solid var(--super-admin-color);
+    }
+
+    .sidebar-item:hover {
+      background-color: #f5f5f5;
+    }
+
+    .sidebar-item-icon {
+      margin-right: 12px;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 24px;
+    }
+
+    .page-title {
+      margin-bottom: 24px;
+      color: var(--super-admin-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      background-color: white;
+      border-radius: 8px 8px 0 0;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .tab {
+      padding: 16px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #757575;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s;
+      background-color: white;
+    }
+
+    .tab.active {
+      color: var(--super-admin-color);
+      background-color: white;
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--super-admin-color);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .action-button {
+      background-color: var(--super-admin-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin-left: 8px;
+      transition: background-color 0.3s;
+    }
+
+    .action-button:hover {
+      background-color: #5e35b1;
+    }
+
+    .action-button .material-icons {
+      margin-right: 4px;
+      font-size: 18px;
+    }
+
+    .plans-container {
+      background-color: white;
+      border-radius: 0 0 8px 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .plan-card {
+      background-color: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .plan-header {
+      background-color: var(--super-admin-light);
+      color: var(--super-admin-color);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plan-title {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .plan-price {
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .plan-period {
+      font-size: 14px;
+      font-weight: normal;
+    }
+
+    .plan-body {
+      padding: 16px;
+    }
+
+    .plan-description {
+      font-size: 14px;
+      color: #757575;
+      margin-bottom: 16px;
+    }
+
+    .plan-features {
+      margin-bottom: 16px;
+    }
+
+    .plan-feature {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #616161;
+    }
+
+    .plan-feature .material-icons {
+      color: #43a047;
+      margin-right: 8px;
+      font-size: 16px;
+    }
+
+    .plan-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+
+    .plan-edit {
+      padding: 8px 16px;
+      font-size: 13px;
+      border: 1px solid var(--super-admin-color);
+      background-color: white;
+      color: var(--super-admin-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .plan-edit:hover {
+      background-color: var(--super-admin-light);
+    }
+
+    .plan-delete {
+      padding: 8px 16px;
+      font-size: 13px;
+      border: 1px solid #e53935;
+      background-color: white;
+      color: #e53935;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .plan-delete:hover {
+      background-color: #ffebee;
+    }
+
+    .invoices-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .invoices-table th, .invoices-table td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .invoices-table th {
+      background-color: var(--super-admin-light);
+      color: var(--super-admin-color);
+      font-weight: 500;
+    }
+
+    .invoices-table tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    .organization-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f5f5f5;
+    }
+
+    .organization-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .status-active {
+      background-color: #e8f5e9;
+      color: #43a047;
+    }
+
+    .status-trial {
+      background-color: #fff8e1;
+      color: #ffb300;
+    }
+
+    .status-past-due {
+      background-color: #ffebee;
+      color: #e53935;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #616161;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--super-admin-color);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .feature-list {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .feature-item input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .feature-item .material-icons {
+      color: #e53935;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .add-feature {
+      display: flex;
+      align-items: center;
+      color: var(--super-admin-color);
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .add-feature .material-icons {
+      margin-right: 4px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background-color: white;
+      border-radius: 8px;
+      width: 600px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #eeeeee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 500;
+      color: #424242;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .modal-close:hover {
+      background-color: #f5f5f5;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #eeeeee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-cancel {
+      background-color: #eeeeee;
+      color: #757575;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .btn-cancel:hover {
+      background-color: #e0e0e0;
+    }
+
+    .btn-save {
+      background-color: var(--super-admin-color);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .btn-save:hover {
+      background-color: #5e35b1;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .pagination-info {
+      font-size: 14px;
+      color: #757575;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+    }
+
+    .pagination-button {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: #757575;
+    }
+
+    .pagination-button:hover {
+      border-color: var(--super-admin-color);
+      color: var(--super-admin-color);
+    }
+
+    .pagination-button.active {
+      background-color: var(--super-admin-color);
+      border-color: var(--super-admin-color);
+      color: white;
+    }
+
+    .pagination-button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-button.disabled:hover {
+      border-color: #e0e0e0;
+      color: #757575;
+    }
+    
+    .action-menu {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .action-menu-button {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+    }
+    
+    .action-menu-button:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .action-menu-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+      border-radius: 4px;
+    }
+    
+    .action-menu-content a {
+      color: #616161;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .action-menu-content a .material-icons {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+    
+    .action-menu-content a:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .show {
+      display: block;
+    }
+    
+    .receipt-button {
+      cursor: pointer;
+      color: #757575;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+    }
+    
+    .receipt-button:hover {
+      background-color: #f0f0f0;
+    }
+    
+    /* API使用量関連の追加スタイル */
+    .api-usage-container {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .api-usage-header {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--super-admin-color);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .api-usage-header .material-icons {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+    
+    .api-usage-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .api-stat-box {
+      flex: 1;
+      min-width: 200px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .api-stat-title {
+      font-size: 14px;
+      color: #757575;
+      margin-bottom: 8px;
+    }
+    
+    .api-stat-value {
+      font-size: 24px;
+      font-weight: 500;
+      color: #424242;
+    }
+    
+    .api-stat-subtext {
+      font-size: 12px;
+      color: #9e9e9e;
+      margin-top: 4px;
+    }
+    
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-low {
+      background-color: #66bb6a;
+    }
+    
+    .progress-medium {
+      background-color: #ffb74d;
+    }
+    
+    .progress-high {
+      background-color: #ef5350;
+    }
+    
+    .usage-trend-chart {
+      width: 100%;
+      height: 200px;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #757575;
+    }
+    
+    /* トークン追加購入関連のスタイル */
+    .token-purchase-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      border: 1px solid #e0e0e0;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .token-purchase-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .token-purchase-header {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--super-admin-color);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .token-purchase-options {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .token-option {
+      flex: 1;
+      min-width: 250px;
+      background-color: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .token-option:hover {
+      background-color: #f0f7ff;
+      border-color: #90caf9;
+    }
+    
+    .token-option.selected {
+      background-color: #e3f2fd;
+      border-color: #2196f3;
+    }
+    
+    .token-option.selected:before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: #2196f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 14px;
+    }
+    
+    .token-option.selected:after {
+      content: '✓';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 14px;
+    }
+    
+    .token-amount {
+      font-size: 18px;
+      font-weight: 500;
+      color: #424242;
+      margin-bottom: 4px;
+    }
+    
+    .token-price {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2196f3;
+      margin-bottom: 8px;
+    }
+    
+    .token-price-detail {
+      font-size: 12px;
+      color: #757575;
+      margin-bottom: 12px;
+    }
+    
+    .token-session-estimate {
+      font-size: 13px;
+      color: #4caf50;
+      margin-bottom: 16px;
+    }
+    
+    .token-purchase-button {
+      width: 100%;
+      padding: 10px 16px;
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .token-purchase-button:hover {
+      background-color: #1976d2;
+    }
+    
+    .token-purchase-button .material-icons {
+      font-size: 18px;
+    }
+    
+    .token-note {
+      font-size: 13px;
+      color: #757575;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        flex-direction: column;
+      }
+
+      .main-content {
+        padding: 16px;
+      }
+
+      .modal {
+        width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-img">
+        <span class="material-icons">admin_panel_settings</span>
+      </div>
+      美姫命 スーパー管理者
+    </div>
+    <div class="avatar">
+      <span class="material-icons">person</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">business</span>
+        組織管理
+      </div>
+      <div class="sidebar-item active">
+        <span class="material-icons sidebar-item-icon">payments</span>
+        課金・プラン管理
+      </div>
+      <div class="sidebar-item">
+        <span class="material-icons sidebar-item-icon">help_outline</span>
+        サポート管理
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="page-title">
+        <h1>課金・プラン管理</h1>
+      </div>
+
+      <!-- タブ -->
+      <div class="tabs">
+        <div class="tab active" data-tab="revenue-simulation">収益シミュレーション</div>
+        <div class="tab" data-tab="plans">プラン設定</div>
+        <div class="tab" data-tab="invoices">請求管理</div>
+      </div>
+
+      <!-- プラン設定タブ -->
+      <div class="tab-content" id="plans-tab">
+        <div class="plans-container">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 18px; color: var(--super-admin-color);">プラン一覧</h2>
+            <button class="action-button" id="addPlanButton">
+              <span class="material-icons">add</span>
+              新規プラン作成
+            </button>
+          </div>
+          
+          <div class="plans-grid">
+            <!-- プラン1：ベーシック -->
+            <div class="plan-card">
+              <div class="plan-header">
+                <div class="plan-title">ベーシックプラン</div>
+                <div class="plan-price">¥9,800 <span class="plan-period">/月</span></div>
+              </div>
+              <div class="plan-body">
+                <div class="plan-description">
+                  小規模サロン向けの基本プラン。スタイリスト5名、クライアント200名までご利用いただけます。
+                </div>
+                <div class="plan-features">
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>スタイリスト 5名まで</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>クライアント 200名まで</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>カレンダー連携機能</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>GPT-4o AI チャット（月間600万トークン）</div>
+                  </div>
+                </div>
+                <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                  <span class="material-icons" style="font-size: 16px; margin-right: 4px;">people</span>
+                  現在の利用組織数: 8
+                </div>
+                <div class="plan-actions">
+                  <button class="plan-edit" onclick="openEditPlanModal('ベーシック')">編集</button>
+                  <button class="plan-delete">削除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- プラン2：スタンダード -->
+            <div class="plan-card">
+              <div class="plan-header">
+                <div class="plan-title">スタンダードプラン</div>
+                <div class="plan-price">¥19,800 <span class="plan-period">/月</span></div>
+              </div>
+              <div class="plan-body">
+                <div class="plan-description">
+                  中規模サロン向けの標準プラン。スタイリスト数無制限、クライアント500名までご利用いただけます。
+                </div>
+                <div class="plan-features">
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>スタイリスト数無制限</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>クライアント 500名まで</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>カレンダー連携機能</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>データインポート機能</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>GPT-4o AI チャット（月間1,200万トークン）</div>
+                  </div>
+                </div>
+                <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                  <span class="material-icons" style="font-size: 16px; margin-right: 4px;">people</span>
+                  現在の利用組織数: 12
+                </div>
+                <div class="plan-actions">
+                  <button class="plan-edit" onclick="openEditPlanModal('スタンダード')">編集</button>
+                  <button class="plan-delete">削除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- プラン3：プレミアム -->
+            <div class="plan-card">
+              <div class="plan-header">
+                <div class="plan-title">プレミアムプラン</div>
+                <div class="plan-price">¥29,800 <span class="plan-period">/月</span></div>
+              </div>
+              <div class="plan-body">
+                <div class="plan-description">
+                  大規模サロン向けのハイエンドプラン。スタイリスト数無制限、クライアント数無制限でご利用いただけます。
+                </div>
+                <div class="plan-features">
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>スタイリスト数無制限</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>クライアント数無制限</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>高度なカレンダー連携機能</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>GPT-4o AI チャット（月間2,000万トークン）</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>優先サポート</div>
+                  </div>
+                </div>
+                <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                  <span class="material-icons" style="font-size: 16px; margin-right: 4px;">people</span>
+                  現在の利用組織数: 4
+                </div>
+                <div class="plan-actions">
+                  <button class="plan-edit" onclick="openEditPlanModal('プレミアム')">編集</button>
+                  <button class="plan-delete">削除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- トライアルプラン -->
+            <div class="plan-card">
+              <div class="plan-header" style="background-color: #fff8e1; color: #ffb300;">
+                <div class="plan-title">トライアルプラン</div>
+                <div class="plan-price">無料 <span class="plan-period">14日間</span></div>
+              </div>
+              <div class="plan-body">
+                <div class="plan-description">
+                  14日間の無料トライアルプラン。スタンダードプランと同等の機能をお試しいただけます。
+                </div>
+                <div class="plan-features">
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>スタイリスト数無制限（トライアル期間中）</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>クライアント数無制限（トライアル期間中）</div>
+                  </div>
+                  <div class="plan-feature">
+                    <span class="material-icons">check_circle</span>
+                    <div>GPT-4o AI チャット（限定50万トークン）</div>
+                  </div>
+                </div>
+                <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                  <span class="material-icons" style="font-size: 16px; margin-right: 4px;">people</span>
+                  現在の利用組織数: 3
+                </div>
+                <div class="plan-actions">
+                  <button class="plan-edit" onclick="openEditPlanModal('トライアル')">編集</button>
+                  <button class="plan-delete">削除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- トークン追加購入セクション -->
+          <div style="margin-top: 32px;">
+            <div class="api-usage-header">
+              <span class="material-icons">add_circle</span>
+              トークン追加購入プラン
+            </div>
+            
+            <div class="token-purchase-card">
+              <div class="token-purchase-header">
+                <div>各組織に提供するトークン追加オプション</div>
+                <button class="action-button" id="addNewTokenPlanBtn">
+                  <span class="material-icons">add</span>
+                  新規追加トークンプラン作成
+                </button>
+              </div>
+              
+              <div style="font-size: 14px; color: #757575; margin-bottom: 16px;">
+                各プランのトークン上限に達した組織は、追加で以下のオプションからトークンを購入できます。
+                利益率は<strong>約70%</strong>に設定されています。
+              </div>
+              
+              <div class="plans-grid">
+                <!-- 追加プラン1 - 編集可能なカード形式に変更 -->
+                <div class="plan-card">
+                  <div class="plan-header">
+                    <div class="plan-title">小容量プラン</div>
+                    <div class="plan-price">¥980</div>
+                  </div>
+                  <div class="plan-body">
+                    <div class="plan-description">
+                      100万トークン（1トークンあたり約0.00098円）
+                    </div>
+                    <div class="plan-features">
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>チャット約660セッション分</div>
+                      </div>
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>購入月内に消費必須</div>
+                      </div>
+                    </div>
+                    <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                      <span class="material-icons" style="font-size: 16px; margin-right: 4px;">insights</span>
+                      採算性: 利益率 約74.7%
+                    </div>
+                    <div class="plan-actions">
+                      <button class="plan-edit" onclick="openEditTokenPlanModal('small')">編集</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 追加プラン2 - 編集可能なカード形式に変更 -->
+                <div class="plan-card">
+                  <div class="plan-header">
+                    <div class="plan-title">中容量プラン</div>
+                    <div class="plan-price">¥3,980</div>
+                  </div>
+                  <div class="plan-body">
+                    <div class="plan-description">
+                      500万トークン（1トークンあたり約0.000796円）
+                    </div>
+                    <div class="plan-features">
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>チャット約3,300セッション分</div>
+                      </div>
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>購入月内に消費必須</div>
+                      </div>
+                    </div>
+                    <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                      <span class="material-icons" style="font-size: 16px; margin-right: 4px;">insights</span>
+                      採算性: 利益率 約68.8%
+                    </div>
+                    <div class="plan-actions">
+                      <button class="plan-edit" onclick="openEditTokenPlanModal('medium')">編集</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 追加プラン3 - 編集可能なカード形式に変更 -->
+                <div class="plan-card">
+                  <div class="plan-header">
+                    <div class="plan-title">大容量プラン</div>
+                    <div class="plan-price">¥8,000</div>
+                  </div>
+                  <div class="plan-body">
+                    <div class="plan-description">
+                      1,000万トークン（1トークンあたり約0.0008円）
+                    </div>
+                    <div class="plan-features">
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>チャット約6,600セッション分</div>
+                      </div>
+                      <div class="plan-feature">
+                        <span class="material-icons">check_circle</span>
+                        <div>購入月内に消費必須</div>
+                      </div>
+                    </div>
+                    <div style="color: #757575; font-size: 13px; display: flex; align-items: center;">
+                      <span class="material-icons" style="font-size: 16px; margin-right: 4px;">insights</span>
+                      採算性: 利益率 約69.0%
+                    </div>
+                    <div style="position: absolute; top: -10px; right: -10px; background-color: #f44336; color: white; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: 500;">
+                      お得
+                    </div>
+                    <div class="plan-actions">
+                      <button class="plan-edit" onclick="openEditTokenPlanModal('large')">編集</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="token-note">
+                <span class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">info</span>
+                購入したトークンは購入月内に消費必須。翌月への繰り越しはできません。セッション数の目安は1セッションあたり平均1,500トークンで計算しています。
+              </div>
+            </div>
+            
+            <!-- 収益予測情報セクションを削除しました -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 請求管理タブ -->
+      <div class="tab-content" id="invoices-tab">
+        <div class="plans-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin: 0; font-size: 18px; color: var(--super-admin-color);">請求書一覧</h2>
+            <div style="display: flex; gap: 12px;">
+              <select style="padding: 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 14px;">
+                <option value="all">すべてのプラン</option>
+                <option value="basic">ベーシック</option>
+                <option value="standard">スタンダード</option>
+                <option value="premium">プレミアム</option>
+              </select>
+              <select style="padding: 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 14px;">
+                <option value="all">すべてのステータス</option>
+                <option value="pending">支払い待ち</option>
+                <option value="paid">支払い済み</option>
+                <option value="pastdue">支払い遅延</option>
+                <option value="canceled">キャンセル</option>
+              </select>
+              <button class="action-button">
+                <span class="material-icons">add</span>
+                新規請求書作成
+              </button>
+            </div>
+          </div>
+
+          <table class="invoices-table">
+            <thead>
+              <tr>
+                <th>請求書番号</th>
+                <th>組織名</th>
+                <th>プラン</th>
+                <th>金額</th>
+                <th>発行日</th>
+                <th>支払期限</th>
+                <th>ステータス</th>
+                <th style="width: 100px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>INV-2025042501</td>
+                <td>ヘアデザインRICO</td>
+                <td>ベーシック</td>
+                <td>¥9,800</td>
+                <td>2025/04/18</td>
+                <td>2025/05/18</td>
+                <td><span class="status-badge status-active">支払い済み</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042501')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042501')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042501')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042501')"><span class="material-icons">send</span>再送信</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>INV-2025042502</td>
+                <td>美容室フローラ</td>
+                <td>プレミアム</td>
+                <td>¥29,800</td>
+                <td>2025/04/15</td>
+                <td>2025/05/15</td>
+                <td><span class="status-badge status-active">支払い済み</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042502')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042502')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042502')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042502')"><span class="material-icons">send</span>再送信</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>INV-2025042503</td>
+                <td>ヘアーサロンモモ</td>
+                <td>スタンダード</td>
+                <td>¥19,800</td>
+                <td>2025/04/12</td>
+                <td>2025/05/12</td>
+                <td><span class="status-badge status-past-due">支払い遅延</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042503')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042503')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042503')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042503')"><span class="material-icons">send</span>再送信</a>
+                        <a onclick="sendReminder('INV-2025042503')"><span class="material-icons">notification_important</span>支払い催促</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>INV-2025042504</td>
+                <td>サロンヴィヴィ</td>
+                <td>ベーシック</td>
+                <td>¥9,800</td>
+                <td>2025/04/10</td>
+                <td>2025/05/10</td>
+                <td><span class="status-badge status-active">支払い済み</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042504')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042504')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042504')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042504')"><span class="material-icons">send</span>再送信</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>INV-2025042505</td>
+                <td>ヘアーメイクLush</td>
+                <td>スタンダード</td>
+                <td>¥19,800</td>
+                <td>2025/04/05</td>
+                <td>2025/05/05</td>
+                <td><span class="status-badge status-active">支払い済み</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042505')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042505')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042505')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042505')"><span class="material-icons">send</span>再送信</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>INV-2025042506</td>
+                <td>アトリエブルーム</td>
+                <td>プレミアム</td>
+                <td>¥29,800</td>
+                <td>2025/04/01</td>
+                <td>2025/05/01</td>
+                <td><span class="status-badge status-active">支払い済み</span></td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <div class="receipt-button" title="請求書表示" onclick="showInvoice('INV-2025042506')">
+                      <span class="material-icons">receipt</span>
+                    </div>
+                    <div class="action-menu">
+                      <div class="action-menu-button" onclick="toggleActionMenu(this)">
+                        <span class="material-icons">more_vert</span>
+                      </div>
+                      <div class="action-menu-content">
+                        <a onclick="viewInvoiceDetails('INV-2025042506')"><span class="material-icons">visibility</span>詳細を表示</a>
+                        <a onclick="downloadInvoice('INV-2025042506')"><span class="material-icons">download</span>ダウンロード</a>
+                        <a onclick="resendInvoice('INV-2025042506')"><span class="material-icons">send</span>再送信</a>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <div class="pagination-info">
+              36件中 1-6件を表示
+            </div>
+            <div class="pagination-controls">
+              <button class="pagination-button disabled">
+                <span class="material-icons">first_page</span>
+              </button>
+              <button class="pagination-button disabled">
+                <span class="material-icons">chevron_left</span>
+              </button>
+              <button class="pagination-button active">1</button>
+              <button class="pagination-button">2</button>
+              <button class="pagination-button">3</button>
+              <button class="pagination-button">
+                <span class="material-icons">chevron_right</span>
+              </button>
+              <button class="pagination-button">
+                <span class="material-icons">last_page</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 収益シミュレーションタブ（新規追加） -->
+      <div class="tab-content active" id="revenue-simulation-tab">
+        <div class="plans-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin: 0; font-size: 18px; color: var(--super-admin-color);">収益シミュレーション</h2>
+            <div style="display: flex; gap: 12px;">
+              <button class="action-button" id="saveSimulationBtn">
+                <span class="material-icons">save</span>
+                シミュレーション保存
+              </button>
+              <button class="action-button" id="exportSimulationBtn">
+                <span class="material-icons">download</span>
+                エクスポート
+              </button>
+            </div>
+          </div>
+          
+          <!-- 収益概要 -->
+          <div class="api-usage-stats" style="margin-bottom: 24px;">
+            <div class="api-stat-box" style="background-color: #e8f5e9;">
+              <div class="api-stat-title">現在の月額収益</div>
+              <div class="api-stat-value">¥435,200</div>
+              <div class="api-stat-subtext">組織数: 27</div>
+            </div>
+            <div class="api-stat-box" style="background-color: #e3f2fd;">
+              <div class="api-stat-title">現在の推定APIコスト（当月）</div>
+              <div class="api-stat-value">¥52,461</div>
+              <div class="api-stat-subtext">前月比 +8.7%</div>
+            </div>
+            <div class="api-stat-box" style="background-color: #fff8e1;">
+              <div class="api-stat-title">現在の推定利益率</div>
+              <div class="api-stat-value">69.3%</div>
+              <div class="api-stat-subtext">目標: 70%</div>
+            </div>
+          </div>
+          
+          <!-- 基本情報セクション -->
+          <div class="api-usage-header">
+            <span class="material-icons">info</span>
+            基本情報とシミュレーション前提条件
+          </div>
+          
+          <div style="background-color: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 16px;">
+              <div style="min-width: 200px;">
+                <label for="exchange-rate" style="display: block; margin-bottom: 4px;"><strong>為替レート：</strong></label>
+                <div style="display: flex; align-items: center;">
+                  <span style="margin-right: 4px;">1ドル =</span>
+                  <input type="number" id="exchange-rate" style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" value="150" min="100" max="200" step="0.1" onchange="updateSimulationParams()">
+                  <span style="margin-left: 4px;">円</span>
+                </div>
+              </div>
+              <div style="min-width: 220px;">
+                <label for="api-rate" style="display: block; margin-bottom: 4px;"><strong>API単価：</strong></label>
+                <div style="display: flex; align-items: center;">
+                  <span style="margin-right: 4px;">¥</span>
+                  <input type="number" id="api-rate" style="width: 120px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" value="0.000465" min="0.0001" max="0.001" step="0.000001" onchange="updateSimulationParams()">
+                  <span style="margin-left: 4px;">/ token</span>
+                </div>
+              </div>
+              <div style="min-width: 220px;">
+                <label for="session-size" style="display: block; margin-bottom: 4px;"><strong>平均セッションサイズ：</strong></label>
+                <div style="display: flex; align-items: center;">
+                  <input type="number" id="session-size" style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" value="1500" min="500" max="5000" step="100" onchange="updateSimulationParams()">
+                  <span style="margin-left: 4px;">tokens/回</span>
+                </div>
+              </div>
+              <div style="min-width: 220px;">
+                <label for="profit-target" style="display: block; margin-bottom: 4px;"><strong>粗利率目標：</strong></label>
+                <div style="display: flex; align-items: center;">
+                  <input type="number" id="profit-target" style="width: 60px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" value="70" min="50" max="90" step="1" onchange="updateSimulationParams()">
+                  <span style="margin-left: 4px;">%（原価率 <span id="cost-ratio">30</span>%）</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 13px; color: #757575;">
+                <span class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">lightbulb</span>
+                値を変更するとシミュレーション結果が自動的に更新されます
+              </div>
+              <button id="reset-params" class="action-button" style="background-color: #9e9e9e; padding: 4px 12px; font-size: 13px;">
+                <span class="material-icons" style="font-size: 16px;">refresh</span>
+                デフォルトに戻す
+              </button>
+            </div>
+          </div>
+          
+          <!-- 収益シミュレーションテーブル -->
+          <div class="api-usage-header">
+            <span class="material-icons">assessment</span>
+            プラン別収益シミュレーション
+          </div>
+          
+          <table class="invoices-table" id="revenue-simulation-table">
+            <thead>
+              <tr>
+                <th>プラン名</th>
+                <th>現在組織数</th>
+                <th>月額単価</th>
+                <th>現在月額売上</th>
+                <th>仮想組織数
+                  <div style="font-weight: normal; font-size: 12px; color: #757575;">
+                    編集可能
+                  </div>
+                </th>
+                <th>仮想月額売上</th>
+                <th>仮想年額売上</th>
+                <th>原価率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ベーシックプラン</td>
+                <td>8</td>
+                <td>¥9,800</td>
+                <td>¥78,400</td>
+                <td>
+                  <input type="number" class="form-input simulation-input" id="basic-sim-count" value="10" min="0" style="width: 80px; text-align: center;" onchange="updateSimulation()">
+                </td>
+                <td id="basic-sim-monthly">¥98,000</td>
+                <td id="basic-sim-yearly">¥1,176,000</td>
+                <td>
+                  <div class="progress-container" style="width: 100%; margin: 4px 0;">
+                    <div class="progress-bar progress-low" style="width: 30%"></div>
+                  </div>
+                  <div style="text-align: center; font-size: 12px;">30%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>スタンダードプラン</td>
+                <td>12</td>
+                <td>¥19,800</td>
+                <td>¥237,600</td>
+                <td>
+                  <input type="number" class="form-input simulation-input" id="standard-sim-count" value="15" min="0" style="width: 80px; text-align: center;" onchange="updateSimulation()">
+                </td>
+                <td id="standard-sim-monthly">¥297,000</td>
+                <td id="standard-sim-yearly">¥3,564,000</td>
+                <td>
+                  <div class="progress-container" style="width: 100%; margin: 4px 0;">
+                    <div class="progress-bar progress-low" style="width: 29%"></div>
+                  </div>
+                  <div style="text-align: center; font-size: 12px;">29%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>プレミアムプラン</td>
+                <td>4</td>
+                <td>¥29,800</td>
+                <td>¥119,200</td>
+                <td>
+                  <input type="number" class="form-input simulation-input" id="premium-sim-count" value="6" min="0" style="width: 80px; text-align: center;" onchange="updateSimulation()">
+                </td>
+                <td id="premium-sim-monthly">¥178,800</td>
+                <td id="premium-sim-yearly">¥2,145,600</td>
+                <td>
+                  <div class="progress-container" style="width: 100%; margin: 4px 0;">
+                    <div class="progress-bar progress-low" style="width: 28%"></div>
+                  </div>
+                  <div style="text-align: center; font-size: 12px;">28%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>トライアルプラン</td>
+                <td>3</td>
+                <td>¥0</td>
+                <td>¥0</td>
+                <td>
+                  <input type="number" class="form-input simulation-input" id="trial-sim-count" value="5" min="0" style="width: 80px; text-align: center;" onchange="updateSimulation()">
+                </td>
+                <td id="trial-sim-monthly">¥0</td>
+                <td id="trial-sim-yearly">¥0</td>
+                <td>
+                  <div style="text-align: center; font-size: 12px;">-</div>
+                </td>
+              </tr>
+              <tr class="summary-row" style="background-color: #f5f5f5; font-weight: 500;">
+                <td>合計</td>
+                <td>27</td>
+                <td>-</td>
+                <td id="current-total-monthly">¥435,200</td>
+                <td id="sim-total-count">36</td>
+                <td id="sim-total-monthly">¥573,800</td>
+                <td id="sim-total-yearly">¥6,885,600</td>
+                <td id="avg-cost-ratio">
+                  <div class="progress-container" style="width: 100%; margin: 4px 0;">
+                    <div class="progress-bar progress-low" style="width: 29%"></div>
+                  </div>
+                  <div style="text-align: center; font-size: 12px;">29%</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          
+          <!-- 最適トークン配布とセッション数テーブル -->
+          <div class="api-usage-header" style="margin-top: 24px;">
+            <span class="material-icons">settings</span>
+            収益設計基準に基づいた最適トークン配布＆セッション数
+          </div>
+          
+          <table class="invoices-table">
+            <thead>
+              <tr>
+                <th>プラン名</th>
+                <th>月額料金</th>
+                <th>原価上限（30%）</th>
+                <th>配布可能トークン量</th>
+                <th>想定セッション数<span style="font-weight: normal; font-size: 12px; display: block;">1,500トークン/回</span></th>
+                <th>備考例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ベーシック</td>
+                <td>¥9,800</td>
+                <td>¥2,940</td>
+                <td>600万</td>
+                <td>約 4,000 回/月</td>
+                <td>個人〜2席サロン</td>
+              </tr>
+              <tr>
+                <td>スタンダード</td>
+                <td>¥19,800</td>
+                <td>¥5,940</td>
+                <td>1,200万</td>
+                <td>約 8,000 回/月</td>
+                <td>3〜5席サロン</td>
+              </tr>
+              <tr>
+                <td>プレミアム</td>
+                <td>¥29,800</td>
+                <td>¥8,940</td>
+                <td>2,000万</td>
+                <td>約 13,000 回/月</td>
+                <td>6席以上の大型</td>
+              </tr>
+              <tr>
+                <td>VIP／法人向け</td>
+                <td>¥49,800</td>
+                <td>¥14,940</td>
+                <td>3,000万</td>
+                <td>約 20,000 回/月</td>
+                <td>多店舗展開など</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- プラン追加・編集モーダル -->
+  <div class="modal-overlay" id="planModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="planModalTitle">新規プラン作成</div>
+        <div class="modal-close" id="closePlanModal">
+          <span class="material-icons">close</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">プラン名 <span style="color: red;">*</span></label>
+          <input type="text" class="form-input" id="planName" placeholder="例：ベーシックプラン">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">月額料金 (円) <span style="color: red;">*</span></label>
+            <input type="number" class="form-input" id="planPrice" placeholder="例：9800">
+          </div>
+          <div class="form-group">
+            <label class="form-label">請求サイクル</label>
+            <select class="form-input" id="planCycle">
+              <option value="monthly">月額</option>
+              <option value="yearly">年額</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">プラン説明</label>
+          <textarea class="form-textarea" id="planDescription" placeholder="プランの説明文を入力してください..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">最大スタイリスト数</label>
+            <input type="number" class="form-input" id="maxStylists" placeholder="無制限の場合は空欄">
+          </div>
+          <div class="form-group">
+            <label class="form-label">最大クライアント数</label>
+            <input type="number" class="form-input" id="maxClients" placeholder="無制限の場合は空欄">
+          </div>
+        </div>
+        
+        <!-- トークン上限設定 -->
+        <div class="form-group">
+          <label class="form-label">月間GPT-4oトークン使用上限 <span style="color: red;">*</span></label>
+          <input type="number" class="form-input" id="tokenLimit" placeholder="例：6000000">
+          <div style="font-size: 12px; color: #757575; margin-top: 4px;">
+            ※ トークンはユーザーとAI間のテキストを計測する単位です。プランに応じて適切な上限を設定してください。
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancelPlanModal">キャンセル</button>
+        <button class="btn-save" id="savePlanModal">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 請求書詳細モーダル -->
+  <div class="modal-overlay" id="invoiceDetailModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">請求書詳細</div>
+        <div class="modal-close" id="closeInvoiceDetailModal">
+          <span class="material-icons">close</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="invoiceDetailContent">
+          <!-- 詳細内容はJavaScriptで動的に生成 -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="closeInvoiceDetailBtn">閉じる</button>
+        <button class="btn-save" id="updateInvoiceStatusBtn">ステータス変更</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- トークン追加購入モーダル -->
+  <div class="modal-overlay" id="tokenPurchaseModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">トークン追加購入</div>
+        <div class="modal-close" id="closeTokenPurchaseModal">
+          <span class="material-icons">close</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="tokenPurchaseContent">
+          <div style="margin-bottom: 16px;">
+            <div style="font-weight: 500; margin-bottom: 8px;">組織を選択</div>
+            <select class="form-input" id="tokenPurchaseOrg" style="width: 100%;">
+              <option value="org1">ヘアデザインRICO</option>
+              <option value="org2">美容室フローラ</option>
+              <option value="org3">ヘアーメイクLush</option>
+              <option value="org4">ヘアーサロンモモ</option>
+              <option value="org5">サロンヴィヴィ</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <div style="font-weight: 500; margin-bottom: 8px;">購入するトークンプラン</div>
+            <div id="selectedTokenPlan" style="background-color: #e3f2fd; border-radius: 8px; padding: 16px; border: 1px solid #90caf9;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-size: 18px; font-weight: 500;">100万トークン</div>
+                <div style="font-size: 20px; font-weight: 700; color: #1976d2;">¥980</div>
+              </div>
+              <div style="color: #757575; font-size: 13px; margin-bottom: 8px;">1トークンあたり約0.00098円</div>
+              <div style="display: flex; align-items: center; color: #4caf50; font-size: 14px; margin-bottom: 8px;">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px;">chat</span>
+                約660セッション分（1セッション=1,500トークン計算）
+              </div>
+              <div style="color: #757575; font-size: 12px;">
+                <span class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">info</span>
+                購入したトークンは購入月内に消費する必要があります。翌月への繰り越しはできません。
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 24px;">
+            <div style="font-weight: 500; margin-bottom: 8px;">課金方法</div>
+            <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+              <div style="flex: 1; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; background-color: #f9f9f9;" onclick="this.style.backgroundColor = '#e3f2fd'; this.style.borderColor = '#2196f3';">
+                <div style="display: flex; align-items: center;">
+                  <span class="material-icons" style="color: #2196f3; margin-right: 8px;">credit_card</span>
+                  <div>
+                    <div style="font-weight: 500;">クレジットカード</div>
+                    <div style="font-size: 12px; color: #757575;">既存の登録カードに請求</div>
+                  </div>
+                </div>
+              </div>
+              <div style="flex: 1; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer;" onclick="this.style.backgroundColor = '#e3f2fd'; this.style.borderColor = '#2196f3';">
+                <div style="display: flex; align-items: center;">
+                  <span class="material-icons" style="color: #ff9800; margin-right: 8px;">receipt</span>
+                  <div>
+                    <div style="font-weight: 500;">請求書発行</div>
+                    <div style="font-size: 12px; color: #757575;">月末に一括請求</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="color: #f44336; font-size: 14px; margin-bottom: 16px; background-color: #ffebee; padding: 12px; border-radius: 4px; display: flex; align-items: flex-start;">
+            <span class="material-icons" style="margin-right: 8px; margin-top: 2px;">warning</span>
+            <div>
+              <strong>注意:</strong> 購入完了後、即座に組織のトークン残高に追加されます。この操作は取り消しできません。
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancelTokenPurchaseBtn">キャンセル</button>
+        <button class="btn-save" id="confirmTokenPurchaseBtn">購入を確定</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 新規トークンプラン作成モーダル -->
+  <div class="modal-overlay" id="tokenSettingsModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">新規トークンプラン作成</div>
+        <div class="modal-close" id="closeTokenSettingsModal">
+          <span class="material-icons">close</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 16px;">
+          <p style="font-size: 14px; color: #757575; margin-bottom: 16px;">
+            各組織に提供する新しい追加トークン購入プランを作成します。利益率の目標は約70%です。
+          </p>
+          
+          <div style="background-color: #e3f2fd; padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 14px;">
+            <div style="display: flex; align-items: center; color: #1976d2; margin-bottom: 8px;">
+              <span class="material-icons" style="margin-right: 8px;">info</span>
+              <strong>参考情報</strong>
+            </div>
+            <ul style="margin: 0; padding-left: 24px;">
+              <li>トークン原価（概算）: 約0.000248円/トークン</li>
+              <li>推奨利益率: 約70%</li>
+              <li>1セッションあたり平均使用量: 約1,500トークン</li>
+            </ul>
+          </div>
+          
+          <!-- 新規プラン設定 -->
+          <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">プラン名</label>
+              <input type="text" class="form-input" placeholder="例: 特大容量プラン" id="newPlanName">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">トークン量</label>
+                <input type="number" class="form-input" placeholder="例: 20000000" id="newPlanTokens">
+              </div>
+              <div class="form-group">
+                <label class="form-label">販売価格（円）</label>
+                <input type="number" class="form-input" placeholder="例: 15000" id="newPlanPrice">
+              </div>
+            </div>
+            <div style="font-size: 13px; color: #757575; display: flex; align-items: center; margin-top: 8px;">
+              <span class="material-icons" style="font-size: 16px; margin-right: 4px; color: #4caf50;">calculate</span>
+              <div id="newPlanProfitCalc">原価と利益率は入力後に計算されます</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancelTokenSettingsBtn">キャンセル</button>
+        <button class="btn-save" id="saveTokenSettingsBtn">プランを作成</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 個別トークンプラン編集モーダル -->
+  <div class="modal-overlay" id="singleTokenPlanModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="singleTokenPlanTitle">トークンプラン編集</div>
+        <div class="modal-close" id="closeSingleTokenPlanModal">
+          <span class="material-icons">close</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 16px;">
+          <p style="font-size: 14px; color: #757575; margin-bottom: 16px;">
+            このトークン購入プランの設定を編集します。利益率の目標は約70%です。
+          </p>
+          
+          <div style="background-color: #e3f2fd; padding: 12px; border-radius: 4px; margin-bottom: 16px; font-size: 14px;">
+            <div style="display: flex; align-items: center; color: #1976d2; margin-bottom: 8px;">
+              <span class="material-icons" style="margin-right: 8px;">info</span>
+              <strong>参考情報</strong>
+            </div>
+            <ul style="margin: 0; padding-left: 24px;">
+              <li>トークン原価（概算）: 約0.000248円/トークン</li>
+              <li>推奨利益率: 約70%</li>
+              <li>1セッションあたり平均使用量: 約1,500トークン</li>
+            </ul>
+          </div>
+          
+          <!-- プラン設定 -->
+          <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px;">
+            <div class="form-group">
+              <label class="form-label">プラン名</label>
+              <input type="text" class="form-input" id="singlePlanName">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">トークン量</label>
+                <input type="number" class="form-input" id="singlePlanTokens">
+              </div>
+              <div class="form-group">
+                <label class="form-label">販売価格（円）</label>
+                <input type="number" class="form-input" id="singlePlanPrice">
+              </div>
+            </div>
+            <div style="font-size: 13px; color: #757575; display: flex; align-items: center; margin-top: 8px;">
+              <span class="material-icons" style="font-size: 16px; margin-right: 4px; color: #4caf50;">calculate</span>
+              <div id="singlePlanProfitCalc">原価と利益率は入力後に計算されます</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="cancelSingleTokenPlanBtn">キャンセル</button>
+        <button class="btn-save" id="saveSingleTokenPlanBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // タブ切り替えの処理
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // アクティブなタブのクラスを削除
+        document.querySelector('.tab.active').classList.remove('active');
+        // クリックしたタブをアクティブに
+        tab.classList.add('active');
+
+        // タブコンテンツの表示切り替え
+        const tabId = tab.getAttribute('data-tab');
+        document.querySelector('.tab-content.active').classList.remove('active');
+        document.getElementById(tabId + '-tab').classList.add('active');
+      });
+    });
+
+    // プランモーダルの処理
+    const planModal = document.getElementById('planModal');
+    const addPlanButton = document.getElementById('addPlanButton');
+    const closePlanModal = document.getElementById('closePlanModal');
+    const cancelPlanModal = document.getElementById('cancelPlanModal');
+    const savePlanModal = document.getElementById('savePlanModal');
+    const planModalTitle = document.getElementById('planModalTitle');
+
+    addPlanButton.addEventListener('click', () => {
+      planModalTitle.textContent = '新規プラン作成';
+      resetPlanForm();
+      planModal.style.display = 'flex';
+    });
+
+    closePlanModal.addEventListener('click', () => {
+      planModal.style.display = 'none';
+    });
+
+    cancelPlanModal.addEventListener('click', () => {
+      planModal.style.display = 'none';
+    });
+
+    savePlanModal.addEventListener('click', () => {
+      // ここで保存処理を実行
+      planModal.style.display = 'none';
+      // 実際のアプリケーションでは、フォームデータを取得してAPIリクエストを送信する
+    });
+
+    function openEditPlanModal(planName) {
+      planModalTitle.textContent = `${planName}プラン編集`;
+      
+      // 実際のアプリケーションでは、プランデータを取得して各フィールドに設定する
+      document.getElementById('planName').value = `${planName}プラン`;
+      
+      switch(planName) {
+        case 'ベーシック':
+          document.getElementById('planPrice').value = '9800';
+          document.getElementById('planDescription').value = '小規模サロン向けの基本プラン。スタイリスト5名、クライアント200名までご利用いただけます。';
+          document.getElementById('maxStylists').value = '5';
+          document.getElementById('maxClients').value = '200';
+          document.getElementById('tokenLimit').value = '6000000';
+          break;
+        case 'スタンダード':
+          document.getElementById('planPrice').value = '19800';
+          document.getElementById('planDescription').value = '中規模サロン向けの標準プラン。スタイリスト数無制限、クライアント500名までご利用いただけます。';
+          document.getElementById('maxStylists').value = '';
+          document.getElementById('maxClients').value = '500';
+          document.getElementById('tokenLimit').value = '12000000';
+          break;
+        case 'プレミアム':
+          document.getElementById('planPrice').value = '29800';
+          document.getElementById('planDescription').value = '大規模サロン向けのハイエンドプラン。スタイリスト数無制限、クライアント数無制限でご利用いただけます。';
+          document.getElementById('maxStylists').value = '';
+          document.getElementById('maxClients').value = '';
+          document.getElementById('tokenLimit').value = '20000000';
+          break;
+        case 'トライアル':
+          document.getElementById('planPrice').value = '0';
+          document.getElementById('planDescription').value = '14日間の無料トライアルプラン。スタンダードプランと同等の機能をお試しいただけます。';
+          document.getElementById('maxStylists').value = '';
+          document.getElementById('maxClients').value = '';
+          document.getElementById('tokenLimit').value = '500000';
+          break;
+      }
+      
+      planModal.style.display = 'flex';
+    }
+
+    function resetPlanForm() {
+      document.getElementById('planName').value = '';
+      document.getElementById('planPrice').value = '';
+      document.getElementById('planDescription').value = '';
+      document.getElementById('maxStylists').value = '';
+      document.getElementById('maxClients').value = '';
+      document.getElementById('tokenLimit').value = '';
+      // 機能一覧もリセット（実装略）
+    }
+
+    // トークンプラン編集モーダルを開く処理
+    const tokenSettingsModal = document.getElementById('tokenSettingsModal');
+    const closeTokenSettingsModal = document.getElementById('closeTokenSettingsModal');
+    const cancelTokenSettingsBtn = document.getElementById('cancelTokenSettingsBtn');
+    const saveTokenSettingsBtn = document.getElementById('saveTokenSettingsBtn');
+    const editTokenPurchaseOptionsBtn = document.getElementById('editTokenPurchaseOptionsBtn');
+    
+    // 編集ボタンクリック時の処理
+    function openEditTokenPlanModal(planSize) {
+      // プランサイズに応じてフォームの値を設定
+      switch(planSize) {
+        case 'small':
+          document.getElementById('smallPlanTokens').value = '1000000';
+          document.getElementById('smallPlanPrice').value = '980';
+          break;
+        case 'medium':
+          document.getElementById('mediumPlanTokens').value = '5000000';
+          document.getElementById('mediumPlanPrice').value = '3980';
+          break;
+        case 'large':
+          document.getElementById('largePlanTokens').value = '10000000';
+          document.getElementById('largePlanPrice').value = '8000';
+          break;
+      }
+      
+      // モーダルを表示
+      tokenSettingsModal.style.display = 'flex';
+    }
+    
+    // 編集ボタンクリック時の処理
+    editTokenPurchaseOptionsBtn.addEventListener('click', () => {
+      tokenSettingsModal.style.display = 'flex';
+    });
+    
+    // 閉じるボタンクリック時の処理
+    closeTokenSettingsModal.addEventListener('click', () => {
+      tokenSettingsModal.style.display = 'none';
+    });
+    
+    // キャンセルボタンクリック時の処理
+    cancelTokenSettingsBtn.addEventListener('click', () => {
+      tokenSettingsModal.style.display = 'none';
+    });
+    
+    // 保存ボタンクリック時の処理
+    saveTokenSettingsBtn.addEventListener('click', () => {
+      // 実際のアプリケーションでは、ここでデータを保存する処理が入る
+      tokenSettingsModal.style.display = 'none';
+      
+      // この部分はデモ用なので、実際のアプリケーションでは適切なAPIリクエストを送信する
+      alert('トークン追加購入プランの設定が保存されました');
+    });
+    const addFeature = document.getElementById('addFeature');
+    const featureList = document.getElementById('featureList');
+
+    addFeature.addEventListener('click', () => {
+      const featureItem = document.createElement('div');
+      featureItem.className = 'feature-item';
+      featureItem.innerHTML = `
+        <input type="text" placeholder="機能を入力">
+        <span class="material-icons">remove_circle</span>
+      `;
+      featureList.appendChild(featureItem);
+      
+      // 削除ボタンの処理を追加
+      const removeButton = featureItem.querySelector('.material-icons');
+      removeButton.addEventListener('click', () => {
+        featureItem.remove();
+      });
+    });
+
+    // 既存の削除ボタンにイベントリスナーを追加
+    document.querySelectorAll('.feature-item .material-icons').forEach(button => {
+      button.addEventListener('click', () => {
+        button.parentElement.remove();
+      });
+    });
+
+    // モーダル外クリックで閉じる
+    window.addEventListener('click', (e) => {
+      if (e.target === planModal) {
+        planModal.style.display = 'none';
+      }
+      if (e.target === document.getElementById('invoiceDetailModal')) {
+        document.getElementById('invoiceDetailModal').style.display = 'none';
+      }
+    });
+    
+    // アクションメニューの表示・非表示
+    function toggleActionMenu(element) {
+      // 他のメニューを閉じる
+      document.querySelectorAll('.action-menu-content').forEach(menu => {
+        if (menu !== element.nextElementSibling) {
+          menu.classList.remove('show');
+        }
+      });
+      
+      // クリックされたメニューの表示切り替え
+      element.nextElementSibling.classList.toggle('show');
+    }
+    
+    // クリック以外の場所をクリックした時にメニューを閉じる
+    window.addEventListener('click', (event) => {
+      if (!event.target.matches('.action-menu-button') && !event.target.matches('.material-icons')) {
+        const menus = document.querySelectorAll('.action-menu-content');
+        menus.forEach(menu => {
+          if (menu.classList.contains('show')) {
+            menu.classList.remove('show');
+          }
+        });
+      }
+    });
+    
+    // 請求書操作関数群
+    function showInvoice(invoiceId) {
+      alert(`請求書 ${invoiceId} のPDFを表示します。`);
+    }
+    
+    function viewInvoiceDetails(invoiceId) {
+      const invoiceDetailModal = document.getElementById('invoiceDetailModal');
+      const invoiceDetailContent = document.getElementById('invoiceDetailContent');
+      
+      // 実際のアプリケーションではAPIからデータを取得する
+      const invoiceData = {
+        id: invoiceId,
+        organization: "ヘアデザインRICO",
+        plan: "ベーシック",
+        amount: 9800,
+        issueDate: "2025/04/18",
+        dueDate: "2025/05/18",
+        status: "支払い済み",
+        paidDate: "2025/04/20",
+        items: [
+          { description: "ベーシックプラン（月額）", quantity: 1, unitPrice: 9800, amount: 9800 }
+        ],
+        notes: "お支払いありがとうございました。"
+      };
+      
+      // 詳細内容を生成
+      invoiceDetailContent.innerHTML = `
+        <h3 style="margin-top: 0; color: var(--super-admin-color);">請求書 ${invoiceId}</h3>
+        <div style="display: flex; gap: 24px; margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <p style="font-weight: 500; margin-bottom: 4px;">組織情報:</p>
+            <p style="margin: 0;">${invoiceData.organization}</p>
+          </div>
+          <div style="flex: 1;">
+            <p style="font-weight: 500; margin-bottom: 4px;">ステータス:</p>
+            <p style="margin: 0;"><span class="status-badge status-active">${invoiceData.status}</span></p>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 24px; margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <p style="font-weight: 500; margin-bottom: 4px;">発行日:</p>
+            <p style="margin: 0;">${invoiceData.issueDate}</p>
+          </div>
+          <div style="flex: 1;">
+            <p style="font-weight: 500; margin-bottom: 4px;">支払期限:</p>
+            <p style="margin: 0;">${invoiceData.dueDate}</p>
+          </div>
+          <div style="flex: 1;">
+            <p style="font-weight: 500; margin-bottom: 4px;">支払日:</p>
+            <p style="margin: 0;">${invoiceData.paidDate || '-'}</p>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <p style="font-weight: 500; margin-bottom: 8px;">請求項目:</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e0e0e0;">内容</th>
+                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">数量</th>
+                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">単価</th>
+                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceData.items.map(item => `
+                <tr>
+                  <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${item.description}</td>
+                  <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">${item.quantity}</td>
+                  <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">¥${item.unitPrice.toLocaleString()}</td>
+                  <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e0e0e0;">¥${item.amount.toLocaleString()}</td>
+                </tr>
+              `).join('')}
+              <tr>
+                <td colspan="3" style="padding: 8px; text-align: right; font-weight: 500;">合計:</td>
+                <td style="padding: 8px; text-align: right; font-weight: 500;">¥${invoiceData.amount.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div>
+          <p style="font-weight: 500; margin-bottom: 4px;">備考:</p>
+          <p style="margin: 0;">${invoiceData.notes}</p>
+        </div>
+      `;
+      
+      invoiceDetailModal.style.display = 'flex';
+      
+      // モーダルを閉じるボタンの処理
+      document.getElementById('closeInvoiceDetailModal').addEventListener('click', () => {
+        invoiceDetailModal.style.display = 'none';
+      });
+      
+      document.getElementById('closeInvoiceDetailBtn').addEventListener('click', () => {
+        invoiceDetailModal.style.display = 'none';
+      });
+      
+      document.getElementById('updateInvoiceStatusBtn').addEventListener('click', () => {
+        alert(`請求書 ${invoiceId} のステータスを変更します。`);
+        invoiceDetailModal.style.display = 'none';
+      });
+    }
+    
+    function downloadInvoice(invoiceId) {
+      alert(`請求書 ${invoiceId} をダウンロードします。`);
+    }
+    
+    function resendInvoice(invoiceId) {
+      alert(`請求書 ${invoiceId} を組織に再送信します。`);
+    }
+    
+    function sendReminder(invoiceId) {
+      alert(`請求書 ${invoiceId} の支払い催促メールを送信します。`);
+    }
+    
+    
+    // 収益シミュレーション関連の関数
+    // シミュレーションパラメータ
+    let simParams = {
+      exchangeRate: 150,        // 円/ドル
+      apiRate: 0.000465,        // 円/トークン
+      sessionSize: 1500,        // トークン/セッション
+      profitTarget: 70,         // 粗利率目標(%)
+      costRatio: 30             // 原価率(%)
+    };
+    
+    // デフォルトパラメータ（リセット用）
+    const defaultParams = {
+      exchangeRate: 150,
+      apiRate: 0.000465,
+      sessionSize: 1500,
+      profitTarget: 70,
+      costRatio: 30
+    };
+    
+    // プラン情報の定義
+    const planInfo = {
+      basic: {
+        name: 'ベーシックプラン',
+        currentCount: 8,
+        price: 9800,
+        tokenLimit: 6000000, // 600万
+        tokenUnitCost: 0.000465
+      },
+      standard: {
+        name: 'スタンダードプラン',
+        currentCount: 12,
+        price: 19800,
+        tokenLimit: 12000000, // 1,200万
+        tokenUnitCost: 0.000465
+      },
+      premium: {
+        name: 'プレミアムプラン',
+        currentCount: 4,
+        price: 29800,
+        tokenLimit: 20000000, // 2,000万
+        tokenUnitCost: 0.000465
+      },
+      trial: {
+        name: 'トライアルプラン',
+        currentCount: 3,
+        price: 0,
+        tokenLimit: 500000, // 50万
+        tokenUnitCost: 0.000465
+      }
+    };
+    
+    // 初期化時に実行
+    document.addEventListener('DOMContentLoaded', function() {
+      // シミュレーションボタンにイベントリスナーを追加
+      const saveSimulationBtn = document.getElementById('saveSimulationBtn');
+      const exportSimulationBtn = document.getElementById('exportSimulationBtn');
+      
+      if (saveSimulationBtn) {
+        saveSimulationBtn.addEventListener('click', saveSimulation);
+      }
+      
+      if (exportSimulationBtn) {
+        exportSimulationBtn.addEventListener('click', exportSimulation);
+      }
+      
+      // 初回のシミュレーション更新を実行
+      updateSimulation();
+    });
+    
+    // シミュレーションの計算と更新
+    function updateSimulation() {
+      // 入力値を取得
+      const basicCount = parseInt(document.getElementById('basic-sim-count').value) || 0;
+      const standardCount = parseInt(document.getElementById('standard-sim-count').value) || 0;
+      const premiumCount = parseInt(document.getElementById('premium-sim-count').value) || 0;
+      const trialCount = parseInt(document.getElementById('trial-sim-count').value) || 0;
+      
+      // 各プランの売上計算
+      const basicMonthly = basicCount * planInfo.basic.price;
+      const standardMonthly = standardCount * planInfo.standard.price;
+      const premiumMonthly = premiumCount * planInfo.premium.price;
+      const trialMonthly = trialCount * planInfo.trial.price; // 常に0
+      
+      // 年間売上
+      const basicYearly = basicMonthly * 12;
+      const standardYearly = standardMonthly * 12;
+      const premiumYearly = premiumMonthly * 12;
+      const trialYearly = trialMonthly * 12;
+      
+      // 合計
+      const currentTotal = (
+        planInfo.basic.currentCount * planInfo.basic.price +
+        planInfo.standard.currentCount * planInfo.standard.price +
+        planInfo.premium.currentCount * planInfo.premium.price
+      );
+      
+      const simTotalCount = basicCount + standardCount + premiumCount + trialCount;
+      const simTotalMonthly = basicMonthly + standardMonthly + premiumMonthly + trialMonthly;
+      const simTotalYearly = simTotalMonthly * 12;
+      
+      // UI更新
+      document.getElementById('basic-sim-monthly').textContent = `¥${basicMonthly.toLocaleString()}`;
+      document.getElementById('basic-sim-yearly').textContent = `¥${basicYearly.toLocaleString()}`;
+      
+      document.getElementById('standard-sim-monthly').textContent = `¥${standardMonthly.toLocaleString()}`;
+      document.getElementById('standard-sim-yearly').textContent = `¥${standardYearly.toLocaleString()}`;
+      
+      document.getElementById('premium-sim-monthly').textContent = `¥${premiumMonthly.toLocaleString()}`;
+      document.getElementById('premium-sim-yearly').textContent = `¥${premiumYearly.toLocaleString()}`;
+      
+      document.getElementById('trial-sim-monthly').textContent = `¥${trialMonthly.toLocaleString()}`;
+      document.getElementById('trial-sim-yearly').textContent = `¥${trialYearly.toLocaleString()}`;
+      
+      document.getElementById('current-total-monthly').textContent = `¥${currentTotal.toLocaleString()}`;
+      document.getElementById('sim-total-count').textContent = simTotalCount;
+      document.getElementById('sim-total-monthly').textContent = `¥${simTotalMonthly.toLocaleString()}`;
+      document.getElementById('sim-total-yearly').textContent = `¥${simTotalYearly.toLocaleString()}`;
+      
+      // シミュレーション要約エリアも更新
+      const diffAmount = simTotalMonthly - currentTotal;
+      const diffPercent = currentTotal > 0 ? ((diffAmount / currentTotal) * 100).toFixed(1) : 0;
+      const diffSign = diffAmount >= 0 ? '+' : '';
+      
+      const summaryElements = document.querySelectorAll('.api-usage-stats .api-stat-value');
+      if (summaryElements.length >= 3) {
+        summaryElements[0].textContent = `¥${currentTotal.toLocaleString()}`;
+        summaryElements[1].textContent = `¥${simTotalMonthly.toLocaleString()}`;
+        summaryElements[2].textContent = `¥${simTotalYearly.toLocaleString()}`;
+      }
+      
+      const summarySubtexts = document.querySelectorAll('.api-usage-stats .api-stat-subtext');
+      if (summarySubtexts.length >= 3) {
+        summarySubtexts[0].textContent = `組織数: ${planInfo.basic.currentCount + planInfo.standard.currentCount + planInfo.premium.currentCount + planInfo.trial.currentCount}`;
+        summarySubtexts[1].textContent = `${diffSign}¥${Math.abs(diffAmount).toLocaleString()} (${diffSign}${diffPercent}%)`;
+        summarySubtexts[2].textContent = `平均月額: ¥${simTotalMonthly.toLocaleString()}`;
+      }
+    }
+    
+    // シミュレーション設定の保存
+    function saveSimulation() {
+      alert('現在のシミュレーション設定が保存されました。');
+    }
+    
+    // シミュレーション結果のエクスポート
+    function exportSimulation() {
+      // 本来はCSVやExcel形式での出力処理
+      alert('シミュレーション結果をエクスポートします。実際の実装ではCSVやExcel形式でダウンロードされます。');
+    }
+    
+    // トークン追加購入関連の処理
+    document.addEventListener('DOMContentLoaded', function() {
+      // モーダル要素の取得
+      const tokenPurchaseModal = document.getElementById('tokenPurchaseModal');
+      const tokenSettingsModal = document.getElementById('tokenSettingsModal');
+      
+      // 閉じるボタンに処理を追加
+      const closeTokenPurchaseModal = document.getElementById('closeTokenPurchaseModal');
+      const cancelTokenPurchaseBtn = document.getElementById('cancelTokenPurchaseBtn');
+      const confirmTokenPurchaseBtn = document.getElementById('confirmTokenPurchaseBtn');
+      
+      if (closeTokenPurchaseModal) {
+        closeTokenPurchaseModal.addEventListener('click', () => {
+          tokenPurchaseModal.style.display = 'none';
+        });
+      }
+      
+      if (cancelTokenPurchaseBtn) {
+        cancelTokenPurchaseBtn.addEventListener('click', () => {
+          tokenPurchaseModal.style.display = 'none';
+        });
+      }
+      
+      if (confirmTokenPurchaseBtn) {
+        confirmTokenPurchaseBtn.addEventListener('click', () => {
+          const org = document.getElementById('tokenPurchaseOrg').value;
+          alert(`${org}へのトークン追加購入が完了しました。`);
+          tokenPurchaseModal.style.display = 'none';
+        });
+      }
+      
+      // 新規トークンプラン作成モーダルのイベント処理
+      const addNewTokenPlanBtn = document.getElementById('addNewTokenPlanBtn');
+      const closeTokenSettingsModal = document.getElementById('closeTokenSettingsModal');
+      const cancelTokenSettingsBtn = document.getElementById('cancelTokenSettingsBtn');
+      const saveTokenSettingsBtn = document.getElementById('saveTokenSettingsBtn');
+      
+      if (addNewTokenPlanBtn) {
+        addNewTokenPlanBtn.addEventListener('click', () => {
+          tokenSettingsModal.style.display = 'flex';
+          
+          // 新規プラン作成時のリアルタイム計算
+          const newPlanTokens = document.getElementById('newPlanTokens');
+          const newPlanPrice = document.getElementById('newPlanPrice');
+          const newPlanProfitCalc = document.getElementById('newPlanProfitCalc');
+          
+          // 初期化
+          document.getElementById('newPlanName').value = '';
+          newPlanTokens.value = '';
+          newPlanPrice.value = '';
+          newPlanProfitCalc.textContent = '原価と利益率は入力後に計算されます';
+          
+          // 入力時に計算
+          function calculateNewProfit() {
+            const tokens = parseInt(newPlanTokens.value) || 0;
+            const price = parseInt(newPlanPrice.value) || 0;
+            const cost = tokens * 0.000248; // トークン原価
+            const profit = price - cost;
+            const profitRate = price > 0 ? (profit / price * 100).toFixed(1) : 0;
+            
+            newPlanProfitCalc.textContent = `原価: 約${Math.round(cost).toLocaleString()}円 / 利益率: 約${profitRate}%`;
+          }
+          
+          newPlanTokens.addEventListener('input', calculateNewProfit);
+          newPlanPrice.addEventListener('input', calculateNewProfit);
+        });
+      }
+      
+      if (closeTokenSettingsModal) {
+        closeTokenSettingsModal.addEventListener('click', () => {
+          tokenSettingsModal.style.display = 'none';
+        });
+      }
+      
+      if (cancelTokenSettingsBtn) {
+        cancelTokenSettingsBtn.addEventListener('click', () => {
+          tokenSettingsModal.style.display = 'none';
+        });
+      }
+      
+      if (saveTokenSettingsBtn) {
+        saveTokenSettingsBtn.addEventListener('click', () => {
+          // 新規プラン作成の処理
+          const planName = document.getElementById('newPlanName').value;
+          const tokens = document.getElementById('newPlanTokens').value;
+          const price = document.getElementById('newPlanPrice').value;
+          
+          alert(`新規トークン追加プランが作成されました。
+プラン名: ${planName}
+トークン量: ${tokens}トークン
+販売価格: ¥${price}`);
+          
+          tokenSettingsModal.style.display = 'none';
+        });
+      }
+      
+      // 個別プラン編集モーダルのイベント処理
+      const singleTokenPlanModal = document.getElementById('singleTokenPlanModal');
+      const closeSingleTokenPlanModal = document.getElementById('closeSingleTokenPlanModal');
+      const cancelSingleTokenPlanBtn = document.getElementById('cancelSingleTokenPlanBtn');
+      const saveSingleTokenPlanBtn = document.getElementById('saveSingleTokenPlanBtn');
+      
+      if (closeSingleTokenPlanModal) {
+        closeSingleTokenPlanModal.addEventListener('click', () => {
+          singleTokenPlanModal.style.display = 'none';
+        });
+      }
+      
+      if (cancelSingleTokenPlanBtn) {
+        cancelSingleTokenPlanBtn.addEventListener('click', () => {
+          singleTokenPlanModal.style.display = 'none';
+        });
+      }
+      
+      if (saveSingleTokenPlanBtn) {
+        saveSingleTokenPlanBtn.addEventListener('click', () => {
+          // 個別プラン編集の保存処理
+          const planName = document.getElementById('singlePlanName').value;
+          const tokens = document.getElementById('singlePlanTokens').value;
+          const price = document.getElementById('singlePlanPrice').value;
+          
+          alert(`トークンプランが更新されました。
+プラン名: ${planName}
+トークン量: ${tokens}トークン
+販売価格: ¥${price}`);
+          
+          singleTokenPlanModal.style.display = 'none';
+        });
+      }
+    });
+    
+    // 個別トークンプラン編集モーダルを表示
+    function openEditTokenPlanModal(planSize) {
+      const singleTokenPlanModal = document.getElementById('singleTokenPlanModal');
+      const singleTokenPlanTitle = document.getElementById('singleTokenPlanTitle');
+      const singlePlanName = document.getElementById('singlePlanName');
+      const singlePlanTokens = document.getElementById('singlePlanTokens');
+      const singlePlanPrice = document.getElementById('singlePlanPrice');
+      const singlePlanProfitCalc = document.getElementById('singlePlanProfitCalc');
+      
+      // プランサイズに応じて初期値を設定
+      if (planSize === 'small') {
+        singleTokenPlanTitle.textContent = '小容量プラン編集';
+        singlePlanName.value = '小容量プラン';
+        singlePlanTokens.value = '1000000';
+        singlePlanPrice.value = '980';
+        singlePlanProfitCalc.textContent = '原価: 約248円 / 利益率: 約74.7%';
+      } else if (planSize === 'medium') {
+        singleTokenPlanTitle.textContent = '中容量プラン編集';
+        singlePlanName.value = '中容量プラン';
+        singlePlanTokens.value = '5000000';
+        singlePlanPrice.value = '3980';
+        singlePlanProfitCalc.textContent = '原価: 約1,240円 / 利益率: 約68.8%';
+      } else if (planSize === 'large') {
+        singleTokenPlanTitle.textContent = '大容量プラン編集';
+        singlePlanName.value = '大容量プラン';
+        singlePlanTokens.value = '10000000';
+        singlePlanPrice.value = '8000';
+        singlePlanProfitCalc.textContent = '原価: 約2,480円 / 利益率: 約69.0%';
+      }
+      
+      // モーダルを表示
+      singleTokenPlanModal.style.display = 'flex';
+      
+      // トークン量と価格が変更された時に利益率を計算する
+      singlePlanTokens.addEventListener('input', calculateProfit);
+      singlePlanPrice.addEventListener('input', calculateProfit);
+      
+      function calculateProfit() {
+        const tokens = parseInt(singlePlanTokens.value) || 0;
+        const price = parseInt(singlePlanPrice.value) || 0;
+        const cost = tokens * 0.000248; // トークン原価
+        const profit = price - cost;
+        const profitRate = price > 0 ? (profit / price * 100).toFixed(1) : 0;
+        
+        singlePlanProfitCalc.textContent = `原価: 約${Math.round(cost).toLocaleString()}円 / 利益率: 約${profitRate}%`;
+      }
+    }
+    
+    // トークン購入プレビューを表示
+    function previewTokenPurchase(planSize) {
+      const tokenPurchaseModal = document.getElementById('tokenPurchaseModal');
+      const selectedPlan = document.getElementById('selectedTokenPlan');
+      
+      // プランサイズに応じて表示内容を切り替え
+      if (planSize === 'small') {
+        selectedPlan.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 18px; font-weight: 500;">100万トークン</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1976d2;">¥980</div>
+          </div>
+          <div style="color: #757575; font-size: 13px; margin-bottom: 8px;">1トークンあたり約0.00098円</div>
+          <div style="display: flex; align-items: center; color: #4caf50; font-size: 14px; margin-bottom: 8px;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">chat</span>
+            約660セッション分（1セッション=1,500トークン計算）
+          </div>
+          <div style="color: #757575; font-size: 12px;">
+            <span class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">info</span>
+            購入したトークンは購入月内に消費する必要があります。翌月への繰り越しはできません。
+          </div>
+        `;
+      } else if (planSize === 'medium') {
+        selectedPlan.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 18px; font-weight: 500;">500万トークン</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1976d2;">¥3,980</div>
+          </div>
+          <div style="color: #757575; font-size: 13px; margin-bottom: 8px;">1トークンあたり約0.000796円</div>
+          <div style="display: flex; align-items: center; color: #4caf50; font-size: 14px; margin-bottom: 8px;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">chat</span>
+            約3,300セッション分（1セッション=1,500トークン計算）
+          </div>
+          <div style="color: #757575; font-size: 12px;">
+            <span class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">info</span>
+            購入したトークンは購入月内に消費する必要があります。翌月への繰り越しはできません。
+          </div>
+        `;
+      } else if (planSize === 'large') {
+        selectedPlan.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 18px; font-weight: 500;">1,000万トークン</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1976d2;">¥8,000</div>
+          </div>
+          <div style="color: #757575; font-size: 13px; margin-bottom: 8px;">1トークンあたり約0.0008円（20%お得）</div>
+          <div style="display: flex; align-items: center; color: #4caf50; font-size: 14px; margin-bottom: 8px;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">chat</span>
+            約6,600セッション分（1セッション=1,500トークン計算）
+          </div>
+          <div style="color: #757575; font-size: 12px;">
+            <span class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">info</span>
+            購入したトークンは購入月内に消費する必要があります。翌月への繰り越しはできません。
+          </div>
+          <div style="background-color: #e8f5e9; color: #4caf50; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 13px; display: flex; align-items: center;">
+            <span class="material-icons" style="font-size: 16px; margin-right: 4px;">savings</span>
+            最大容量プランでお得に購入（1トークンあたり約20%割引）
+          </div>
+        `;
+      }
+      
+      // モーダルを表示
+      tokenPurchaseModal.style.display = 'flex';
+    }
+  </script>
+</body>
+</html>

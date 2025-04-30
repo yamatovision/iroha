@@ -51,6 +51,8 @@
  * - 2025/04/08: SajuProfileの削除とUserモデルへの統合 (Claude)
  * - 2025/04/12: HarmonyCompassインターフェースを追加 (Claude)
  * - 2025/04/24: チャットコンテキスト管理システム用の型定義を追加 (Claude)
+ * - 2025/04/30: クライアント管理API定義を追加 (Claude)
+ * - 2025/04/30: 本日の施術クライアント一覧機能のAPI定義と型を追加 (Claude)
  */
 
 // API基本パス
@@ -69,6 +71,20 @@ export const AUTH = {
   LOGOUT: `${API_BASE_PATH}/auth/logout`,
   REFRESH_TOKEN: `${API_BASE_PATH}/auth/refresh-token`,
   VERIFY_EMAIL: `${API_BASE_PATH}/auth/verify-email`,
+};
+
+// ========== サポートチケット関連 ==========
+export const SUPPORT = {
+  // サロン側
+  TICKETS: `${API_BASE_PATH}/support/tickets`,
+  TICKET_DETAIL: (id: string) => `${API_BASE_PATH}/support/tickets/${id}`,
+  TICKET_REPLY: (id: string) => `${API_BASE_PATH}/support/tickets/${id}/reply`,
+  
+  // SuperAdmin側
+  ADMIN_TICKETS: `${API_BASE_PATH}/admin/support/tickets`,
+  ADMIN_TICKET_DETAIL: (id: string) => `${API_BASE_PATH}/admin/support/tickets/${id}`,
+  ADMIN_TICKET_REPLY: (id: string) => `${API_BASE_PATH}/admin/support/tickets/${id}/reply`,
+  ADMIN_SUPPORT_STATS: `${API_BASE_PATH}/admin/support/stats`,
 };
 
 // ========== JWT認証関連 ==========
@@ -235,6 +251,65 @@ export const ADMIN = {
   INVALIDATE_USER_TOKENS: (userId: string) => `${API_BASE_PATH}/admin/settings/auth/users/${userId}/invalidate`,
   GET_MIGRATION_STATS: `${API_BASE_PATH}/admin/settings/auth/migration`,
   RUN_TOKEN_CLEANUP: `${API_BASE_PATH}/admin/settings/auth/cleanup`,
+  
+  // 美容サロン管理（スーパー管理者用）
+  GET_SALON_STATS: `${API_BASE_PATH}/admin/salon-stats`,
+  GET_SALON_DETAILS: (organizationId: string) => `${API_BASE_PATH}/admin/salons/${organizationId}`,
+  UPDATE_SALON_STATUS: (organizationId: string) => `${API_BASE_PATH}/admin/salons/${organizationId}/status`,
+  GET_CLIENT_STATS: `${API_BASE_PATH}/admin/client-stats`,
+  GET_STYLIST_STATS: `${API_BASE_PATH}/admin/stylist-stats`,
+};
+
+// ========== クライアント管理API ==========
+export const CLIENT = {
+  LIST: `${API_BASE_PATH}/clients`,
+  DETAIL: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}`,
+  CREATE: `${API_BASE_PATH}/clients`,
+  UPDATE: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}`,
+  DELETE: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}`,
+  
+  // 四柱推命関連
+  UPDATE_SAJU: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/saju`,
+  GET_COMPATIBILITY: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/compatibility`,
+  RECALCULATE_COMPATIBILITY: (clientId: string) => 
+    `${API_BASE_PATH}/clients/${clientId}/compatibility/recalculate`,
+    
+  // メモ関連
+  GET_NOTES: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/notes`,
+  CREATE_NOTE: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/notes`,
+  UPDATE_NOTE: (clientId: string, noteId: string) => 
+    `${API_BASE_PATH}/clients/${clientId}/notes/${noteId}`,
+  DELETE_NOTE: (clientId: string, noteId: string) => 
+    `${API_BASE_PATH}/clients/${clientId}/notes/${noteId}`,
+    
+  // データインポート/エクスポート
+  IMPORT: `${API_BASE_PATH}/clients/import`,
+  EXPORT: `${API_BASE_PATH}/clients/export`,
+  
+  // チャット連携
+  GET_CHAT: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/chat`,
+  SEND_CHAT: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/chat`,
+  
+  // 本日の施術クライアント一覧関連
+  GET_DAILY_APPOINTMENTS: `${API_BASE_PATH}/appointments/daily`,
+  GET_CLIENT_DETAILS: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/details`,
+  ADD_CLIENT_MEMO: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/memos`,
+  REGISTER_SAJU: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/register-saju`,
+  REFRESH_AI_SUGGESTIONS: (clientId: string) => `${API_BASE_PATH}/clients/${clientId}/refresh-ai-suggestions`,
+};
+
+// ========== 美容クライアント直接入力・チャット連携API ==========
+export const BEAUTY_CLIENT_INPUT = {
+  // クライアント検索・詳細
+  SEARCH_CLIENTS: `${API_BASE_PATH}/beauty-clients/search`,
+  GET_CLIENT_DETAILS: (clientId: string) => `${API_BASE_PATH}/beauty-clients/${clientId}/details`,
+  
+  // 誕生日情報更新
+  UPDATE_BIRTH_INFO: (clientId: string) => `${API_BASE_PATH}/beauty-clients/${clientId}/birth-info`,
+  
+  // チャット関連
+  GET_CHAT_SESSION: (clientId: string) => `${API_BASE_PATH}/beauty-clients/${clientId}/chat`,
+  SEND_CHAT_MESSAGE: (clientId: string) => `${API_BASE_PATH}/beauty-clients/${clientId}/chat`,
 };
 
 // ========== データモデル ==========
@@ -330,6 +405,7 @@ export enum ContextType {
   FORTUNE = 'fortune',   // 運勢情報
   TEAM = 'team',         // チーム情報
   TEAM_GOAL = 'team_goal', // チーム目標情報
+  CLIENT = 'client',     // クライアント情報（美容サロン向け）
 }
 
 // 五行属性
@@ -413,8 +489,7 @@ export interface IUser {
     metal: number;
     water: number;
   };
-  // 格局（気質タイプ）情報
-  kakukyoku?: {
+  kakukyoku?: {               // 格局情報
     type: string;                   // 例: '従旺格', '建禄格'など
     category: 'special' | 'normal'; // 特別格局か普通格局か
     strength: 'strong' | 'weak' | 'neutral'; // 身強か身弱か中和か
@@ -735,6 +810,135 @@ export interface ISystemSetting {
   updatedBy: string;
 }
 
+// クライアント（美容サロンの顧客）
+export interface IClient {
+  id: string;                 // クライアントのユニークID
+  organizationId: string;     // 所属組織ID（美容サロンID）
+  name: string;               // 氏名
+  nameReading?: string;       // 読み仮名
+  gender?: string;            // 性別
+  birthdate?: Date;           // 生年月日
+  birthtime?: string;         // 生まれた時間（HH:MM形式）
+  birthPlace?: string;        // 出生地
+  phone?: string;             // 電話番号
+  email?: string;             // メールアドレス
+  address?: string;           // 住所
+  memo?: string;              // メモ・備考
+  
+  // カスタムプロパティ
+  customFields?: Record<string, any>; // カスタムフィールド
+  
+  // 外部システム連携情報
+  externalSources?: {
+    [sourceKey: string]: string;  // 例: { "hotpepper": "HP12345", "salonanswer": "SA67890" }
+  };
+  
+  // 四柱推命情報
+  birthplaceCoordinates?: IGeoCoordinates;
+  localTimeOffset?: number;   // 地方時オフセット（分単位）
+  timeZone?: string;          // タイムゾーン
+  elementAttribute?: string;  // 主要五行属性
+  fourPillars?: {             // 四柱（年月日時）
+    year: GanShiPillar;
+    month: GanShiPillar;
+    day: GanShiPillar;
+    hour: GanShiPillar;
+  };
+  elementProfile?: {          // 五行バランス
+    wood: number;
+    fire: number;
+    earth: number;
+    metal: number;
+    water: number;
+  };
+  kakukyoku?: {               // 格局情報
+    type: string;
+    category: 'special' | 'normal';
+    strength: 'strong' | 'weak' | 'neutral';
+    description?: string;
+  };
+  yojin?: {                   // 用神情報
+    tenGod: string;
+    element: string;
+    description?: string;
+    supportElements?: string[];
+  };
+  personalityDescription?: string; // 性格特性
+  
+  // 内部管理用
+  isFavorite: boolean;        // お気に入り登録
+  hasCompleteSajuProfile: boolean; // 四柱推命プロフィール完成状態
+  lastVisitDate?: Date;       // 最終来店日
+  createdBy: string;          // 作成者ID
+  updatedBy: string;          // 更新者ID
+  createdAt: Date;            // 登録日時
+  updatedAt: Date;            // 更新日時
+}
+
+// 干支柱（四柱の基本単位）
+export interface GanShiPillar {
+  gan: string;                 // 天干
+  shi: string;                 // 地支
+  element: string;             // 五行属性
+}
+
+// クライアント-スタイリスト相性
+export interface IClientStylistCompatibility {
+  id: string;
+  clientId: string;
+  stylistId: string;
+  organizationId: string;
+  overallScore: number;
+  calculatedAt: Date;
+  calculationVersion: string;
+}
+
+// クライアントメモ
+export interface IClientNote {
+  id: string;
+  clientId: string;
+  organizationId: string;
+  authorId: string;
+  content: string;
+  noteType: ClientNoteType;
+  isPrivate: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  isRemoved: boolean;
+}
+
+// メモタイプ
+export enum ClientNoteType {
+  GENERAL = 'general',
+  PREFERENCE = 'preference',
+  TREATMENT = 'treatment',
+  FOLLOW_UP = 'follow_up'
+}
+
+// クライアントチャット
+export interface IClientChat {
+  id: string;
+  clientId: string;
+  organizationId: string;
+  messages: IClientChatMessage[];
+  lastMessageAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// クライアントチャットメッセージ
+export interface IClientChatMessage {
+  role: 'stylist' | 'assistant';
+  content: string;
+  timestamp: Date;
+  stylistId?: string;
+  contextItems?: {
+    type: string;
+    refId?: string;
+    data?: any;
+  }[];
+}
+
 // ========== リクエスト/レスポンス型 ==========
 
 // ログインリクエスト
@@ -913,5 +1117,865 @@ export interface SystemStatsResponse {
       date: string;
       count: number;
     }[];
+  };
+}
+
+// ========== サポートチケットシステム関連 ==========
+
+// サポートチケットステータス
+export enum TicketStatus {
+  PENDING = 'pending',   // 未回答
+  ANSWERED = 'answered', // 回答済み
+}
+
+// サポートチケット送信者タイプ
+export enum TicketSenderType {
+  SALON = 'salon',         // サロンスタッフ
+  SUPERADMIN = 'superadmin' // スーパー管理者
+}
+
+// サポートチケット
+export interface ISupportTicket {
+  id: string;
+  ticketNumber: string;     // 表示用チケット番号（TK-XXXX形式）
+  organizationId: string;   // 組織ID
+  creatorId: string;        // 作成者ID（ユーザーID）
+  title: string;            // タイトル
+  status: TicketStatus;     // ステータス
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// チケットメッセージ
+export interface ITicketMessage {
+  id: string;
+  ticketId: string;
+  senderId: string;         // 送信者ID（ユーザーIDまたは'superadmin'）
+  senderType: TicketSenderType; // 送信者タイプ
+  content: string;          // メッセージ内容
+  createdAt: Date;
+  isRead: boolean;          // 既読フラグ
+}
+
+// チケット作成リクエスト
+export interface CreateTicketRequest {
+  title: string;            // タイトル
+  content: string;          // 詳細内容
+}
+
+// チケット作成レスポンス
+export interface CreateTicketResponse {
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  content: string;
+  status: TicketStatus;
+  createdAt: string;
+}
+
+// チケット一覧クエリパラメータ
+export interface TicketListQuery {
+  status?: 'all' | 'pending' | 'answered';
+  page?: number;
+  limit?: number;
+}
+
+// チケット一覧レスポンス
+export interface TicketListResponse {
+  tickets: {
+    ticketId: string;
+    ticketNumber: string;
+    title: string;
+    status: TicketStatus;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+  counts: {
+    all: number;
+    pending: number;
+    answered: number;
+  };
+}
+
+// チケット詳細レスポンス
+export interface TicketDetailResponse {
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  status: TicketStatus;
+  createdAt: string;
+  updatedAt: string;
+  messages: {
+    messageId: string;
+    content: string;
+    createdAt: string;
+    sender: {
+      id: string;
+      name: string;
+      type: TicketSenderType;
+    };
+    isRead: boolean;
+  }[];
+}
+
+// チケット返信リクエスト
+export interface ReplyTicketRequest {
+  content: string;
+}
+
+// チケット返信レスポンス
+export interface ReplyTicketResponse {
+  messageId: string;
+  content: string;
+  createdAt: string;
+  sender: {
+    id: string;
+    name: string;
+    type: TicketSenderType;
+  };
+  ticketStatus: TicketStatus;
+}
+
+// SuperAdmin用チケット一覧クエリパラメータ
+export interface AdminTicketListQuery extends TicketListQuery {
+  organizationId?: string;
+  search?: string;
+}
+
+// SuperAdmin用チケット一覧レスポンス
+export interface AdminTicketListResponse {
+  tickets: {
+    ticketId: string;
+    ticketNumber: string;
+    title: string;
+    status: TicketStatus;
+    createdAt: string;
+    updatedAt: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+    creator: {
+      id: string;
+      name: string;
+    };
+  }[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+  counts: {
+    all: number;
+    pending: number;
+    answered: number;
+  };
+}
+
+// SuperAdmin用チケット詳細レスポンス
+export interface AdminTicketDetailResponse extends TicketDetailResponse {
+  organization: {
+    id: string;
+    name: string;
+  };
+  creator: {
+    id: string;
+    name: string;
+    role: 'owner' | 'admin';
+  };
+}
+
+// サポート統計情報レスポンス
+export interface SupportStatsResponse {
+  totalTickets: number;
+  pendingTickets: number;
+  answeredTickets: number;
+  avgResponseTime: number;
+  topOrganizations: {
+    id: string;
+    name: string;
+    ticketCount: number;
+  }[];
+  ticketsPerDay: {
+    date: string;
+    count: number;
+  }[];
+}
+
+// ========== 課金・支払い管理関連 ==========
+
+// 請求サイクル
+export enum BillingCycle {
+  MONTHLY = 'monthly',        // 月額
+  YEARLY = 'yearly'           // 年額
+}
+
+// 請求書ステータス
+export enum InvoiceStatus {
+  PENDING = 'pending',        // 支払い待ち
+  PAID = 'paid',              // 支払い済み
+  PAST_DUE = 'past_due',      // 支払い遅延
+  CANCELED = 'canceled'       // キャンセル
+}
+
+// サブスクリプションのステータス
+export enum SubscriptionStatus {
+  TRIAL = 'trial',            // トライアル中
+  ACTIVE = 'active',          // アクティブ
+  PAST_DUE = 'past_due',      // 支払い遅延
+  CANCELED = 'canceled',      // キャンセル済み
+  SUSPENDED = 'suspended'     // 一時停止中
+}
+
+// 支払いステータス
+export enum PaymentStatus {
+  SUCCESS = 'success',   // 支払い成功
+  FAILED = 'failed',     // 支払い失敗
+  PENDING = 'pending'    // 処理中
+}
+
+// 料金プランモデル
+export interface IPricePlan {
+  _id: string;                // プランID
+  name: string;               // プラン名
+  price: number;              // 月額料金
+  description: string;        // プラン説明
+  features: string[];         // 機能リスト
+  maxStylists: number | null; // 最大スタイリスト数（nullは無制限）
+  maxClients: number | null;  // 最大クライアント数（nullは無制限）
+  maxTokensPerMonth: number;  // 月間最大トークン数
+  additionalTokenPrice: number; // 追加トークン1Mあたりの価格
+  isActive: boolean;          // 有効/無効フラグ
+  displayOrder: number;       // 表示順序
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// サブスクリプションモデル
+export interface ISubscription {
+  _id: string;                // サブスクリプションID
+  organizationId: string;     // 組織ID
+  planId: string;             // プランID
+  status: SubscriptionStatus; // ステータス
+  paymentStatus: PaymentStatus; // 支払いステータス
+  startDate: Date;            // 開始日
+  endDate: Date | null;       // 終了日（nullは無期限）
+  billingCycle: BillingCycle; // 請求サイクル
+  nextBillingDate: Date;      // 次回請求日
+  currentPeriodStart: Date;   // 現在の請求期間開始日
+  currentPeriodEnd: Date;     // 現在の請求期間終了日
+  paymentFailCount: number;   // 支払い失敗回数
+  lastPaymentDate?: Date;     // 最終支払い日
+  lastFailureReason?: string; // 最後の失敗理由
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// 請求書項目
+export interface IInvoiceItem {
+  description: string;        // 内容
+  quantity: number;           // 数量
+  unitPrice: number;          // 単価
+  amount: number;             // 金額
+}
+
+// 請求書モデル
+export interface IInvoice {
+  _id: string;                // 請求書ID
+  invoiceNumber: string;      // 請求書番号
+  subscriptionId: string;     // サブスクリプションID
+  organizationId: string;     // 組織ID
+  planId: string;             // プランID
+  amount: number;             // 請求金額
+  status: InvoiceStatus;      // ステータス
+  issueDate: Date;            // 発行日
+  dueDate: Date;              // 支払期限
+  paidAt: Date | null;        // 支払日
+  items: IInvoiceItem[];      // 請求項目
+  notes: string;              // 備考
+  tokenUsage?: {              // トークン使用状況
+    totalTokens: number;      // 合計トークン数
+    planLimit: number;        // プラン上限
+    additionalTokens: number; // 追加トークン
+    utilizationPercentage: number; // 使用率
+  };
+  paymentMethod?: {           // 支払い方法
+    type: string;             // 種類（クレジットカードなど）
+    last4: string;            // 下4桁
+    brand: string;            // ブランド（VISAなど）
+  };
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// トークンチャージ履歴
+export interface ITokenCharge {
+  _id: string;                // チャージID
+  organizationId: string;     // 組織ID
+  userId: string;             // 購入者ID
+  purchaseDate: Date;         // 購入日時
+  chargeType: 'standard' | 'premium'; // チャージタイプ
+  tokenAmount: number;        // トークン数
+  price: number;              // 金額
+  expirationDate: Date;       // 有効期限
+  remainingTokens: number;    // 残りトークン数
+  status: 'active' | 'expired' | 'exhausted'; // ステータス
+  invoiceId?: string;         // 関連する請求書ID
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// APIトークン使用統計
+export interface ITokenUsageStats {
+  organizationId: string;     // 組織ID
+  period: string;             // 期間（YYYY-MM形式）
+  totalTokens: number;        // 合計トークン数
+  planLimit: number;          // プラン上限
+  additionalTokens: number;   // 追加チャージトークン
+  utilizationPercentage: number; // 使用率
+  byDay: {                    // 日別統計
+    date: string;             // 日付
+    tokens: number;           // トークン数
+  }[];
+  byUser: {                   // ユーザー別統計
+    userId: string;           // ユーザーID
+    userName: string;         // ユーザー名
+    tokens: number;           // トークン数
+    percentage: number;       // 割合
+  }[];
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// 組織の支払い情報
+export interface IPaymentMethod {
+  _id: string;                // 支払い方法ID
+  organizationId: string;     // 組織ID
+  type: string;               // 種類（クレジットカードなど）
+  cardHolder?: string;        // カード保持者名
+  last4?: string;             // 下4桁
+  brand?: string;             // ブランド（VISAなど）
+  expiryMonth?: number;       // 有効期限（月）
+  expiryYear?: number;        // 有効期限（年）
+  isDefault: boolean;         // デフォルトフラグ
+  createdAt: Date;            // 作成日時
+  updatedAt: Date;            // 更新日時
+}
+
+// 課金・支払い関連のAPIパス
+export const BILLING = {
+  // プラン関連
+  GET_CURRENT_PLAN: `${API_BASE_PATH}/billing/plan`,
+  CHANGE_PLAN: `${API_BASE_PATH}/billing/plan`,
+  
+  // 請求書関連
+  GET_INVOICES: `${API_BASE_PATH}/billing/invoices`,
+  GET_INVOICE_DETAIL: (invoiceId: string) => `${API_BASE_PATH}/billing/invoices/${invoiceId}`,
+  DOWNLOAD_INVOICE: (invoiceId: string) => `${API_BASE_PATH}/billing/invoices/${invoiceId}/pdf`,
+  
+  // 支払い方法関連
+  GET_PAYMENT_METHODS: `${API_BASE_PATH}/billing/payment-methods`,
+  ADD_PAYMENT_METHOD: `${API_BASE_PATH}/billing/payment-methods`,
+  UPDATE_PAYMENT_METHOD: (methodId: string) => `${API_BASE_PATH}/billing/payment-methods/${methodId}`,
+  DELETE_PAYMENT_METHOD: (methodId: string) => `${API_BASE_PATH}/billing/payment-methods/${methodId}`,
+  SET_DEFAULT_PAYMENT_METHOD: (methodId: string) => `${API_BASE_PATH}/billing/payment-methods/${methodId}/default`,
+  
+  // APIトークン関連
+  GET_TOKEN_USAGE: `${API_BASE_PATH}/billing/token-usage`,
+  PURCHASE_TOKENS: `${API_BASE_PATH}/billing/purchase-tokens`,
+  GET_TOKEN_CHARGES: `${API_BASE_PATH}/billing/token-charges`,
+  
+  // 課金サイクル関連
+  CHANGE_BILLING_CYCLE: `${API_BASE_PATH}/billing/cycle`,
+};
+
+// リクエスト・レスポンス型定義
+// 現在のプラン情報取得レスポンス
+export interface CurrentPlanResponse {
+  subscription: {
+    _id: string;
+    status: SubscriptionStatus;
+    billingCycle: BillingCycle;
+    nextBillingDate: string;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+  };
+  plan: {
+    _id: string;
+    name: string;
+    price: number;
+    description: string;
+    features: string[];
+    maxStylists: number | null;
+    maxClients: number | null;
+    maxTokensPerMonth: number;
+  };
+  monthlyPrice: number;
+  yearlyPrice: number;
+  tokenUsage: {
+    currentUsage: number;
+    planLimit: number;
+    additionalTokens: number;
+    utilizationPercentage: number;
+    estimatedConversationsLeft: number;
+  };
+}
+
+// プラン変更リクエスト
+export interface ChangePlanRequest {
+  planId: string;
+  billingCycle?: BillingCycle;
+  startImmediately?: boolean;
+}
+
+// プラン変更レスポンス
+export interface ChangePlanResponse {
+  success: boolean;
+  message: string;
+  effectiveDate: string;
+  newPlan: {
+    name: string;
+    price: number;
+  };
+}
+
+// 請求書一覧取得リクエスト
+export interface InvoiceListRequest {
+  page?: number;
+  limit?: number;
+  status?: InvoiceStatus | 'all';
+  startDate?: string;
+  endDate?: string;
+}
+
+// 請求書一覧レスポンス
+export interface InvoiceListResponse {
+  invoices: {
+    _id: string;
+    invoiceNumber: string;
+    amount: number;
+    status: InvoiceStatus;
+    issueDate: string;
+    dueDate: string;
+    paidAt: string | null;
+  }[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
+// 請求書詳細レスポンス
+export interface InvoiceDetailResponse {
+  _id: string;
+  invoiceNumber: string;
+  subscription: {
+    _id: string;
+    plan: {
+      name: string;
+      price: number;
+    };
+  };
+  amount: number;
+  status: InvoiceStatus;
+  issueDate: string;
+  dueDate: string;
+  paidAt: string | null;
+  items: {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
+  }[];
+  notes: string;
+  tokenUsage?: {
+    totalTokens: number;
+    planLimit: number;
+    additionalTokens: number;
+    utilizationPercentage: number;
+    details?: {
+      date: string;
+      tokens: number;
+    }[];
+  };
+  paymentMethod?: {
+    type: string;
+    last4: string;
+    brand: string;
+  };
+}
+
+// 支払い方法一覧レスポンス
+export interface PaymentMethodListResponse {
+  paymentMethods: {
+    _id: string;
+    type: string;
+    cardHolder?: string;
+    last4?: string;
+    brand?: string;
+    expiryMonth?: number;
+    expiryYear?: number;
+    isDefault: boolean;
+  }[];
+}
+
+// 支払い方法追加リクエスト
+export interface AddPaymentMethodRequest {
+  cardHolder: string;
+  cardNumber: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cvc: string;
+  isDefault?: boolean;
+}
+
+// トークン使用状況レスポンス
+export interface TokenUsageResponse {
+  currentPeriod: {
+    start: string;
+    end: string;
+  };
+  usage: {
+    totalTokens: number;
+    planLimit: number;
+    additionalTokens: number;
+    utilizationPercentage: number;
+    estimatedConversationsLeft: number;
+  };
+  dailyUsage: {
+    date: string;
+    tokens: number;
+  }[];
+  userBreakdown: {
+    userId: string;
+    userName: string;
+    tokens: number;
+    percentage: number;
+  }[];
+  trendData: {
+    previousMonthUsage: number;
+    monthOverMonthChange: number;
+    averageDailyUsage: number;
+  };
+}
+
+// トークン購入リクエスト
+export interface PurchaseTokensRequest {
+  chargeType: 'standard' | 'premium';
+  paymentMethodId?: string;
+}
+
+// トークン購入レスポンス
+export interface PurchaseTokensResponse {
+  success: boolean;
+  message: string;
+  tokenCharge: {
+    tokenAmount: number;
+    price: number;
+    expirationDate: string;
+    remainingTokens: number;
+  };
+  invoiceId?: string;
+}
+
+// トークンチャージ履歴レスポンス
+export interface TokenChargeListResponse {
+  charges: {
+    _id: string;
+    purchaseDate: string;
+    chargeType: string;
+    tokenAmount: number;
+    price: number;
+    expirationDate: string;
+    remainingTokens: number;
+    status: string;
+  }[];
+}
+
+// 課金サイクル変更リクエスト
+export interface ChangeBillingCycleRequest {
+  billingCycle: BillingCycle;
+}
+
+// 課金サイクル変更レスポンス
+export interface ChangeBillingCycleResponse {
+  success: boolean;
+  message: string;
+  effectiveDate: string;
+  newCycle: BillingCycle;
+  priceChange: {
+    oldPrice: number;
+    newPrice: number;
+    savingsPercentage?: number;
+  };
+}
+
+// ========== クライアント管理API関連 ==========
+
+// クライアント一覧クエリパラメータ
+export interface ClientListRequest {
+  page?: number;               // ページ番号（1から開始）
+  limit?: number;              // 1ページあたりの件数
+  search?: string;             // 検索キーワード（名前、電話、メールなど）
+  filter?: string;             // フィルター条件（all, no_birthday, recent_visit, favorite）
+  sortBy?: string;             // ソート項目（name, last_visit, created_at）
+  sortOrder?: 'asc' | 'desc';  // ソート順
+}
+
+// クライアント一覧レスポンス
+export interface ClientListResponse {
+  clients: {
+    id: string;
+    name: string;
+    gender?: string;
+    phone?: string;
+    email?: string;
+    birthdate?: string;
+    hasCompleteSajuProfile: boolean;
+    isFavorite: boolean;
+    lastVisitDate?: string;
+    elementAttribute?: string;
+  }[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+  counts: {
+    all: number;
+    no_birthday: number;
+    recent_visit: number;
+    favorite: number;
+  };
+}
+
+// クライアント詳細レスポンス
+export interface ClientDetailResponse {
+  client: IClient;
+  stylistCompatibility?: {  // 現在のスタイリストとの相性
+    stylistId: string;
+    stylistName: string;
+    overallScore: number;
+  }[];
+  recentVisits?: {  // 最近の来店履歴
+    date: string;
+    stylistName: string;
+    treatmentTypes: string[];
+  }[];
+}
+
+// クライアント作成リクエスト
+export interface CreateClientRequest {
+  name: string;               // 氏名（必須）
+  nameReading?: string;       // 読み仮名
+  gender?: string;            // 性別
+  birthdate?: string;         // 生年月日（YYYY-MM-DD形式）
+  birthtime?: string;         // 生まれた時間（HH:MM形式）
+  birthPlace?: string;        // 出生地
+  phone?: string;             // 電話番号
+  email?: string;             // メールアドレス
+  address?: string;           // 住所
+  memo?: string;              // メモ・備考
+  customFields?: Record<string, any>; // カスタムフィールド
+  isFavorite?: boolean;       // お気に入り登録
+}
+
+// クライアント更新リクエスト
+export interface UpdateClientRequest {
+  name?: string;              // 氏名
+  nameReading?: string;       // 読み仮名
+  gender?: string;            // 性別
+  birthdate?: string;         // 生年月日（YYYY-MM-DD形式）
+  birthtime?: string;         // 生まれた時間（HH:MM形式）
+  birthPlace?: string;        // 出生地
+  phone?: string;             // 電話番号
+  email?: string;             // メールアドレス
+  address?: string;           // 住所
+  memo?: string;              // メモ・備考
+  customFields?: Record<string, any>; // カスタムフィールド
+  isFavorite?: boolean;       // お気に入り登録
+}
+
+// クライアント四柱推命情報更新リクエスト
+export interface UpdateClientSajuRequest {
+  birthdate: string;          // 生年月日（YYYY-MM-DD形式）
+  birthtime?: string;         // 生まれた時間（HH:MM形式）
+  birthPlace?: string;        // 出生地
+  gender: string;             // 性別
+  birthplaceCoordinates?: {   // 出生地座標
+    longitude: number;
+    latitude: number;
+  };
+  timeZone?: string;          // タイムゾーン
+}
+
+// クライアントメモ作成リクエスト
+export interface CreateClientNoteRequest {
+  content: string;            // メモ内容
+  noteType: ClientNoteType;   // メモタイプ
+  isPrivate?: boolean;        // プライベートメモか
+}
+
+// クライアントチャット送信リクエスト
+export interface SendClientChatRequest {
+  message: string;            // メッセージ内容
+  includeContext?: boolean;   // クライアント情報をコンテキストに含めるか
+}
+
+// クライアントデータインポートリクエスト
+export interface ImportClientsRequest {
+  source: 'hotpepper' | 'salonanswer' | 'csv';  // データソース
+  apiKey?: string;            // 外部APIキー（ホットペッパー等の場合）
+  fileContent?: string;       // CSVファイルのBase64エンコード文字列
+  mapping?: {                 // CSVカラムマッピング
+    [key: string]: string;    // フィールド名: CSVカラム名
+  };
+  options?: {
+    updateExisting: boolean;  // 既存データを更新するか
+    importNotes: boolean;     // メモもインポートするか
+  };
+}
+
+// クライアントデータエクスポートリクエスト
+export interface ExportClientsRequest {
+  format: 'csv' | 'json';     // エクスポート形式
+  filter?: string;            // フィルター条件
+  fields?: string[];          // エクスポートするフィールド
+  includeNotes?: boolean;     // メモも含めるか
+}
+
+// ========== 本日の施術クライアント一覧関連 ==========
+
+// 本日の予約一覧取得クエリパラメータ
+export interface DailyAppointmentsRequest {
+  date?: string;              // 日付 (YYYY-MM-DD形式、省略時は本日)
+  sortBy?: 'time' | 'name';   // ソート基準
+  timeSlot?: 'morning' | 'afternoon' | 'evening' | 'all';  // 時間帯フィルター
+}
+
+// 時間帯
+export enum TimeSlot {
+  MORNING = 'morning',       // 午前 (00:00-12:00)
+  AFTERNOON = 'afternoon',   // 午後 (12:00-17:00)
+  EVENING = 'evening'        // 夕方以降 (17:00-24:00)
+}
+
+// 施術タイプ
+export enum TreatmentType {
+  CUT = 'cut',               // カット
+  COLOR = 'color',           // カラー
+  PERM = 'perm',             // パーマ
+  STRAIGHT = 'straight',     // 縮毛矯正
+  TREATMENT = 'treatment',   // トリートメント
+  SPA = 'spa',               // ヘッドスパ
+  STYLING = 'styling',       // スタイリング
+  EXTENSION = 'extension',   // エクステンション
+  OTHER = 'other'            // その他
+}
+
+// アポイントメント（予約）
+export interface IAppointment {
+  id: string;                 // 予約ID
+  clientId: string;           // クライアントID
+  date: string;               // 日付 (YYYY-MM-DD形式)
+  time: string;               // 時間 (HH:MM形式)
+  endTime: string;            // 終了時間 (HH:MM形式)
+  stylistId: string;          // 担当スタイリストID
+  treatmentTypes: TreatmentType[]; // 施術タイプ
+  notes?: string;             // 備考
+  status: 'confirmed' | 'canceled' | 'completed' | 'noshow'; // ステータス
+  timeSlot: TimeSlot;         // 時間帯区分
+}
+
+// クライアント詳細情報（四柱推命データ含む）
+export interface ClientDetailsResponse {
+  client: IClient;            // クライアント基本情報
+  compatibility?: {           // スタイリストとの相性
+    overallScore: number;     // 総合相性スコア（0-100）
+    elementRelation: string;  // 五行関係
+    advice: string;           // 相性アドバイス
+  };
+  appointments: {             // 過去の来店履歴（直近5件）
+    id: string;
+    date: string;
+    treatmentTypes: TreatmentType[];
+    stylistName: string;
+  }[];
+  notes: {                    // メモ履歴（直近5件）
+    id: string;
+    content: string;
+    createdAt: string;
+    authorName: string;
+    noteType: ClientNoteType;
+  }[];
+  suggestions: {              // AI提案
+    hairStyle: string;        // ヘアスタイル提案
+    color: string;            // カラー提案
+    careAdvice: string;       // ケアアドバイス
+    conversationTopics: string[]; // 会話トピック
+    generatedAt: string;      // 生成日時
+  };
+}
+
+// メモ追加リクエスト
+export interface AddClientMemoRequest {
+  content: string;            // メモ内容
+  noteType: ClientNoteType;   // メモタイプ
+  isPrivate?: boolean;        // プライベートメモかどうか
+}
+
+// 四柱推命登録リクエスト
+export interface RegisterClientSajuRequest {
+  birthdate: string;          // 生年月日（YYYY-MM-DD形式）
+  birthtime?: string;         // 生まれた時間（HH:MM形式）
+  birthPlace?: string;        // 出生地
+  gender: Gender;             // 性別
+  timeZone?: string;          // タイムゾーン
+}
+
+// AI提案更新レスポンス
+export interface RefreshAiSuggestionsResponse {
+  success: boolean;
+  suggestions: {
+    hairStyle: string;
+    color: string;
+    careAdvice: string;
+    conversationTopics: string[];
+    generatedAt: string;
+  };
+}
+
+// 本日の予約一覧レスポンス
+export interface DailyAppointmentsResponse {
+  date: string;               // 対象日
+  timeSlots: {
+    [key in TimeSlot]: {
+      appointments: {
+        id: string;
+        time: string;
+        endTime: string;
+        client: {
+          id: string;
+          name: string;
+          nameReading?: string;
+          phone?: string;
+          hasCompleteSajuProfile: boolean;
+          elementAttribute?: Element;
+        };
+        treatmentTypes: TreatmentType[];
+        compatibilityScore?: number;
+        conversationSuggestion?: string;
+      }[];
+    };
   };
 }

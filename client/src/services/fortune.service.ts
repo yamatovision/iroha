@@ -273,11 +273,29 @@ class FortuneService {
       // タイムゾーン情報をクエリパラメータに含める
       const params = {
         timezone: tzInfo.timezone,
-        tzOffset: tzInfo.offset
+        tzOffset: tzInfo.offset,
+        _ts: Date.now() // キャッシュバスティング用のタイムスタンプを追加
       };
       
-      const response = await apiService.get(FORTUNE.GET_FORTUNE_DASHBOARD(teamId), { params });
+      // 常に新しいデータを取得するためにキャッシュをスキップ
+      const response = await apiService.get(
+        FORTUNE.GET_FORTUNE_DASHBOARD(teamId), 
+        { params }, 
+        { skipCache: true, forceRefresh: true }
+      );
+      
       console.log(`💫 運勢ダッシュボード取得完了 (${Date.now() - startTime}ms)：`, JSON.stringify(response.data, null, 2));
+      
+      // MISSING_SAJU_PROFILE エラーを特別に処理
+      if (response.data && response.data.error === "ユーザーの四柱推命情報が見つかりません" && response.data.code === "MISSING_SAJU_PROFILE") {
+        console.warn('💫 四柱推命プロフィールが不足しています', response.data);
+        
+        // APIキャッシュを強制的にクリア
+        await this.clearFortuneCache();
+        await apiService.clearCache('/api/v1/users/profile');
+        
+        throw new Error('MISSING_SAJU_PROFILE');
+      }
       
       // レスポンスの内容を検証
       if (!response.data || !response.data.personalFortune) {
@@ -297,7 +315,17 @@ class FortuneService {
       }
       
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'MISSING_SAJU_PROFILE') {
+        // 特別なエラーオブジェクトを作成
+        const errorObj: any = new Error('四柱推命プロフィールが必要です');
+        errorObj.response = {
+          status: 400,
+          data: { code: 'MISSING_SAJU_PROFILE' }
+        };
+        throw errorObj;
+      }
+      
       console.error('💫 運勢ダッシュボードの取得に失敗しました', error);
       throw error;
     }
@@ -460,6 +488,31 @@ class FortuneService {
     }
     
     return false;
+  }
+  
+  /**
+   * 運勢データのキャッシュを強制的にクリアする
+   * デバッグやデータ整合性問題の解決に使用
+   */
+  async clearFortuneCache(): Promise<void> {
+    console.log('💥 運勢データキャッシュを強制的にクリア');
+    
+    // インメモリキャッシュをクリア
+    this.cachedFortune = null;
+    this.cacheExpiration = null;
+    
+    try {
+      // ストレージから日付チェック情報をクリア
+      await storageService.remove(StorageKeys.LAST_FORTUNE_CHECK_DATE);
+      
+      // APIサービスのキャッシュもクリア
+      await apiService.clearCache(FORTUNE.GET_DAILY_FORTUNE);
+      await apiService.clearCache(FORTUNE.GET_FORTUNE_DASHBOARD());
+      
+      console.log('✅ 運勢データキャッシュのクリア完了');
+    } catch (error) {
+      console.error('❌ キャッシュクリア中にエラーが発生しました:', error);
+    }
   }
 
   /**

@@ -8,6 +8,7 @@ import TeamFortuneRanking from '../../components/fortune/TeamFortuneRanking';
 import AiConsultButton from '../../components/fortune/AiConsultButton';
 import LoadingOverlay from '../../components/common/LoadingOverlay';
 import fortuneService from '../../services/fortune.service';
+import apiService from '../../services/api.service';
 import { IFortune, IFortuneDashboardResponse } from '../../../../shared';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNetworkAwareDataSync } from '../../components/network';
@@ -79,7 +80,44 @@ const Fortune: React.FC = () => {
       return;
     }
 
-    // ダッシュボードのフェッチ処理
+    // 四柱推命プロフィールが完全かチェック
+    const hasFourPillars = userProfile.fourPillars && 
+      Object.keys(userProfile.fourPillars).length > 0 &&
+      userProfile.fourPillars.day?.heavenlyStem &&
+      userProfile.fourPillars.year?.heavenlyStem &&
+      userProfile.fourPillars.month?.heavenlyStem;
+    
+    // 必要な基本情報が存在するかを確認
+    const hasBasicInfo = 
+      userProfile.birthDate && 
+      userProfile.birthTime && 
+      userProfile.birthPlace && 
+      userProfile.gender;
+    
+    // 四柱推命の属性情報が存在するか確認
+    const hasElementInfo = userProfile.elementAttribute && userProfile.elementAttribute.length > 0;
+    
+    const isProfileComplete = hasFourPillars && hasBasicInfo && hasElementInfo;
+    
+    console.log('👤 userProfileの変更検出: 四柱推命プロフィール完全性チェック', {
+      isComplete: isProfileComplete,
+      hasFourPillars,
+      hasBasicInfo,
+      hasElementInfo,
+      dayPillar: userProfile.fourPillars?.day?.heavenlyStem || 'なし',
+      yearPillar: userProfile.fourPillars?.year?.heavenlyStem || 'なし',
+      monthPillar: userProfile.fourPillars?.month?.heavenlyStem || 'なし'
+    });
+    
+    // エラー時にSAJU_PROFILE_REQUIREDを設定する代わりに、ここでもチェック
+    if (!isProfileComplete) {
+      console.warn('⚠️ 四柱推命プロフィールが不完全です。プロフィール設定画面に移動します');
+      setError('SAJU_PROFILE_REQUIRED');
+      setLoading(false);
+      return;
+    }
+
+    // プロフィールが完全な場合のみダッシュボードのフェッチ処理を実行
     fetchDashboard();
   }, [userProfile]); // userProfileが変更されたときに再実行
   
@@ -88,38 +126,151 @@ const Fortune: React.FC = () => {
     try {
       setLoading(true);
       setRefreshing(true); // 追加: 初期ロード時も豆知識を表示するために refreshing を true に設定
-      console.log('認証済みユーザープロファイルでの運勢ダッシュボード取得開始', { userId: userProfile?.id });
+      console.log('📊 認証済みユーザープロファイルでの運勢ダッシュボード取得開始', { 
+        userId: userProfile?.id,
+        hasSajuProfile: !!userProfile?.fourPillars
+      });
       
-      // 統合ダッシュボードデータを取得
-      const dashboardData: IFortuneDashboardResponse = await fortuneService.getFortuneDashboard();
+      // 最大4回まで取得を試行
+      let dashboardData = null;
+      let attempts = 0;
+      const maxAttempts = 4;
+      let success = false;
       
-      // 個人運勢を設定
-      if (dashboardData.personalFortune) {
+      while (attempts < maxAttempts && !success) {
+        try {
+          // 再試行ごとに待機時間を増やす
+          if (attempts > 0) {
+            console.log(`🔁 運勢ダッシュボード取得を再試行... (${attempts + 1}/${maxAttempts})`);
+            
+            // 待機時間を長く設定（3秒、5秒、8秒）
+            const waitTime = [3000, 5000, 8000][attempts - 1] || 2000;
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            // 再試行前にキャッシュをクリア
+            await apiService.clearCache('/api/v1/fortune/dashboard');
+            await apiService.clearCache('/api/v1/users/profile');
+          }
+          
+          // 実際のユーザープロフィールの状態をログ出力
+          if (userProfile) {
+            console.log('👤 プロフィール検証（運勢ダッシュボード取得前）:', {
+              hasFourPillars: !!userProfile.fourPillars,
+              hasDayPillar: !!userProfile.fourPillars?.day?.heavenlyStem,
+              hasYearPillar: !!userProfile.fourPillars?.year?.heavenlyStem,
+              hasMonthPillar: !!userProfile.fourPillars?.month?.heavenlyStem,
+              hasElement: !!userProfile.elementAttribute
+            });
+          }
+          
+          // 統合ダッシュボードデータを取得
+          dashboardData = await fortuneService.getFortuneDashboard();
+          
+          // 取得したデータの詳細をログ出力
+          console.log('📋 取得した運勢ダッシュボードデータ:', {
+            hasPersonalFortune: !!dashboardData?.personalFortune,
+            fortuneId: dashboardData?.personalFortune?.id,
+            fortuneDate: dashboardData?.personalFortune?.date,
+            fortuneAdviceLength: dashboardData?.personalFortune?.advice ? dashboardData.personalFortune.advice.length : 0,
+            luckyItems: dashboardData?.personalFortune?.luckyItems ? Object.keys(dashboardData.personalFortune.luckyItems).length : 0,
+          });
+          
+          // 個人運勢データの検証
+          if (dashboardData?.personalFortune?.id && dashboardData?.personalFortune?.advice) {
+            success = true;
+            console.log('✅ 完全な運勢データを取得しました', {
+              id: dashboardData.personalFortune.id,
+              advicePreview: dashboardData.personalFortune.advice.substring(0, 50) + '...',
+              adviceLength: dashboardData.personalFortune.advice.length,
+              hasDailyMessage: dashboardData.personalFortune.advice.includes('今日の名言')
+            });
+          } else {
+            console.warn('⚠️ 運勢データが不完全です。再試行します', {
+              hasId: !!dashboardData?.personalFortune?.id,
+              hasAdvice: !!dashboardData?.personalFortune?.advice,
+              attempts: attempts + 1
+            });
+            attempts++;
+          }
+        } catch (retryError: any) {
+          console.error(`❌ 取得試行 ${attempts + 1} 失敗:`, retryError);
+          
+          // MISSING_SAJU_PROFILE エラーの場合、プロフィール再取得を試みる
+          if (retryError.response?.data?.code === 'MISSING_SAJU_PROFILE') {
+            console.warn('⚠️ 四柱推命プロフィールが不足しています。プロフィールを再取得します');
+            
+            try {
+              // プロフィール情報を更新
+              await apiService.clearCache('/api/v1/users/profile');
+              // 認証コンテキストからプロフィール情報を再取得する関数があれば呼び出す
+              if (typeof refreshUserProfile === 'function') {
+                await refreshUserProfile();
+              }
+              
+              // 長めの待機時間を設定
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            } catch (profileError) {
+              console.error('❌ プロフィール再取得中にエラーが発生しました:', profileError);
+            }
+          }
+          
+          attempts++;
+        }
+      }
+      
+      // 最終的な処理 - 成功した場合
+      if (success && dashboardData?.personalFortune) {
+        // 個人運勢を設定
         setFortune(dashboardData.personalFortune);
         setError(null);
-
+        
         // 日付をフォーマット
         const date = dashboardData.personalFortune.date instanceof Date 
           ? dashboardData.personalFortune.date 
           : new Date(dashboardData.personalFortune.date);
         
         setCurrentDate(fortuneService.formatDate(date));
+        console.log('📅 運勢日付設定:', fortuneService.formatDate(date));
+      } else {
+        // 複数回試行しても失敗した場合
+        console.error('❌ 複数回の試行後も完全な運勢データを取得できませんでした');
+        throw new Error('複数回の試行後も運勢データを取得できませんでした');
       }
       
     } catch (err: any) {
-      console.error('運勢ダッシュボードの取得に失敗しました', err);
+      console.error('❌ 運勢ダッシュボードの取得に失敗しました', {
+        message: err.message,
+        stack: err.stack,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
+      // キャッシュをクリアして再取得を試みる
+      try {
+        console.log('🔄 キャッシュをクリアして再取得を試みます');
+        // すべての関連APIキャッシュを強制クリア
+        await fortuneService.clearFortuneCache();
+        await apiService.clearCache('/api/v1/users/profile');
+        await apiService.clearCache('/api/v1/fortune/daily');
+        await apiService.clearCache('/api/v1/fortune/dashboard');
+        console.log('✅ 全関連APIキャッシュをクリアしました');
+      } catch (cacheError) {
+        console.error('❌ キャッシュクリア中にエラーが発生しました', cacheError);
+      }
       
       // エラーメッセージを設定
       if (err.response && err.response.status === 404) {
         // 運勢データがない場合は特定のエラータイプを設定（後でボタン表示の判断に使用）
+        console.log('⚠️ 運勢データが見つかりません (404)');
         setError('FORTUNE_NOT_FOUND');
       } else if (err.response && err.response.status === 400 && 
                err.response.data && err.response.data.code === 'MISSING_SAJU_PROFILE') {
         // 四柱推命プロフィールがない場合
+        console.log('⚠️ 四柱推命プロフィールが必要です (400)');
         setError('SAJU_PROFILE_REQUIRED');
       } else if (err.response && err.response.status === 401) {
         // 認証エラーの場合、少し待機してから再試行 (認証処理完了待ち)
-        console.log('認証エラー、3秒後に再試行します');
+        console.log('🔄 認証エラー (401)、3秒後に再試行します');
         setTimeout(() => {
           // ローディング状態を維持したまま再試行フラグを設定
           setError(null);
@@ -128,6 +279,7 @@ const Fortune: React.FC = () => {
         return; // ここでreturnして下のfinallyブロックを実行しない
       } else {
         // その他のエラー
+        console.log('❌ その他のエラーが発生しました', err);
         setError('運勢データの取得に失敗しました。しばらくしてからもう一度お試しください。');
       }
       

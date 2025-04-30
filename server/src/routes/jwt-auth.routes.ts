@@ -1,6 +1,5 @@
 import express from 'express';
 import { JwtAuthController } from '../controllers/jwt-auth.controller';
-import { hybridAuthenticate } from '../middleware/hybrid-auth.middleware';
 
 const router = express.Router();
 
@@ -19,8 +18,5 @@ router.post('/refresh-token', JwtAuthController.refreshToken);
 
 // ログアウト
 router.post('/logout', JwtAuthController.logout);
-
-// Firebase認証からJWT認証への移行（廃止予定 - 移行完了後）
-router.post('/migrate-to-jwt', hybridAuthenticate, JwtAuthController.migrateToJwt);
 
 export default router;

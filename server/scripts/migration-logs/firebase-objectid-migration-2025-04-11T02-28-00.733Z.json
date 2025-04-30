@@ -1,0 +1,18 @@
+{
+  "startTime": "2025-04-11T02:28:00.733Z",
+  "userCount": 2,
+  "usersWithFirebaseId": 0,
+  "teamMemberCardCount": 2,
+  "chatHistoryCount": 113,
+  "migratedTeamMemberCards": 0,
+  "migratedChatHistories": 0,
+  "failedMigrations": {
+    "teamMemberCards": [],
+    "chatHistories": []
+  },
+  "idMappings": {
+    "Bs2MacLtK1Z1fVnau2dYPpsWRpa2": "Bs2MacLtK1Z1fVnau2dYPpsWRpa2",
+    "E83YThG9lwZIef1eirBJJ9Wujht2": "E83YThG9lwZIef1eirBJJ9Wujht2"
+  },
+  "endTime": "2025-04-11T02:28:01.285Z"
+}
