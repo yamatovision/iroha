@@ -657,7 +657,7 @@ SuperAdminは組織レベルの操作に集中し、個別ユーザー（スタ�
    - [SuperAdmin API仕様書（4階層ロール対応）](/docs/api/superadmin-role-v2.md)
    - [4階層ロール構造の実装プラン](/docs/migration-notes/four-tier-role-implementation.md)
    - [4階層ロール構造のAPI設計・実装ガイド](/docs/api/admin-role-expansion.md)
-
+   - [テストガイド](/docs/api/superadmin-api-test-handover-update.md)
 2. **課金・プラン管理画面**
    - **説明**: プランの設定、収益シミュレーション、および請求書の管理を行う画面
    - **モックアップ**: `/mockups/beauty-superadmin-plans.html`
@@ -665,6 +665,7 @@ SuperAdminは組織レベルの操作に集中し、個別ユーザー（スタ�
    - **データモデル**: `/docs/data_models/beauty-superadmin-plans.md`
    - **UI設計**: `/docs/ui/beauty-superadmin-plans.md`
    - **実装ガイド**: `/docs/implementation/beauty-superadmin-plans.md`
+   - **UniverPayドキュメント**: `/docs/implementation/univerpay-integration-details.md`
    - **主要機能**:
      - 収益シミュレーションタブ：収益データの可視化と将来予測
        - 現在の収益概要（月額収益、APIコスト、利益率）の表示

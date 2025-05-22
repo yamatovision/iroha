@@ -61,6 +61,7 @@ import { requestTracer, requestLogger, errorLogger } from './utils/logger/middle
 import authRoutes from './routes/auth.routes';
 import jwtAuthRoutes from './routes/jwt-auth.routes';
 import adminRoutes from './routes/admin.routes';
+import superadminRoutes from './routes/superadmin.routes';
 import dayPillarRoutes from './routes/day-pillar.routes';
 import publicEndpointsRoutes from './routes/public-endpoints.routes';
 import usersRoutes from './routes/users.routes';
@@ -138,6 +139,9 @@ app.use(`${API_BASE_PATH}`, (req, res, next) => jwtEdgeCaseHandler(req, res, nex
 
 // 管理者ルーターを設定
 app.use(`${API_BASE_PATH}/admin`, adminRoutes);
+
+// スーパー管理者ルーターを設定
+app.use(`${API_BASE_PATH}/superadmin`, superadminRoutes);
 
 // 四柱推命プロフィールルーター削除済み - ユーザーモデルに統合
 

@@ -14,8 +14,17 @@ export class JwtService {
    * 現在の環境変数からアクセストークンシークレットを取得
    * index.tsで設定された値を使用するため、実行時に取得
    */
-  private static getAccessTokenSecret(): string {
-    return process.env.JWT_ACCESS_SECRET || 'dailyfortune_access_token_secret_dev';
+  static getAccessTokenSecret(): string {
+    const secret = process.env.JWT_ACCESS_SECRET || 'dailyfortune_access_token_secret_dev';
+    // テスト環境ではデバッグ情報を出力
+    if (process.env.NODE_ENV === 'test') {
+      console.log('JwtService.getAccessTokenSecret called:', { 
+        secretLength: secret.length,
+        secretFirstChars: secret.substring(0, 5) + '...',
+        env: process.env.NODE_ENV
+      });
+    }
+    return secret;
   }
 
   /**
@@ -81,9 +90,21 @@ export class JwtService {
     try {
       // シークレットを実行時に取得
       const secretKey = this.getAccessTokenSecret();
+      console.log('Verifying access token with secret:', { 
+        secretKeyLength: secretKey.length, 
+        secretKeyFirstChars: secretKey.substring(0, 5) + '...',
+        tokenLength: token.length,
+        tokenFirstChars: token.substring(0, 10) + '...'
+      });
+      
       const payload = jwt.verify(token, secretKey);
+      console.log('Token verified successfully:', { 
+        sub: typeof payload === 'object' ? payload.sub : 'unknown',
+        role: typeof payload === 'object' && 'role' in payload ? payload.role : 'unknown'
+      });
       return { valid: true, payload };
     } catch (error) {
+      console.error('Token verification failed:', error);
       return { valid: false, error };
     }
   }

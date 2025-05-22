@@ -95,3 +95,6 @@ ios/Pods/
 *.hprof
 .project
 .settings/
+**/.claude/settings.local.json
+
+.claude_data/

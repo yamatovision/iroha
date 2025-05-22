@@ -1,15 +1,28 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 /**
+ * サブスクリプションステータス列挙型
+ */
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  TRIALING = 'trialing',
+  PAST_DUE = 'past_due',
+  CANCELED = 'canceled',
+  INCOMPLETE = 'incomplete',
+  SUSPENDED = 'suspended' // payment-webhook.controller.tsで使用
+}
+
+/**
  * サブスクリプションモデルのインターフェース
  */
 export interface ISubscription {
   organizationId: mongoose.Types.ObjectId;
-  status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete';
+  status: SubscriptionStatus;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
   priceId: string;
+  planId?: string; // payment-webhook.controller.tsで使用
   quantity: number;
   totalAmount: number;
   currency: string;
@@ -17,6 +30,9 @@ export interface ISubscription {
   adminCount: number;
   userCount: number;
   lastInvoiceId?: string;
+  startDate?: Date; // payment-webhook.controller.tsで使用
+  nextBillingDate?: Date; // payment-webhook.controller.tsで使用
+  metadata?: any; // payment-webhook.controller.tsで使用
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,11 +57,11 @@ const subscriptionSchema = new Schema<ISubscriptionDocument>(
     status: {
       type: String,
       enum: {
-        values: ['active', 'trialing', 'past_due', 'canceled', 'incomplete'],
+        values: Object.values(SubscriptionStatus),
         message: '{VALUE}は有効なサブスクリプションステータスではありません'
       },
       required: [true, 'ステータスは必須です'],
-      default: 'incomplete',
+      default: SubscriptionStatus.INCOMPLETE,
       index: true
     },
     currentPeriodStart: {

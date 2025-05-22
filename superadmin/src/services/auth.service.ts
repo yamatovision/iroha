@@ -1,6 +1,5 @@
 import axios from 'axios';
 import tokenService from './token.service';
-import { JWT_AUTH } from '../types';
 
 // APIパスと認証プロパティを取得
 // 開発時はプロキシを使用するため /api/v1 で OK (vite.config.ts で設定済み)

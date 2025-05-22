@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { Request, Response } from 'express';
 import { SajuEngineService } from '../services/saju-engine.service';
 import { handleError, ValidationError, NotFoundError } from '../utils';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * 公開APIルーター

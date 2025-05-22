@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サロモニ - チャットインターフェース</title>
+    
+    <!-- Material UI CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/14.0.0/material-components-web.min.css" rel="stylesheet">
+    
+    <!-- Material UI JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/material-components-web/14.0.0/material-components-web.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .chat-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        /* ヘッダー */
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .ai-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .ai-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .ai-status {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* メッセージエリア */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #fafafa;
+        }
+        
+        .message {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message.ai {
+            align-self: flex-start;
+        }
+        
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .message.ai .message-bubble {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin: 4px 8px 0 8px;
+        }
+        
+        /* リッチカード */
+        .fortune-card {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 8px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            color: #333;
+        }
+        
+        .fortune-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .fortune-icon {
+            font-size: 28px;
+        }
+        
+        .fortune-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .fortune-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .fortune-item {
+            background: rgba(255,255,255,0.7);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .fortune-item-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .fortune-item-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* クイックアクション */
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        /* 入力エリア */
+        .input-area {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        
+        .message-input {
+            width: 100%;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 12px 50px 12px 20px;
+            font-size: 16px;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .input-actions {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            display: flex;
+            gap: 4px;
+        }
+        
+        .input-btn {
+            background: none;
+            border: none;
+            color: #999;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .input-btn:hover {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* タイピングインジケーター */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 8px 0;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* レスポンシブ */
+        @media (max-width: 600px) {
+            .chat-container {
+                height: 100vh;
+            }
+            
+            .fortune-items {
+                grid-template-columns: 1fr;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- ヘッダー -->
+        <header class="chat-header">
+            <div class="ai-info">
+                <div class="ai-avatar">🌟</div>
+                <div>
+                    <div style="font-weight: 500;">サロモニ</div>
+                    <div class="ai-status">オンライン</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" title="設定">
+                    <span class="material-icons">settings</span>
+                </button>
+                <button class="header-btn" title="メニュー">
+                    <span class="material-icons">more_vert</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- メッセージエリア -->
+        <main class="messages-area" id="messagesArea">
+            <!-- AIの初回メッセージ -->
+            <div class="message ai">
+                <div class="message-bubble">
+                    おはようございます！✨<br>
+                    今日も一日お疲れさまです。何かお悩みや相談したいことはありますか？
+                </div>
+                <div class="message-time">09:00</div>
+            </div>
+            
+            <!-- ユーザーメッセージ例 -->
+            <div class="message user">
+                <div class="message-bubble">
+                    今日の運勢を教えて
+                </div>
+                <div class="message-time">09:01</div>
+            </div>
+            
+            <!-- 運勢カード -->
+            <div class="message ai">
+                <div class="message-bubble">
+                    今日の運勢をお調べしました！✨
+                    
+                    <div class="fortune-card">
+                        <div class="fortune-header">
+                            <span class="fortune-icon">🔮</span>
+                            <span class="fortune-title">5月22日の運勢</span>
+                        </div>
+                        <div class="fortune-items">
+                            <div class="fortune-item">
+                                <div class="fortune-item-label">全体運</div>
+                                <div class="fortune-item-value">⭐⭐⭐⭐☆</div>
+                            </div>
+                            <div class="fortune-item">
+                                <div class="fortune-item-label">仕事運</div>
+                                <div class="fortune-item-value">⭐⭐⭐⭐⭐</div>
+                            </div>
+                            <div class="fortune-item">
+                                <div class="fortune-item-label">対人運</div>
+                                <div class="fortune-item-value">⭐⭐⭐☆☆</div>
+                            </div>
+                            <div class="fortune-item">
+                                <div class="fortune-item-label">ラッキーカラー</div>
+                                <div class="fortune-item-value">🟡 イエロー</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    今日は仕事面でのエネルギーが高まっています！新しいチャレンジに向いている日ですね。
+                </div>
+                <div class="message-time">09:02</div>
+            </div>
+            
+            <!-- クイックアクション -->
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="sendQuickMessage('詳しい運勢を見る')">詳しい運勢を見る</button>
+                <button class="quick-btn" onclick="sendQuickMessage('同僚との相性を調べて')">相性を調べる</button>
+                <button class="quick-btn" onclick="sendQuickMessage('今日のアドバイス')">今日のアドバイス</button>
+            </div>
+            
+            <!-- タイピングインジケーター（非表示状態） -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <span>サロモニが入力中</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 入力エリア -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea 
+                    class="message-input" 
+                    id="messageInput"
+                    placeholder="メッセージを入力してください..."
+                    rows="1"
+                ></textarea>
+                <div class="input-actions">
+                    <button class="input-btn" title="写真を添付">
+                        <span class="material-icons">photo_camera</span>
+                    </button>
+                    <button class="input-btn" title="音声入力">
+                        <span class="material-icons">mic</span>
+                    </button>
+                </div>
+            </div>
+            <button class="send-btn" onclick="sendMessage()">
+                <span class="material-icons">send</span>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // テキストエリアの自動リサイズ
+        const messageInput = document.getElementById('messageInput');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+        
+        // Enterキーでメッセージ送信（Shift+Enterで改行）
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // メッセージ送信機能
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addUserMessage(message);
+                input.value = '';
+                input.style.height = 'auto';
+                
+                // AIの応答をシミュレート
+                setTimeout(() => {
+                    showTypingIndicator();
+                    setTimeout(() => {
+                        hideTypingIndicator();
+                        addAIResponse(message);
+                    }, 2000);
+                }, 500);
+            }
+        }
+        
+        // クイックメッセージ送信
+        function sendQuickMessage(message) {
+            addUserMessage(message);
+            setTimeout(() => {
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    addAIResponse(message);
+                }, 1500);
+            }, 300);
+        }
+        
+        // ユーザーメッセージを追加
+        function addUserMessage(message) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${message}</div>
+                <div class="message-time">${getCurrentTime()}</div>
+            `;
+            messagesArea.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // AI応答を追加
+        function addAIResponse(userMessage) {
+            const messagesArea = document.getElementById('messagesArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            
+            let response = getAIResponse(userMessage);
+            
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${response}</div>
+                <div class="message-time">${getCurrentTime()}</div>
+            `;
+            messagesArea.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // AI応答の生成（簡単なルールベース）
+        function getAIResponse(userMessage) {
+            const responses = {
+                '詳しい運勢を見る': '詳細な運勢分析ページに移動しますね！🔮 今日は特に創造性が高まる日です。新しいヘアスタイルのアイデアが浮かびそうですよ✨',
+                '同僚との相性を調べて': '同僚の方との相性をお調べしますね！👥 どちらの方との相性が気になりますか？お名前を教えてください。',
+                '今日のアドバイス': '今日のアドバイスです💡<br><br>・午前中は集中力が高いので、技術的な作業に最適<br>・お客様とのコミュニケーションでは明るい笑顔を心がけて<br>・休憩時間に軽いストレッチを取り入れると運気アップ！',
+                'default': 'ありがとうございます😊 どのようなことでお手伝いできますか？お気軽にお聞かせください。'
+            };
+            
+            return responses[userMessage] || responses['default'];
+        }
+        
+        // タイピングインジケーター表示
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
+            scrollToBottom();
+        }
+        
+        // タイピングインジケーター非表示
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'none';
+        }
+        
+        // 現在時刻を取得
+        function getCurrentTime() {
+            const now = new Date();
+            return now.getHours().toString().padStart(2, '0') + ':' + 
+                   now.getMinutes().toString().padStart(2, '0');
+        }
+        
+        // 最下部にスクロール
+        function scrollToBottom() {
+            const messagesArea = document.getElementById('messagesArea');
+            setTimeout(() => {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 100);
+        }
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            scrollToBottom();
+        });
+    </script>
+</body>
+</html>

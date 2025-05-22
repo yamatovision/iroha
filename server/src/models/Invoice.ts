@@ -1,6 +1,21 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 /**
+ * 請求書ステータス列挙型
+ */
+export enum InvoiceStatus {
+  DRAFT = 'draft',
+  OPEN = 'open',
+  PAID = 'paid',
+  VOID = 'void',
+  UNCOLLECTIBLE = 'uncollectible',
+  PAST_DUE = 'past_due', // payment-webhook.controller.tsで使用されているため追加
+  PROCESSING = 'processing', // payment-webhook.controller.tsで使用
+  FAILED = 'failed', // payment-webhook.controller.tsで使用
+  REFUNDED = 'refunded' // payment-webhook.controller.tsで使用
+}
+
+/**
  * 請求書アイテムのインターフェース
  */
 export interface IInvoiceItem {
@@ -11,15 +26,15 @@ export interface IInvoiceItem {
 }
 
 /**
- * 請求書モデルのインターフェース
+ * 請求書の基本データインターフェース（MongoDB非依存）
  */
-export interface IInvoice {
+export interface IInvoiceData {
   organizationId: mongoose.Types.ObjectId;
   subscriptionId: mongoose.Types.ObjectId;
   invoiceNumber: string;
   amount: number;
   currency: string;
-  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible';
+  status: InvoiceStatus;
   billingPeriodStart: Date;
   billingPeriodEnd: Date;
   dueDate: Date;
@@ -27,6 +42,13 @@ export interface IInvoice {
   items: IInvoiceItem[];
   paymentMethodId?: string;
   receiptUrl?: string;
+}
+
+/**
+ * 請求書モデルのインターフェース
+ */
+export interface IInvoice extends IInvoiceData {
+  _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,7 +56,7 @@ export interface IInvoice {
 /**
  * Mongoose用のドキュメントインターフェース
  */
-export interface IInvoiceDocument extends IInvoice, Document {}
+export interface IInvoiceDocument extends Omit<IInvoice, '_id'>, Document {}
 
 /**
  * 請求書アイテムスキーマ定義
@@ -102,11 +124,11 @@ const invoiceSchema = new Schema<IInvoiceDocument>(
     status: {
       type: String,
       enum: {
-        values: ['draft', 'open', 'paid', 'void', 'uncollectible'],
+        values: Object.values(InvoiceStatus),
         message: '{VALUE}は有効な請求書ステータスではありません'
       },
       required: [true, 'ステータスは必須です'],
-      default: 'draft',
+      default: InvoiceStatus.DRAFT,
       index: true
     },
     billingPeriodStart: {
@@ -155,3 +177,14 @@ invoiceSchema.index({ billingPeriodStart: 1, billingPeriodEnd: 1 });
  * 請求書モデル
  */
 export const Invoice = mongoose.model<IInvoiceDocument>('Invoice', invoiceSchema);
+
+/**
+ * ドキュメントを標準インターフェースに変換するユーティリティ関数
+ */
+export function convertToIInvoice(doc: IInvoiceDocument): IInvoice {
+  const { _id, ...data } = doc.toObject();
+  return {
+    _id: _id as mongoose.Types.ObjectId,
+    ...data,
+  } as IInvoice;
+}

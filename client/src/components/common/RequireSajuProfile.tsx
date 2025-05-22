@@ -44,7 +44,7 @@ const RequireSajuProfile: React.FC<RequireSajuProfileProps> = ({ children }) => 
     
     const isValid = hasFourPillars && hasBasicInfo && hasElementInfo;
     
-    if (isValid) {
+    if (isValid && userProfile.fourPillars) {
       console.log('✅ 四柱推命プロフィール検証完了: すべての必要情報が存在します', {
         pillars: Object.keys(userProfile.fourPillars),
         hasDayPillar: !!userProfile.fourPillars.day?.heavenlyStem,

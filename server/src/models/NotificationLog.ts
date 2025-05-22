@@ -41,7 +41,24 @@ const notificationLogSchema = new Schema<INotificationLogDocument>(
     type: {
       type: String,
       enum: {
-        values: ['payment_failed', 'subscription_expiring', 'system_alert'],
+        values: [
+          'payment_success',
+          'payment_failed',
+          'subscription_created',
+          'subscription_payment',
+          'subscription_failure',
+          'subscription_expiring',
+          'subscription_suspended',
+          'subscription_canceled',
+          'invoice_created',
+          'invoice_payment_reminder',
+          'access_suspended',
+          'access_restored',
+          'plan_updated',
+          'refund_notification',
+          'refund_failure',
+          'system_alert'
+        ],
         message: '{VALUE}は有効な通知タイプではありません'
       },
       required: [true, '通知タイプは必須です']

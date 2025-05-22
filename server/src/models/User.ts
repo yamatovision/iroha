@@ -9,7 +9,7 @@ export interface IUser {
   email: string;
   password: string;
   displayName: string;
-  role: 'SuperAdmin' | 'Admin' | 'User';
+  role: 'SuperAdmin' | 'Owner' | 'Admin' | 'User';
   organizationId: mongoose.Types.ObjectId;
   // teamIdフィールドは削除しました - TeamMembershipモデルで管理します
   jobTitle?: string;
@@ -177,7 +177,7 @@ const userSchema = new Schema<IUserDocument>(
     role: {
       type: String,
       enum: {
-        values: ['SuperAdmin', 'Admin', 'User'],
+        values: ['SuperAdmin', 'Owner', 'Admin', 'User'],
         message: '{VALUE}は有効な権限ではありません'
       },
       required: [true, '権限は必須です'],

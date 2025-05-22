@@ -27,8 +27,8 @@ const Fortune: React.FC = () => {
     severity: 'info' as 'info' | 'success' | 'warning' | 'error'
   });
   
-  // 認証コンテキストから userProfile を取得
-  const { userProfile } = useAuth();
+  // 認証コンテキストから userProfile と refreshUserProfile を取得
+  const { userProfile, refreshUserProfile } = useAuth();
   
   // ネットワークの状態監視と運勢データ連携
   const { wasDisconnected } = useNetworkAwareDataSync((connected) => {
@@ -202,8 +202,8 @@ const Fortune: React.FC = () => {
             try {
               // プロフィール情報を更新
               await apiService.clearCache('/api/v1/users/profile');
-              // 認証コンテキストからプロフィール情報を再取得する関数があれば呼び出す
-              if (typeof refreshUserProfile === 'function') {
+              // 認証コンテキストからプロフィール情報を再取得
+              if (refreshUserProfile) {
                 await refreshUserProfile();
               }
               

@@ -1,16 +1,30 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 /**
- * 組織モデルのインターフェース
+ * 組織ステータス列挙型
  */
-export interface IOrganization {
+export enum OrganizationStatus {
+  ACTIVE = 'active',
+  TRIAL = 'trial',
+  SUSPENDED = 'suspended',
+  DELETED = 'deleted',
+  INACTIVE = 'inactive' // payment-webhook.controller.tsで使用
+}
+
+/**
+ * 組織の基本データインターフェース（MongoDB非依存）
+ */
+export interface IOrganizationData {
   name: string;
-  superAdminId: mongoose.Types.ObjectId;
+  ownerId: mongoose.Types.ObjectId; // superAdminIdから変更
+  adminIds?: mongoose.Types.ObjectId[]; // 管理者IDリスト
+  status: OrganizationStatus; // 組織の状態
   subscriptionPlan: {
     type: 'none' | 'active' | 'trial' | 'cancelled';
     isActive: boolean;
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
+    trialEndsAt?: Date; // トライアル終了日
   };
   billingInfo: {
     companyName?: string;
@@ -22,6 +36,13 @@ export interface IOrganization {
     taxId?: string;
     paymentMethodId?: string;
   };
+}
+
+/**
+ * 組織モデルのインターフェース
+ */
+export interface IOrganization extends IOrganizationData {
+  _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,7 +50,7 @@ export interface IOrganization {
 /**
  * Mongoose用のドキュメントインターフェース
  */
-export interface IOrganizationDocument extends IOrganization, Document {}
+export interface IOrganizationDocument extends Omit<IOrganization, '_id'>, Document {}
 
 /**
  * 組織スキーマ定義
@@ -43,10 +64,21 @@ const organizationSchema = new Schema<IOrganizationDocument>(
       minlength: [2, '組織名は2文字以上である必要があります'],
       maxlength: [100, '組織名は100文字以下である必要があります']
     },
-    superAdminId: {
+    ownerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'スーパー管理者IDは必須です'],
+      required: [true, 'オーナーIDは必須です'],
+      index: true
+    },
+    adminIds: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    status: {
+      type: String,
+      enum: Object.values(OrganizationStatus),
+      default: OrganizationStatus.TRIAL,
+      required: true,
       index: true
     },
     subscriptionPlan: {
@@ -67,6 +99,10 @@ const organizationSchema = new Schema<IOrganizationDocument>(
         default: Date.now
       },
       currentPeriodEnd: {
+        type: Date,
+        default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30日後
+      },
+      trialEndsAt: {
         type: Date,
         default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30日後
       }
@@ -127,3 +163,14 @@ organizationSchema.index({ 'subscriptionPlan.isActive': 1 });
  * 組織モデル
  */
 export const Organization = mongoose.model<IOrganizationDocument>('Organization', organizationSchema);
+
+/**
+ * ドキュメントを標準インターフェースに変換するユーティリティ関数
+ */
+export function convertToIOrganization(doc: IOrganizationDocument): IOrganization {
+  const { _id, ...data } = doc.toObject();
+  return {
+    _id: _id as mongoose.Types.ObjectId,
+    ...data,
+  } as IOrganization;
+}

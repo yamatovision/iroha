@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>トークンチャージ購入モーダル | 美姫命</title>
+  
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <!-- Material UI -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      --primary-color: #e91e63;
+      --primary-light: #f48fb1;
+      --primary-dark: #c2185b;
+      --secondary-color: #9c27b0;
+      --text-color: #333333;
+      --background-light: #f5f5f5;
+      --card-color: #ffffff;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+    
+    .modal {
+      max-width: 600px;
+      border-radius: 8px;
+    }
+    
+    .modal-content {
+      padding: 24px;
+    }
+    
+    .modal-footer {
+      padding: 16px 24px;
+    }
+    
+    .btn-flat {
+      color: var(--primary-color);
+    }
+    
+    .btn {
+      background-color: var(--primary-color);
+    }
+    
+    .btn:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .step {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      color: #757575;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 5px;
+      font-weight: 500;
+      position: relative;
+    }
+    
+    .step.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    
+    .step.completed {
+      background-color: #4caf50;
+      color: white;
+    }
+    
+    .step::after {
+      content: '';
+      height: 2px;
+      width: 30px;
+      background-color: #e0e0e0;
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translateY(-50%);
+    }
+    
+    .step:last-child::after {
+      display: none;
+    }
+    
+    .step.active ~ .step::after,
+    .step:not(.active):not(.completed)::after {
+      background-color: #e0e0e0;
+    }
+    
+    .step.completed::after,
+    .step.active::after {
+      background-color: #4caf50;
+    }
+    
+    .plan-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .plan-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .plan-card.selected {
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 4px 8px rgba(233, 30, 99, 0.2);
+    }
+    
+    .plan-title {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+    
+    .plan-price {
+      font-size: 24px;
+      font-weight: 500;
+      margin: 10px 0;
+    }
+    
+    .payment-method {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+    }
+    
+    .payment-method:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .payment-method.selected {
+      border: 2px solid var(--primary-color);
+      box-shadow: 0 2px 4px rgba(233, 30, 99, 0.2);
+    }
+    
+    .card-logo {
+      font-size: 28px;
+      margin-right: 15px;
+      color: #666;
+    }
+    
+    .card-info {
+      flex: 1;
+    }
+    
+    .card-number {
+      font-weight: 500;
+    }
+    
+    .card-expiry {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .radio-indicator {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #e0e0e0;
+      margin-right: 15px;
+      position: relative;
+    }
+    
+    .selected .radio-indicator {
+      border-color: var(--primary-color);
+    }
+    
+    .selected .radio-indicator::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    .credit-card-form {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .credit-card-form .row {
+      margin-bottom: 0;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+    
+    .summary-label {
+      color: #666;
+    }
+    
+    .summary-value {
+      font-weight: 500;
+    }
+    
+    .payment-status {
+      text-align: center;
+      padding: 20px 0;
+    }
+    
+    .payment-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    
+    .payment-icon.success {
+      color: #4caf50;
+    }
+    
+    .payment-icon.pending {
+      color: #ffc107;
+    }
+    
+    .payment-icon.error {
+      color: #f44336;
+    }
+    
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 30px 0;
+    }
+    
+    .progress-circular {
+      margin-bottom: 20px;
+    }
+    
+    .stepper-content {
+      display: none;
+    }
+    
+    .stepper-content.active {
+      display: block;
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 20px 0;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .radio-button {
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      display: block;
+    }
+    
+    .radio-button input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .radio-checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 20px;
+      width: 20px;
+      background-color: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 50%;
+    }
+    
+    .radio-button:hover input ~ .radio-checkmark {
+      border-color: #ccc;
+    }
+    
+    .radio-button input:checked ~ .radio-checkmark {
+      border-color: var(--primary-color);
+    }
+    
+    .radio-checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+    
+    .radio-button input:checked ~ .radio-checkmark:after {
+      display: block;
+    }
+    
+    .radio-button .radio-checkmark:after {
+      top: 3px;
+      left: 3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+    
+    .card-form {
+      margin-top: 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    /* 3Dセキュア認証モーダル */
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+    }
+    
+    .auth-modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+      text-align: center;
+    }
+    
+    .token-usage {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .token-usage-bar {
+      flex: 1;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      margin: 0 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .token-usage-progress {
+      position: absolute;
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- モックアップバナー -->
+  <div style="background-color: #2196f3; color: white; padding: 10px; text-align: center;">
+    <span class="material-icons" style="vertical-align: middle; margin-right: 5px;">info</span>
+    これはモックアップです - 実際の実装ではありません
+  </div>
+
+  <!-- トークンチャージ購入モーダル（ステップ1: プラン選択） -->
+  <div class="modal" id="token-purchase-modal" style="display: block; position: relative; z-index: 1000; margin: 30px auto;">
+    <div class="modal-content">
+      <h4>APIトークンチャージ購入</h4>
+      
+      <!-- ステップインジケーター -->
+      <div class="step-indicator">
+        <div class="step active" data-step="1">1</div>
+        <div class="step" data-step="2">2</div>
+        <div class="step" data-step="3">3</div>
+        <div class="step" data-step="4">4</div>
+      </div>
+      
+      <!-- ステップ1: プラン選択 -->
+      <div class="stepper-content active" id="step-1">
+        <p>現在のAPIトークン残量: <strong>1,750</strong> (月間制限: 5,000)</p>
+        <p>追加チャージでトークンを購入すると、月間制限に関わらず利用できます。今月中のみ有効です。</p>
+        
+        <div class="row">
+          <div class="col s12">
+            <div class="plan-card" onclick="selectPlan('standard')">
+              <div class="radio-indicator"></div>
+              <div class="plan-title">スタンダードチャージ</div>
+              <div class="plan-price">¥980</div>
+              <div>1,000,000トークン（約1,000回分の通常チャット）</div>
+              <ul style="list-style-type: disc; margin-left: 20px;">
+                <li>即時チャージ反映</li>
+                <li>今月末まで有効</li>
+              </ul>
+            </div>
+            
+            <div class="plan-card selected" onclick="selectPlan('premium')">
+              <div class="radio-indicator"></div>
+              <div class="plan-title">プレミアムチャージ <span class="new badge" style="background-color: var(--primary-color);">お得</span></div>
+              <div class="plan-price">¥8,000</div>
+              <div>10,000,000トークン（約10,000回分の通常チャット）</div>
+              <ul style="list-style-type: disc; margin-left: 20px;">
+                <li>即時チャージ反映</li>
+                <li>今月末まで有効</li>
+                <li><strong>18%お得</strong>（1トークンあたり）</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 13px; color: #666;">
+          <p>※チャージ購入したトークンは、プラン上限に追加されます（今月のみ有効、翌月への繰り越しはできません）</p>
+          <p>※購入後すぐに利用可能です。料金は請求書に自動的に追加されます。</p>
+          <p>※1回の会話あたり約800-1,200トークンを消費します（質問や回答の長さによって変動します）</p>
+        </div>
+      </div>
+      
+      <!-- ステップ2: 支払い方法選択 -->
+      <div class="stepper-content" id="step-2">
+        <h5>支払い方法の選択</h5>
+        
+        <p>トークン購入の支払い方法を選択してください。</p>
+        
+        <div class="payment-options">
+          <label class="radio-button">
+            <input type="radio" name="payment-method" value="saved-card" checked>
+            <span class="radio-checkmark"></span>
+            保存済みのカードで支払う
+          </label>
+          
+          <div class="saved-cards">
+            <div class="payment-method selected" onclick="selectCard('visa')">
+              <i class="material-icons card-logo">credit_card</i>
+              <div class="card-info">
+                <div class="card-number">Visa •••• 4242</div>
+                <div class="card-expiry">有効期限: 11/26</div>
+              </div>
+            </div>
+            
+            <div class="payment-method" onclick="selectCard('mastercard')">
+              <i class="material-icons card-logo">credit_card</i>
+              <div class="card-info">
+                <div class="card-number">MasterCard •••• 5678</div>
+                <div class="card-expiry">有効期限: 08/27</div>
+              </div>
+            </div>
+          </div>
+          
+          <label class="radio-button" style="margin-top: 20px;">
+            <input type="radio" name="payment-method" value="new-card">
+            <span class="radio-checkmark"></span>
+            新しいカードで支払う
+          </label>
+          
+          <div class="card-form" style="display: none;" id="new-card-form">
+            <div class="row">
+              <div class="input-field col s12">
+                <input id="card_name" type="text" class="validate">
+                <label for="card_name">カード名義</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="input-field col s12">
+                <input id="card_number" type="text" class="validate" placeholder="0000 0000 0000 0000">
+                <label for="card_number">カード番号</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="input-field col s6">
+                <input id="card_expiry" type="text" class="validate" placeholder="MM/YY">
+                <label for="card_expiry">有効期限</label>
+              </div>
+              <div class="input-field col s6">
+                <input id="card_cvc" type="text" class="validate" placeholder="123">
+                <label for="card_cvc">セキュリティコード</label>
+              </div>
+            </div>
+            <div class="row">
+              <p>
+                <label>
+                  <input type="checkbox" class="filled-in" />
+                  <span>このカード情報を保存する</span>
+                </label>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 13px; color: #666;">
+          <p>※カード情報は安全に処理され、当社サーバーには保存されません。</p>
+          <p>※取引はSSL暗号化されており、安全に処理されます。</p>
+        </div>
+      </div>
+      
+      <!-- ステップ3: 注文確認 -->
+      <div class="stepper-content" id="step-3">
+        <h5>注文内容の確認</h5>
+        
+        <div class="summary-container" style="margin-top: 20px;">
+          <div class="summary-item">
+            <div class="summary-label">プラン</div>
+            <div class="summary-value">プレミアムチャージ</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">トークン数</div>
+            <div class="summary-value">10,000,000トークン</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">金額（税込）</div>
+            <div class="summary-value">¥8,000</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">支払い方法</div>
+            <div class="summary-value">Visa •••• 4242</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">購入後のトークン残量</div>
+            <div class="summary-value">
+              <div>10,001,750トークン</div>
+              <div class="token-usage">
+                現在: <div class="token-usage-bar"><div class="token-usage-progress" style="width: 35%;"></div></div> 購入後: 約10,000回分
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 13px; color: #666;">
+          <p>※チャージしたトークンは今月末まで有効です（翌月への繰り越しはできません）</p>
+          <p>※購入後すぐに利用可能になります</p>
+          <p>※料金は次回の請求書に自動的に追加されます</p>
+        </div>
+      </div>
+      
+      <!-- ステップ4: 処理中/完了 -->
+      <div class="stepper-content" id="step-4">
+        <!-- 処理中 -->
+        <div class="loading-animation" id="processing-view">
+          <div class="progress-circular">
+            <div class="preloader-wrapper big active">
+              <div class="spinner-layer spinner-blue-only">
+                <div class="circle-clipper left">
+                  <div class="circle"></div>
+                </div>
+                <div class="gap-patch">
+                  <div class="circle"></div>
+                </div>
+                <div class="circle-clipper right">
+                  <div class="circle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p>お支払い処理中です。しばらくお待ちください...</p>
+        </div>
+        
+        <!-- 3Dセキュア認証 -->
+        <div class="auth-modal" id="auth-modal" style="display: none;">
+          <div class="auth-modal-content">
+            <h5>3Dセキュア認証</h5>
+            <p>セキュリティのため、カード発行会社の認証が必要です。</p>
+            <p>別ウィンドウで認証画面が開きます。認証完了後、こちらに戻ります。</p>
+            <div class="progress">
+              <div class="indeterminate"></div>
+            </div>
+            <p>認証ページを開いています...</p>
+          </div>
+        </div>
+        
+        <!-- 処理完了 -->
+        <div class="payment-status" id="success-view" style="display: none;">
+          <i class="material-icons payment-icon success">check_circle</i>
+          <h5>支払い処理が完了しました！</h5>
+          <p>トークンチャージが正常に完了しました。</p>
+          <div style="margin: 20px 0;">
+            <div style="font-weight: 500; font-size: 18px;">現在のトークン残量</div>
+            <div style="font-size: 24px; color: var(--primary-color); margin: 10px 0;">10,001,750トークン</div>
+            <div>（約10,000回分の会話）</div>
+          </div>
+          <p>これより直ちに使用可能です。</p>
+        </div>
+        
+        <!-- エラー -->
+        <div class="payment-status" id="error-view" style="display: none;">
+          <i class="material-icons payment-icon error">error</i>
+          <h5>エラーが発生しました</h5>
+          <p>支払い処理中にエラーが発生しました。</p>
+          <p id="error-message">カードが拒否されました。別のカードをお試しいただくか、カード発行会社にお問い合わせください。</p>
+          <button class="btn waves-effect waves-light" onclick="goToStep(2)">
+            別の支払い方法を試す
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <!-- ステップ1, 2, 3のフッター -->
+      <div id="footer-steps-1-3">
+        <a href="#!" class="modal-close btn-flat">キャンセル</a>
+        <button class="btn waves-effect waves-light" id="previous-btn" onclick="previousStep()" style="display: none;">
+          戻る
+        </button>
+        <button class="btn waves-effect waves-light" id="next-btn" onclick="nextStep()">
+          次へ
+        </button>
+      </div>
+      
+      <!-- ステップ4のフッター -->
+      <div id="footer-step-4" style="display: none;">
+        <a href="#!" class="modal-close btn">閉じる</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    // 現在のステップ
+    let currentStep = 1;
+    const totalSteps = 4;
+    
+    // プラン選択
+    function selectPlan(plan) {
+      document.querySelectorAll('.plan-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      
+      if (plan === 'standard') {
+        document.querySelectorAll('.plan-card')[0].classList.add('selected');
+      } else {
+        document.querySelectorAll('.plan-card')[1].classList.add('selected');
+      }
+    }
+    
+    // カード選択
+    function selectCard(card) {
+      document.querySelectorAll('.payment-method').forEach(method => {
+        method.classList.remove('selected');
+      });
+      
+      if (card === 'visa') {
+        document.querySelectorAll('.payment-method')[0].classList.add('selected');
+      } else {
+        document.querySelectorAll('.payment-method')[1].classList.add('selected');
+      }
+      
+      // 既存カードラジオボタンを選択
+      document.querySelector('input[name="payment-method"][value="saved-card"]').checked = true;
+    }
+    
+    // 次のステップへ
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        // 現在のステップの検証（バリデーション）
+        if (currentStep === 1) {
+          // プラン選択の検証
+          if (!document.querySelector('.plan-card.selected')) {
+            alert('プランを選択してください');
+            return;
+          }
+        } else if (currentStep === 2) {
+          // 支払い方法の検証
+          const newCardSelected = document.querySelector('input[name="payment-method"][value="new-card"]').checked;
+          if (newCardSelected) {
+            const cardName = document.getElementById('card_name').value;
+            const cardNumber = document.getElementById('card_number').value;
+            const cardExpiry = document.getElementById('card_expiry').value;
+            const cardCvc = document.getElementById('card_cvc').value;
+            
+            if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
+              alert('すべてのカード情報を入力してください');
+              return;
+            }
+          }
+        }
+        
+        // ステップ4の場合は支払い処理を開始
+        if (currentStep === 3) {
+          document.getElementById('footer-steps-1-3').style.display = 'none';
+          document.getElementById('footer-step-4').style.display = 'block';
+          
+          // 5秒後に支払い成功状態を表示（デモ用）
+          setTimeout(() => {
+            document.getElementById('processing-view').style.display = 'none';
+            
+            // デモとして3Dセキュア認証を表示（実際の実装では条件による）
+            document.getElementById('auth-modal').style.display = 'block';
+            
+            // 5秒後に3Dセキュア認証を閉じて成功状態を表示（デモ用）
+            setTimeout(() => {
+              document.getElementById('auth-modal').style.display = 'none';
+              document.getElementById('success-view').style.display = 'block';
+            }, 5000);
+            
+          }, 3000);
+        }
+        
+        // 次のステップに移動
+        updateStep(currentStep + 1);
+      }
+    }
+    
+    // 前のステップへ
+    function previousStep() {
+      if (currentStep > 1) {
+        updateStep(currentStep - 1);
+      }
+    }
+    
+    // 特定のステップに移動
+    function goToStep(step) {
+      updateStep(step);
+    }
+    
+    // ステップの更新
+    function updateStep(step) {
+      // 現在のステップを非表示
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      
+      // 新しいステップを表示
+      document.getElementById(`step-${step}`).classList.add('active');
+      
+      // ステップインジケーターの更新
+      document.querySelectorAll('.step').forEach(stepEl => {
+        const stepNum = parseInt(stepEl.dataset.step);
+        stepEl.classList.remove('active', 'completed');
+        
+        if (stepNum < step) {
+          stepEl.classList.add('completed');
+        } else if (stepNum === step) {
+          stepEl.classList.add('active');
+        }
+      });
+      
+      // ボタンの表示制御
+      if (step > 1) {
+        document.getElementById('previous-btn').style.display = 'inline-block';
+      } else {
+        document.getElementById('previous-btn').style.display = 'none';
+      }
+      
+      if (step === 3) {
+        document.getElementById('next-btn').textContent = '購入を確定する';
+      } else {
+        document.getElementById('next-btn').textContent = '次へ';
+      }
+      
+      // 現在のステップを更新
+      currentStep = step;
+    }
+    
+    // 新しいカード入力フォームの表示切替
+    document.addEventListener('DOMContentLoaded', function() {
+      const newCardRadio = document.querySelector('input[name="payment-method"][value="new-card"]');
+      const savedCardRadio = document.querySelector('input[name="payment-method"][value="saved-card"]');
+      const newCardForm = document.getElementById('new-card-form');
+      
+      newCardRadio.addEventListener('change', function() {
+        if (this.checked) {
+          newCardForm.style.display = 'block';
+          document.querySelectorAll('.payment-method').forEach(method => {
+            method.classList.remove('selected');
+          });
+        }
+      });
+      
+      savedCardRadio.addEventListener('change', function() {
+        if (this.checked) {
+          newCardForm.style.display = 'none';
+          document.querySelectorAll('.payment-method')[0].classList.add('selected');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

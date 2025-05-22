@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日の運勢 - サロモニ</title>
+    
+    <!-- Material UI & Icon Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.20/dist/material-ui.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- React & Material UI -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@mui/material@5.14.20/umd/material-ui.production.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            color: white;
+        }
+        
+        .date-info {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .fortune-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .overall-fortune {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .fortune-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        
+        .score-stars {
+            font-size: 32px;
+            color: #ffd700;
+            margin-right: 12px;
+        }
+        
+        .score-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .fortune-message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555;
+            text-align: center;
+        }
+        
+        .fortune-categories {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .category-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9ff;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .category-icon {
+            font-size: 24px;
+            margin-right: 16px;
+            color: #667eea;
+        }
+        
+        .category-content {
+            flex: 1;
+        }
+        
+        .category-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .category-rating {
+            color: #ffd700;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .category-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .partner-section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-icon {
+            margin-right: 8px;
+            color: #667eea;
+        }
+        
+        .partner-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .partner-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .partner-compatibility {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+        
+        .compatibility-score {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 8px;
+        }
+        
+        .advice-section {
+            margin-bottom: 24px;
+        }
+        
+        .advice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .advice-card {
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .lucky-card {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: white;
+        }
+        
+        .caution-card {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+            color: white;
+        }
+        
+        .advice-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .advice-content {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        .expand-btn {
+            background: #f0f2ff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .expand-btn:hover {
+            background: #e0e4ff;
+        }
+        
+        .hidden-content {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+        
+        .hidden-content.show {
+            display: block;
+        }
+        
+        .fortune-detail {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()">
+        <span class="material-icons">arrow_back</span>
+    </button>
+    
+    <div class="container">
+        <div class="header">
+            <div class="date-info">2025年5月22日（木）</div>
+            <h1 class="page-title">今日の運勢</h1>
+            <div class="subtitle">田中 美咲さん</div>
+        </div>
+        
+        <!-- 総合運勢 -->
+        <div class="fortune-card overall-fortune">
+            <div class="fortune-score">
+                <div class="score-stars">★★★★☆</div>
+                <div class="score-text">好調</div>
+            </div>
+            <div class="fortune-message">
+                今日は新しいチャレンジに適した日です。特に午前中にエネルギーが高まります。直感を信じて行動すると良い結果が期待できるでしょう。
+            </div>
+        </div>
+        
+        <!-- カテゴリ別運勢 -->
+        <div class="fortune-card">
+            <div class="fortune-categories">
+                <div class="category-item">
+                    <span class="material-icons category-icon">work</span>
+                    <div class="category-content">
+                        <div class="category-title">仕事運</div>
+                        <div class="category-rating">★★★★★</div>
+                        <div class="category-desc">集中力が高まる日。重要な決断に最適</div>
+                    </div>
+                </div>
+                
+                <div class="category-item">
+                    <span class="material-icons category-icon">people</span>
+                    <div class="category-content">
+                        <div class="category-title">人間関係運</div>
+                        <div class="category-rating">★★★☆☆</div>
+                        <div class="category-desc">聞く姿勢を大切に。相手の立場を理解して</div>
+                    </div>
+                </div>
+                
+                <div class="category-item">
+                    <span class="material-icons category-icon">favorite</span>
+                    <div class="category-content">
+                        <div class="category-title">恋愛運</div>
+                        <div class="category-rating">★★★★☆</div>
+                        <div class="category-desc">素直な気持ちを伝えるチャンス</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 相性の良いパートナー -->
+        <div class="fortune-card partner-section">
+            <h3 class="section-title">
+                <span class="material-icons section-icon">group</span>
+                今日の相性ベストパートナー
+            </h3>
+            <div class="partner-card">
+                <div class="partner-name">佐藤 健太さん</div>
+                <div class="partner-compatibility">お互いの五行バランスが最適</div>
+                <div class="compatibility-score">★★★★★</div>
+                <div class="fortune-detail">
+                    重要な相談事や協力が必要な作業におすすめです
+                </div>
+            </div>
+        </div>
+        
+        <!-- アドバイス -->
+        <div class="fortune-card advice-section">
+            <h3 class="section-title">
+                <span class="material-icons section-icon">lightbulb</span>
+                今日のアドバイス
+            </h3>
+            <div class="advice-grid">
+                <div class="advice-card lucky-card">
+                    <div class="advice-title">ラッキーアイテム</div>
+                    <div class="advice-content">青いアクセサリー</div>
+                </div>
+                <div class="advice-card caution-card">
+                    <div class="advice-title">注意ポイント</div>
+                    <div class="advice-content">急な判断は避けて</div>
+                </div>
+            </div>
+            
+            <button class="expand-btn" onclick="toggleDetails()">
+                詳細な運勢を見る
+            </button>
+            
+            <div id="detailContent" class="hidden-content">
+                <div class="fortune-detail">
+                    <h4 style="margin-bottom: 12px; color: #333;">詳細解説</h4>
+                    <p style="margin-bottom: 8px;"><strong>五行バランス:</strong> 今日は水の気が強く、創造性が高まります。</p>
+                    <p style="margin-bottom: 8px;"><strong>時間帯:</strong> 午前9-11時が最も運気が良い時間帯です。</p>
+                    <p style="margin-bottom: 8px;"><strong>方角:</strong> 北東の方角が吉方位となります。</p>
+                    <p><strong>開運行動:</strong> 新しいスキルの習得や勉強に時間を使うと運気アップ。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleDetails() {
+            const content = document.getElementById('detailContent');
+            const button = document.querySelector('.expand-btn');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                button.textContent = '詳細な運勢を見る';
+            } else {
+                content.classList.add('show');
+                button.textContent = '詳細を閉じる';
+            }
+        }
+        
+        // モックデータの動的更新（実装時にAPIから取得）
+        document.addEventListener('DOMContentLoaded', function() {
+            // 現在の日付を更新
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            document.querySelector('.date-info').textContent = dateStr;
+            
+            // カードホバーエフェクト
+            document.querySelectorAll('.fortune-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 12px 40px rgba(0,0,0,0.15)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 8px 32px rgba(0,0,0,0.1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

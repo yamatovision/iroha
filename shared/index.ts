@@ -1979,3 +1979,119 @@ export interface DailyAppointmentsResponse {
     };
   };
 }
+
+// ========== SuperAdmin組織管理関連 ==========
+
+// 組織ステータス
+export enum OrganizationStatus {
+  ACTIVE = 'active',
+  TRIAL = 'trial',
+  SUSPENDED = 'suspended',
+  DELETED = 'deleted'
+}
+
+// 組織
+export interface Organization {
+  _id: string;
+  name: string;
+  address?: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+  };
+  owner?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  plan?: {
+    _id: string;
+    name: string;
+  };
+  userCount: number;
+  clientCount: number;
+  status: OrganizationStatus;
+  subscription?: {
+    status: string;
+    startDate: string;
+    currentPeriodEnd: string;
+    trialEndsAt: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 組織一覧レスポンス
+export interface OrganizationListResponse {
+  organizations: Organization[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}
+
+// 組織詳細レスポンス
+export interface OrganizationDetailResponse extends Organization {
+  adminUsers: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  }[];
+  statistics: {
+    userCount: number;
+    clientCount: number;
+    activeUserCount: number;
+  };
+}
+
+// 組織作成リクエスト
+export interface CreateOrganizationRequest {
+  name: string;
+  address?: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+  };
+  initialOwner: {
+    name: string;
+    email: string;
+    password: string;
+  };
+  plan: string;
+  trialDays?: number;
+}
+
+// 組織ステータス更新リクエスト
+export interface UpdateOrganizationStatusRequest {
+  status: OrganizationStatus;
+  reason?: string;
+  notifyOwner?: boolean;
+}
+
+// トライアル延長リクエスト
+export interface ExtendTrialRequest {
+  days: number;
+  reason?: string;
+  notifyOwner?: boolean;
+}
+
+// 一括ステータス更新リクエスト
+export interface BatchUpdateStatusRequest {
+  organizationIds: string[];
+  status: 'active' | 'suspended';
+  reason?: string;
+  notifyOwners?: boolean;
+}
+
+// 一括トライアル延長リクエスト
+export interface BatchExtendTrialRequest {
+  organizationIds: string[];
+  days: number;
+  reason?: string;
+  notifyOwners?: boolean;
+}

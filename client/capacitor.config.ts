@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'jp.dailyfortune.app',
-  appName: 'DailyFortune',
+  appId: 'jp.iroha.app',
+  appName: 'いろは',
   // バージョン情報（表示用）
   appVersion: '1.0.2',
   // ビルド番号（内部管理用）
@@ -12,14 +12,15 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     iosScheme: 'capacitor', // iOSではcapacitorスキームを使用してプロキシを無効化
     allowNavigation: [
-      'dailyfortune.web.app',
-      '*.dailyfortune.web.app',
+      'iroha-app.web.app',
+      '*.iroha-app.web.app',
       'localhost',
       'localhost:3000',
       'localhost:8080',
       '192.168.11.6',
       '192.168.11.6:3000',
       '192.168.11.6:8080',
+      'iroha-api-235426778039.asia-northeast1.run.app',
       'dailyfortune-api-6clpzmy5pa-an.a.run.app',
       'dailyfortune-api-235426778039.asia-northeast1.run.app',
       '*.asia-northeast1.run.app',
@@ -55,11 +56,11 @@ const config: CapacitorConfig = {
     }
   },
   // ディープリンク設定
-  // アプリは dailyfortune://, 
-  // https://dailyfortune.web.app, 
-  // https://*.dailyfortune.web.app の URL スキームで開くことができます
+  // アプリは iroha://, 
+  // https://iroha-app.web.app, 
+  // https://*.iroha-app.web.app の URL スキームで開くことができます
   appUrlOpen: {
-    url: "dailyfortune://app",
+    url: "iroha://app",
     target: "self"
   },
   // Android ディープリンク設定 (AndroidManifest.xml に追加されます)
@@ -71,16 +72,16 @@ const config: CapacitorConfig = {
         data: [
           {
             scheme: "https",
-            host: "dailyfortune.web.app",
+            host: "iroha-app.web.app",
             pathPrefix: "/"
           },
           {
             scheme: "https",
-            host: "*.dailyfortune.web.app",
+            host: "*.iroha-app.web.app",
             pathPrefix: "/"
           },
           {
-            scheme: "dailyfortune",
+            scheme: "iroha",
             host: "app"
           }
         ],
@@ -93,10 +94,10 @@ const config: CapacitorConfig = {
   },
   // iOS ディープリンク設定 (Info.plist に追加されます)
   ios: {
-    scheme: "dailyfortune",
+    scheme: "iroha",
     // Universal Links 設定
     associatedDomains: [
-      "applinks:dailyfortune.web.app"
+      "applinks:iroha-app.web.app"
     ]
   }
 };
